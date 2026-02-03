@@ -1,13 +1,31 @@
 {
   "manifest_version": 3,
   "name": "Labo Scrapbox Helper",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "Scrapbox Helper for Research Labs: Calendars, Outlines, Minutes, and Project Histories",
   "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["https://scrapbox.io/*"],
-      "js": ["content.js"],
+      "js": [
+        "content/definition.js",
+        "content/config.js",
+        "content/html_helper.js",
+        "content/support.js",
+        "content/pagewatcher.js",
+        "content/openai.js",
+        "content/style.js",
+        "content/top_page.js",
+        "content/research_note.js",
+        "content/experiment_plan.js",
+        "content/minutes.js",
+        "content/paper_intro.js",
+        "content/presentation_training.js",
+        "content/stats.js",
+        "content/history.js",
+        "content/main.js"
+      ],
+       "type": "module"
     }
   ]
 }
