@@ -8,72 +8,73 @@ const start = () => {
     document.getElementById(TODO_PANEL_ID)?.remove();
   };
 
-  /* =============== Watcher ========================= */
-  const paperIntroWatcher = new PageWatcher({
-    fetchPage,
-    headPageETag,
+  // /* =============== Watcher ========================= */
+  // const paperIntroWatcher = new PageWatcher({
+  //   fetchPage,
+  //   headPageETag,
 
-    onInit: ({ pageName, json }) => {
-      if (!isPaperIntroPage(json.lines)) return;
-      renderPaperPanelFromLines(pageName, json.lines);
-    },
+  //   onInit: ({ pageName, json }) => {
+  //     if (!isPaperIntroPage(json.lines)) return;
+  //     renderPaperPanelFromLines(pageName, json.lines);
+  //   },
 
-    onUpdate: ({ pageName, json }) => {
-      if (!isPaperIntroPage(json.lines)) return;
-      renderPaperPanelFromLines(pageName, json.lines);
-    }
-  });
+  //   onUpdate: ({ pageName, json }) => {
+  //     if (!isPaperIntroPage(json.lines)) return;
+  //     renderPaperPanelFromLines(pageName, json.lines);
+  //   }
+  // });
 
-  const presentationTrainingWatcher = new PageWatcher({
-    fetchPage,
-    headPageETag,
+  // const presentationTrainingWatcher = new PageWatcher({
+  //   fetchPage,
+  //   headPageETag,
 
-    onInit: ({ pageName, json }) => {
-      renderPresentationTrainingFromLines(pageName, json.lines);
-    },
+  //   onInit: ({ pageName, json }) => {
+  //     renderPresentationTrainingFromLines(pageName, json.lines);
+  //   },
 
-    onUpdate: ({ pageName, json }) => {
-      renderPresentationTrainingFromLines(pageName, json.lines);
-    }    
-  })
+  //   onUpdate: ({ pageName, json }) => {
+  //     renderPresentationTrainingFromLines(pageName, json.lines);
+  //   }
+  // })
 
-  const researchNoteWatcher = new PageWatcher({
-    fetchPage,
-    headPageETag,
+  // const researchNoteWatcher = new PageWatcher({
+  //   fetchPage,
+  //   headPageETag,
 
-    onInit: ({ pageName, json }) => {
-      loadSettings(currentProjectName, setting => {
-        renderCalendar(pageName);
-        renderCalendarFromLines(pageName, json);
-        renderResearchNoteCreateUI({
-          setting,
-          pageName,
-          rawLines: json.lines
-        });
-        renderTodoPanel(json.lines);
-      });
-    },
+  //   onInit: ({ pageName, json }) => {
+  //     loadSettings(currentProjectName, settings => {
+  //       renderCalendar(pageName);
+  //       renderCalendarFromLines(pageName, json);
+  //       console.log(settings);
+  //       renderResearchNoteCreateUI({
+  //         userName: settings.userName,
+  //         pageName,
+  //         rawLines: json.lines
+  //       });
+  //       renderTodoPanel(json.lines);
+  //     });
+  //   },
 
-    onUpdate: ({ pageName, json }) => {
-      renderCalendarFromLines(pageName, json);
-      renderTodoPanel(json.lines);
-    }
-  });
+  //   onUpdate: ({ pageName, json }) => {
+  //     renderCalendarFromLines(pageName, json);
+  //     renderTodoPanel(json.lines);
+  //   }
+  // });
 
-  const minutesWatcher = new PageWatcher({
-    fetchPage,
-    headPageETag,
+  // const minutesWatcher = new PageWatcher({
+  //   fetchPage,
+  //   headPageETag,
 
-    onInit: ({ pageName, json }) => {
-      //renderMinutesByType(pageName, json);
-      renderMinutesFromLines(json.lines);
-    },
+  //   onInit: ({ pageName, json }) => {
+  //     //renderMinutesByType(pageName, json);
+  //     renderMinutesFromLines(json.lines);
+  //   },
 
-    onUpdate: ({ pageName, json }) => {
-      //renderMinutesByType(pageName, json);
-      renderMinutesFromLines(json.lines);
-    }
-  });
+  //   onUpdate: ({ pageName, json }) => {
+  //     //renderMinutesByType(pageName, json);
+  //     renderMinutesFromLines(json.lines);
+  //   }
+  // });
 
   // const renderMinutesByType = (pageName, json) => {
   //   const lines = json.lines || [];
@@ -83,6 +84,8 @@ const start = () => {
   //     renderMinutesFromLines(lines);
   //   }
   // };
+
+  const watcherManager = new WatcherManager();
 
   /* ================= SPA監視 ================= */
   const classifyPageByName = (pageName) => {
@@ -94,19 +97,21 @@ const start = () => {
     return 'unknown';
   };
 
-  const stopAllWatchers = () => {
-    researchNoteWatcher?.stop();
-    paperIntroWatcher?.stop();
-    minutesWatcher?.stop();
-    presentationTrainingWatcher?.stop();
-  };
+  // const stopAllWatchers = () => {
+  //   researchNoteWatcher?.stop();
+  //   paperIntroWatcher?.stop();
+  //   minutesWatcher?.stop();
+  //   presentationTrainingWatcher?.stop();
+  // };
 
   const route = (projectName, pageName, json) => {
     const lines = normalizeLines(json.lines);
     if (isPaperIntroPage(lines)){
-      paperIntroWatcher.start(projectName, pageName);
+      //paperIntroWatcher.start(projectName, pageName);
+      watcherManager.startPaperIntroWatcher(projectName, pageName);
     } else {
-      minutesWatcher.start(projectName, pageName);
+      //minutesWatcher.start(projectName, pageName);
+      watcherManager.startMinutesWatcher(currentProjectName, pageName);
     }
   };
 
@@ -120,7 +125,8 @@ const start = () => {
     lastURL = url;
 
     clearUI();
-    stopAllWatchers();
+    // stopAllWatchers();
+    watcherManager.stopAllWatchers();
     closedPanels.clear();
 
     const match = location.pathname.match(/^\/([^/]+)(?:\/(.*))?$/);
@@ -142,11 +148,11 @@ const start = () => {
     const type = classifyPageByName(pageName);
     if (type !== 'unknown') {
       const handlers = {
-        'research-note': () => researchNoteWatcher.start(currentProjectName, pageName),
+        'research-note': () => watcherManager.startResearchNoteWatcher(currentProjectName, pageName),
         'experiment-plan': () => renderExperimentPlan(pageName),
-        'paper-intro': () => paperIntroWatcher.start(currentProjectName, pageName),
-        'presentation-training': () => presentationTrainingWatcher.start(currentProjectName, pageName),
-        'minutes': () => minutesWatcher.start(currentProjectName, pageName),
+        'presentation-training': () => watcherManager.startPresentationTrainingWatcher(currentProjectName, pageName),
+        'minutes': () => watcherManager.startMinutesWatcher(currentProjectName, pageName),
+        'paper-intro': () => watcherManager.startPaperIntroWatcher(currentProjectName, pageName),
       };
       handlers[type]?.();
     } else {
@@ -160,7 +166,8 @@ const start = () => {
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      stopAllWatchers();
+      // stopAllWatchers();
+      watcherManager.stopAllWatchers();
     } else {
       lastURL = null;
       tick();

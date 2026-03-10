@@ -353,13 +353,17 @@ const removeResearchNoteCreateUI = () => {
     document.getElementById(CALENDAR_CREATE_UI_ID)?.remove();
 };
 
-const renderResearchNoteCreateUI = ({ settings, pageName, rawLines }) => {
+const renderResearchNoteCreateUI = ({ userName, pageName, rawLines }) => {
+    // console.log("create? " + pageName);
     if (!pageName) return;
+    // console.log("test? " + pageName);
     if (!/研究ノート/.test(pageName)) return;
-    if (!settings?.userName) return;
+    // console.log("create? " + userName);
+    if (!userName) return;
 
-    // 自分の研究ノート以外は出さない 
-    if (!isMyResearchNotePage(pageName, settings.userName)) return;
+    // 自分の研究ノート以外は出さない
+    // console.log("is mine? " + userName);
+    if (!isMyResearchNotePage(pageName, userName)) return;
 
     const calendarPanel = document.getElementById(CALENDAR_ID);
     if (!calendarPanel) return;
@@ -387,10 +391,12 @@ const renderResearchNoteCreateUI = ({ settings, pageName, rawLines }) => {
     const btn = document.createElement('button');
     btn.textContent = `${ym} の研究ノートを作成する（作成後に書き込みするとこのボタンは消えます）`;
     btn.onclick = () => {
-        const targetPage = `${ym}_研究ノート_${settings.userName}`;
-        researchNoteWatcher.stop();
+        const targetPage = `${ym}_研究ノート_${userName}`;
+        //researchNoteWatcher?.stop();
+        //stopAllWatchers();
+        // window.
 
-        const body = generateResearchNoteBody(baseDate, settings.userName);
+        const body = generateResearchNoteBody(baseDate, userName);
         const url = buildCreateNoteUrl(currentProjectName, targetPage, body);
         removeResearchNoteCreateUI();
         location.assign(url);

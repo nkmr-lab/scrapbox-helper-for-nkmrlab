@@ -97,3 +97,14 @@ const parseBracketTitle = (text) => {
 
     return title;
 };
+
+const getDeoratorFromLine = (text) => {
+    if (!text.startsWith('[')) return null;
+
+    // [装飾 + 空白 + 本文]
+    const m = text.match(/^\[([\*\(\&]+)\s+(.+?)]$/);
+    if (!m) return null;
+
+    const decorators = m[1]; // "*", "**", "(", "*(", "(**", "&*", etc
+    return decorators;
+};
