@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Labo Scrapbox Helper",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Scrapbox Helper for Research Labs: Calendars, Outlines, Minutes, and Project Histories",
   "permissions": ["storage"],
   "content_scripts": [
@@ -13,6 +13,7 @@
         "content/html_helper.js",
         "content/support.js",
         "content/pagewatcher.js",
+        "content/watcher_manager.js",
         "content/openai.js",
         "content/style.js",
         "content/top_page.js",
