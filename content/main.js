@@ -8,83 +8,6 @@ const start = () => {
     document.getElementById(TODO_PANEL_ID)?.remove();
   };
 
-  // /* =============== Watcher ========================= */
-  // const paperIntroWatcher = new PageWatcher({
-  //   fetchPage,
-  //   headPageETag,
-
-  //   onInit: ({ pageName, json }) => {
-  //     if (!isPaperIntroPage(json.lines)) return;
-  //     renderPaperPanelFromLines(pageName, json.lines);
-  //   },
-
-  //   onUpdate: ({ pageName, json }) => {
-  //     if (!isPaperIntroPage(json.lines)) return;
-  //     renderPaperPanelFromLines(pageName, json.lines);
-  //   }
-  // });
-
-  // const presentationTrainingWatcher = new PageWatcher({
-  //   fetchPage,
-  //   headPageETag,
-
-  //   onInit: ({ pageName, json }) => {
-  //     renderPresentationTrainingFromLines(pageName, json.lines);
-  //   },
-
-  //   onUpdate: ({ pageName, json }) => {
-  //     renderPresentationTrainingFromLines(pageName, json.lines);
-  //   }
-  // })
-
-  // const researchNoteWatcher = new PageWatcher({
-  //   fetchPage,
-  //   headPageETag,
-
-  //   onInit: ({ pageName, json }) => {
-  //     loadSettings(currentProjectName, settings => {
-  //       renderCalendar(pageName);
-  //       renderCalendarFromLines(pageName, json);
-  //       console.log(settings);
-  //       renderResearchNoteCreateUI({
-  //         userName: settings.userName,
-  //         pageName,
-  //         rawLines: json.lines
-  //       });
-  //       renderTodoPanel(json.lines);
-  //     });
-  //   },
-
-  //   onUpdate: ({ pageName, json }) => {
-  //     renderCalendarFromLines(pageName, json);
-  //     renderTodoPanel(json.lines);
-  //   }
-  // });
-
-  // const minutesWatcher = new PageWatcher({
-  //   fetchPage,
-  //   headPageETag,
-
-  //   onInit: ({ pageName, json }) => {
-  //     //renderMinutesByType(pageName, json);
-  //     renderMinutesFromLines(json.lines);
-  //   },
-
-  //   onUpdate: ({ pageName, json }) => {
-  //     //renderMinutesByType(pageName, json);
-  //     renderMinutesFromLines(json.lines);
-  //   }
-  // });
-
-  // const renderMinutesByType = (pageName, json) => {
-  //   const lines = json.lines || [];
-  //   if (/発表練習/.test(pageName)) {
-  //     renderPresentationTrainingFromLines(pageName, lines);
-  //   } else {
-  //     renderMinutesFromLines(lines);
-  //   }
-  // };
-
   const watcherManager = new WatcherManager();
 
   /* ================= SPA監視 ================= */
@@ -96,13 +19,6 @@ const start = () => {
     if (/議事録/.test(pageName)) return 'minutes';
     return 'unknown';
   };
-
-  // const stopAllWatchers = () => {
-  //   researchNoteWatcher?.stop();
-  //   paperIntroWatcher?.stop();
-  //   minutesWatcher?.stop();
-  //   presentationTrainingWatcher?.stop();
-  // };
 
   const route = (projectName, pageName, json) => {
     const lines = normalizeLines(json.lines);
@@ -125,7 +41,6 @@ const start = () => {
     lastURL = url;
 
     clearUI();
-    // stopAllWatchers();
     watcherManager.stopAllWatchers();
     closedPanels.clear();
 
