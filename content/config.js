@@ -9,8 +9,10 @@ const DEFAULT_SETTINGS = {
     calendarWidth: 480,
     calendarHeight: 560,
     calendarFontSize: 11,
+    calendarHeatmap: true,
     todoWidth: 320,
     todoHeight: 400,
+    todoShowCount: 5,
     mainWidth: 480,
     mainHeight: 560,
     theme: 'normal',
@@ -201,6 +203,9 @@ const openSettingsModal = async () => {
     const calWI = _input(settings.calendarWidth, 'number');
     const calHI = _input(settings.calendarHeight, 'number');
     const calFI = _input(settings.calendarFontSize, 'number');
+    const calHeatI = _select(settings.calendarHeatmap ? 'on' : 'off', [
+        ['on', 'ON'], ['off', 'OFF'],
+    ]);
 
     const todoI = _input(settings.todoMark);
     const doneI = _input(settings.doneMark);
@@ -209,6 +214,7 @@ const openSettingsModal = async () => {
     ]);
     const todoWI = _input(settings.todoWidth, 'number');
     const todoHI = _input(settings.todoHeight, 'number');
+    const todoShowI = _input(settings.todoShowCount, 'number');
 
     const mainWI = _input(settings.mainWidth, 'number');
     const mainHI = _input(settings.mainHeight, 'number');
@@ -282,17 +288,19 @@ const openSettingsModal = async () => {
     /* ===== カレンダータブ ===== */
     const calContent = document.createElement('div');
     calContent.append(
-        _field('横幅', calWI), _field('縦幅', calHI), _field('文字サイズ(px)', calFI),
+        _field('横幅', calWI), _field('縦幅', calHI),
+        _field('文字サイズ(px)', calFI), _field('ヒートマップ', calHeatI),
     );
 
     /* ===== TODOタブ ===== */
     const todoContent = document.createElement('div');
     todoContent.append(
         _field('TODO マーク', todoI), _field('完了マーク', doneI),
+        _field('表示件数', todoShowI),
         _field('横幅', todoWI), _field('縦幅', todoHI), _field('位置', todoPosI),
     );
 
-    /* ===== その他タブ ===== */
+    /* ===== その他ページタブ ===== */
     const otherContent = document.createElement('div');
     otherContent.append(
         _field('横幅', mainWI), _field('縦幅', mainHI),
@@ -303,7 +311,7 @@ const openSettingsModal = async () => {
         { label: '基本', content: basicContent },
         { label: 'カレンダー', content: calContent },
         { label: 'TODO', content: todoContent },
-        { label: 'その他', content: otherContent },
+        { label: 'その他ページ', content: otherContent },
     ]);
 
     panelNode.append(bar, ...panels);
@@ -323,8 +331,9 @@ const openSettingsModal = async () => {
             todoMark: todoI.value, doneMark: doneI.value,
             todoPosition: todoPosI.value, openaiApiKey: apiKeyI.value.trim(),
             calendarWidth: +calWI.value, calendarHeight: +calHI.value,
-            calendarFontSize: +calFI.value,
+            calendarFontSize: +calFI.value, calendarHeatmap: calHeatI.value === 'on',
             todoWidth: +todoWI.value, todoHeight: +todoHI.value,
+            todoShowCount: +todoShowI.value,
             mainWidth: +mainWI.value, mainHeight: +mainHI.value,
             theme: themeI.value, customColors: newCustom,
             showPageCreate: pageCreateI.value,

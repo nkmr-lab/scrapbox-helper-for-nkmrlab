@@ -77,8 +77,9 @@ const renderTodoPanel = async (lines) => {
     const activeItems = items.filter(x => !x.done);
     const doneItems = items.filter(x => x.done);
 
+    const showCount = settings.todoShowCount || TODO_SHOW_COUNT;
     const showCollapsed = () => {
-        activeItems.forEach((x, i) => { x.dom.style.display = i < TODO_SHOW_COUNT ? '' : 'none'; });
+        activeItems.forEach((x, i) => { x.dom.style.display = i < showCount ? '' : 'none'; });
         doneItems.forEach(x => { x.dom.style.display = 'none'; });
     };
     const showAll = () => { items.forEach(x => { x.dom.style.display = ''; }); };

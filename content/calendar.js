@@ -1,6 +1,15 @@
 /* ================= 研究ノート：月カレンダー ================= */
 let calendarExpanded = false;
 
+const heatLevel = (count) =>
+    count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
+
+const applyHeatmapToCell = (cell) => {
+    cell.classList.remove('sb-cal-cell--heat1', 'sb-cal-cell--heat2', 'sb-cal-cell--heat3', 'sb-cal-cell--heat4');
+    const level = heatLevel(Number(cell.dataset.count || 0));
+    if (level > 0) cell.classList.add(`sb-cal-cell--heat${level}`);
+};
+
 const applyCalendarLayout = async (panelNode, gridNode) => {
     const settings = await loadSettings(currentProjectName);
 
@@ -53,7 +62,6 @@ const createCalendarPanel = (pageName) => {
     const gridNode = document.createElement('div');
     gridNode.className = CALENDAR_GRID_CLASS + ' sb-cal-grid';
 
-    /* 曜日行 */
     ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(w => {
         const node = document.createElement('div');
         node.textContent = w;
@@ -69,15 +77,6 @@ const createCalendarPanel = (pageName) => {
         calendarExpanded = !calendarExpanded;
         applyCalendarLayout(panelNode, gridNode);
         toggleBtn.textContent = calendarExpanded ? '[縮小]' : '[拡大]';
-
-        gridNode.querySelectorAll('[data-day-cell]').forEach(c => {
-            c.classList.remove('sb-cal-cell--heat1', 'sb-cal-cell--heat2', 'sb-cal-cell--heat3', 'sb-cal-cell--heat4');
-            if (calendarExpanded) {
-                const count = Number(c.dataset.count || 0);
-                const level = count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
-                if (level > 0) c.classList.add(`sb-cal-cell--heat${level}`);
-            }
-        });
     });
 
     headerNode.append(
@@ -163,7 +162,12 @@ const renderCalendarFromLines = (pageName, json) => {
         gridNode.appendChild(c);
     });
 
+    /* ヒートマップ適用 */
     loadSettings(currentProjectName).then(settings => {
+        if (settings.calendarHeatmap) {
+            gridNode.querySelectorAll('[data-day-cell]').forEach(applyHeatmapToCell);
+        }
+
         if (!isMyThisMonthResearchNote(pageName, settings.userName)) return;
         if (location.hash) return;
         if (!window.__jumpedToTodayInNote) {
