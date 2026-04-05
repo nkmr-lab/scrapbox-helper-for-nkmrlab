@@ -16,7 +16,7 @@ const applyCalendarLayout = async (panelNode, gridNode) => {
         if (todo) todo.style.removeProperty('display');
     }
 
-    gridNode.style.fontSize = settings.calendarFontSize + 'px';
+    document.documentElement.style.setProperty('--sb-calFontSize', settings.calendarFontSize + 'px');
 };
 
 const shiftMonthInPageName = (pageName, offset) => {
@@ -68,13 +68,11 @@ const createCalendarPanel = (pageName) => {
         toggleBtn.textContent = calendarExpanded ? '[縮小]' : '[拡大]';
 
         gridNode.querySelectorAll('[data-day-cell]').forEach(c => {
+            c.classList.remove('sb-cal-cell--heat1', 'sb-cal-cell--heat2', 'sb-cal-cell--heat3', 'sb-cal-cell--heat4');
             if (calendarExpanded) {
                 const count = Number(c.dataset.count || 0);
                 const level = count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
-                const colors = ['transparent', 'var(--sb-heatmap1)', 'var(--sb-heatmap2)', 'var(--sb-heatmap3)', 'var(--sb-heatmap4)'];
-                c.style.background = colors[level];
-            } else {
-                c.style.background = '';
+                if (level > 0) c.classList.add(`sb-cal-cell--heat${level}`);
             }
         });
     });

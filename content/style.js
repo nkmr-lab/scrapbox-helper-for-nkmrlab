@@ -128,6 +128,7 @@ const injectStyleSheet = () => {
     flex:1; min-height:0; padding:6px;
     display:grid; grid-template-columns:repeat(7,1fr);
     grid-template-rows:auto repeat(6,1fr); gap:2px;
+    font-size:var(--sb-calFontSize, 11px);
 }
 .sb-cal-grid--expanded {
     grid-template-rows:auto repeat(6, minmax(140px, 1fr)); gap:8px;
@@ -200,6 +201,22 @@ const injectStyleSheet = () => {
 .sb-color-label { font-size:10px; color:var(--sb-inputLabel); width:7em; flex-shrink:0; }
 .sb-toggle-btn { cursor:pointer; font-size:11px; color:var(--sb-textMuted); margin:4px 0; }
 .sb-create-msg { margin-bottom:6px; color:var(--sb-textMuted); }
+
+/* ===== Heatmap (calendar expanded) ===== */
+.sb-cal-cell--heat1 { background:var(--sb-heatmap1); }
+.sb-cal-cell--heat2 { background:var(--sb-heatmap2); }
+.sb-cal-cell--heat3 { background:var(--sb-heatmap3); }
+.sb-cal-cell--heat4 { background:var(--sb-heatmap4); }
+
+/* ===== Forms / UI ===== */
+.sb-input { width:100%; }
+.sb-select { width:100%; }
+.sb-color-input { width:28px; height:20px; padding:0; border:1px solid var(--sb-border); cursor:pointer; }
+.sb-color-text { flex:1; font-size:11px; font-family:monospace; }
+.sb-save-btn { margin-top:8px; }
+.sb-form-row { display:flex; gap:4px; align-items:center; padding:0 6px; margin-bottom:6px; }
+.sb-form-input { flex:1; font-size:12px; padding:2px 4px; }
+.sb-small-btn { font-size:12px; cursor:pointer; }
 
 /* ===== Layout helpers ===== */
 .sb-flex-spacer { margin-left:auto; }

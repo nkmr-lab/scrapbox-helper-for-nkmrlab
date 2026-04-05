@@ -112,13 +112,13 @@ const renderSettingsPanel = async (panelNode) => {
 
     const input = (v, type = 'text') => {
         const i = document.createElement('input');
-        i.type = type; i.value = v; i.style = 'width:100%';
+        i.type = type; i.value = v; i.className = 'sb-input';
         return i;
     };
 
     const select = (value, options) => {
         const s = document.createElement('select');
-        s.style = 'width:100%';
+        s.className = 'sb-select';
         options.forEach(([val, label]) => {
             const opt = document.createElement('option');
             opt.value = val; opt.textContent = label;
@@ -176,12 +176,12 @@ const renderSettingsPanel = async (panelNode) => {
         const colorI = document.createElement('input');
         colorI.type = 'color';
         colorI.value = currentVal || baseTheme[key] || '#000000';
-        colorI.style = 'width:28px;height:20px;padding:0;border:1px solid #ccc;cursor:pointer';
+        colorI.className = 'sb-color-input';
 
         const textI = document.createElement('input');
         textI.type = 'text'; textI.value = currentVal;
         textI.placeholder = baseTheme[key] || '';
-        textI.style = 'flex:1;font-size:11px;font-family:monospace';
+        textI.className = 'sb-color-text';
 
         const labelNode = document.createElement('div');
         labelNode.textContent = label;
@@ -218,7 +218,7 @@ const renderSettingsPanel = async (panelNode) => {
 
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '保存';
-    saveBtn.style = 'margin-top:8px';
+    saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = () => {
         const newCustom = {};
         Object.entries(colorInputs).forEach(([key, textI]) => {

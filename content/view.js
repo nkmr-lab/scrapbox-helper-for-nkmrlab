@@ -105,7 +105,6 @@ const attachCloseButton = (panelNode, panelId) => {
         closedPanels.add(panelId);
         panelNode.remove();
     };
-    panelNode.style.position = 'fixed';
     panelNode.appendChild(btn);
 };
 

@@ -116,7 +116,7 @@ const createGPTBatchReviewUI = (sections) => {
 
     const btn = document.createElement('button');
     btn.textContent = '🧠 GPTで全部チェック';
-    btn.style = 'font-size:12px;cursor:pointer;';
+    btn.className = 'sb-small-btn';
 
     const status = document.createElement('span');
     status.className = 'sb-batch-status';

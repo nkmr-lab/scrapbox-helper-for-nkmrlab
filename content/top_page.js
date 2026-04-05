@@ -29,17 +29,16 @@ const renderPresentationCreateUI = (panelNode) => {
     appendSectionHeader(panelNode, '🎤 発表練習ページを作成');
 
     const row = document.createElement('div');
-    row.className = 'sb-row';
-    row.style = 'padding:0 6px;margin-bottom:6px';
+    row.className = 'sb-form-row';
 
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = '学会名';
-    input.style = 'flex:1;font-size:12px;padding:2px 4px';
+    input.className = 'sb-form-input';
 
     const btn = document.createElement('button');
     btn.textContent = '生成';
-    btn.style = 'font-size:12px;cursor:pointer';
+    btn.className = 'sb-small-btn';
 
     btn.onclick = () => {
         const name = input.value.trim();
