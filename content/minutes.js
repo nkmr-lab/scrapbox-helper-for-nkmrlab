@@ -4,11 +4,14 @@
 const parseSessions = (lines) => {
     const sessions = [];
     let currentSession = null;
+    let currentTalk = null;
 
     lines.forEach((line, idx) => {
         const text = line.text || '';
 
+        /* セッション開始 */
         if (isSessionStart(text)) {
+            currentTalk = null;
             currentSession = {
                 id: line.id,
                 title: text.replace(/^\[[^\s]+\s*/, '').replace(/\]$/, ''),
@@ -18,14 +21,37 @@ const parseSessions = (lines) => {
             return;
         }
 
+        /* 発表タイトル（&付き装飾） */
+        if (isTalkTitleLine(text)) {
+            if (!currentSession) {
+                currentSession = { id: line.id, title: 'comments', talks: [], startIdx: idx, endIdx: null };
+                sessions.push(currentSession);
+            }
+            currentTalk = {
+                id: line.id, title: cleanTitle(text), idx,
+                questions: [], impressions: [], subheadings: []
+            };
+            currentSession.talks.push(currentTalk);
+            return;
+        }
+
+        /* サブ見出し（概要・質疑・コメント等） → 直前のtalkに紐づける */
+        if (isSubHeadingLine(text) && currentTalk) {
+            currentTalk.subheadings.push({ id: line.id, title: cleanTitle(text) });
+            return;
+        }
+
+        /* 従来のタイトル行（&なし、セッションでもサブ見出しでもない） */
         if (isTitleLine(text)) {
             if (!currentSession) {
                 currentSession = { id: line.id, title: 'comments', talks: [], startIdx: idx, endIdx: null };
                 sessions.push(currentSession);
             }
-            currentSession.talks.push({
-                id: line.id, title: cleanTitle(text), idx, questions: [], impressions: []
-            });
+            currentTalk = {
+                id: line.id, title: cleanTitle(text), idx,
+                questions: [], impressions: [], subheadings: []
+            };
+            currentSession.talks.push(currentTalk);
         }
     });
 
@@ -35,7 +61,7 @@ const parseSessions = (lines) => {
             sessions.push({
                 id: lines[firstTitleIdx].id, title: 'comments',
                 talks: [{ id: lines[firstTitleIdx].id, title: cleanTitle(lines[firstTitleIdx].text),
-                    idx: firstTitleIdx, questions: [], impressions: [] }],
+                    idx: firstTitleIdx, questions: [], impressions: [], subheadings: [] }],
                 startIdx: 0, endIdx: lines.length - 1
             });
         }
@@ -84,7 +110,7 @@ const populateSessionData = (sessions, lines) => {
             if (ims.length || qs.length) {
                 session.talks.push({
                     id: session.id, title: 'comments', idx: session.startIdx,
-                    questions: qs, impressions: ims
+                    questions: qs, impressions: ims, subheadings: []
                 });
             }
         }
@@ -100,13 +126,10 @@ const renderMinutesFromLines = async (rawLines) => {
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
     const fragment = document.createDocumentFragment();
 
-    /* 1. session / title 抽出 */
     const sessions = parseSessions(lines);
-
-    /* 2. 質問・感想 抽出 */
     populateSessionData(sessions, lines);
 
-    /* 3. 描画 */
+    /* 描画 */
     sessions.forEach(session => {
         appendSectionHeader(fragment, session.title, () => jumpToLineId(session.id));
 
@@ -120,6 +143,14 @@ const renderMinutesFromLines = async (rawLines) => {
                     () => summarizeImpressionsByAuthor(talk.impressions)
                 );
             }
+
+            /* サブ見出し（概要・質疑等）をタイトルの子としてインデント表示 */
+            talk.subheadings.forEach(sub => {
+                appendItemMuted(fragment,
+                    '　　📎 ' + sub.title,
+                    () => jumpToLineId(sub.id)
+                );
+            });
 
             talk.questions.forEach(q => {
                 appendItemMuted(fragment,
