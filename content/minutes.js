@@ -4,13 +4,11 @@
 const parseSessions = (lines) => {
     const sessions = [];
     let currentSession = null;
-    let currentTalk = null;
 
     lines.forEach((line, idx) => {
         const text = line.text || '';
 
         if (isSessionStart(text)) {
-            currentTalk = null;
             currentSession = {
                 id: line.id,
                 title: text.replace(/^\[[^\s]+\s*/, '').replace(/\]$/, ''),
@@ -20,37 +18,14 @@ const parseSessions = (lines) => {
             return;
         }
 
-        if (isTalkTitleLine(text)) {
-            if (!currentSession) {
-                currentSession = { id: line.id, title: 'comments', talks: [], startIdx: idx, endIdx: null };
-                sessions.push(currentSession);
-            }
-            currentTalk = {
-                id: line.id, title: cleanTitle(text), idx,
-                questions: [], impressions: [], subheadings: []
-            };
-            currentSession.talks.push(currentTalk);
-            return;
-        }
-
-        if (isSubHeadingLine(text) && currentTalk) {
-            currentTalk.subheadings.push({
-                id: line.id, title: cleanTitle(text), idx,
-                questions: []
-            });
-            return;
-        }
-
         if (isTitleLine(text)) {
             if (!currentSession) {
                 currentSession = { id: line.id, title: 'comments', talks: [], startIdx: idx, endIdx: null };
                 sessions.push(currentSession);
             }
-            currentTalk = {
-                id: line.id, title: cleanTitle(text), idx,
-                questions: [], impressions: [], subheadings: []
-            };
-            currentSession.talks.push(currentTalk);
+            currentSession.talks.push({
+                id: line.id, title: cleanTitle(text), idx, questions: [], impressions: []
+            });
         }
     });
 
@@ -60,7 +35,7 @@ const parseSessions = (lines) => {
             sessions.push({
                 id: lines[firstTitleIdx].id, title: 'comments',
                 talks: [{ id: lines[firstTitleIdx].id, title: cleanTitle(lines[firstTitleIdx].text),
-                    idx: firstTitleIdx, questions: [], impressions: [], subheadings: [] }],
+                    idx: firstTitleIdx, questions: [], impressions: [] }],
                 startIdx: 0, endIdx: lines.length - 1
             });
         }
@@ -93,33 +68,14 @@ const collectImpressions = (lines, start, end) => {
     return ims;
 };
 
-/* 各トークに質問・感想を割り当て、サブ見出しにも質問を紐づける */
+/* 各トークに質問と感想を割り当てる */
 const populateSessionData = (sessions, lines) => {
     sessions.forEach(session => {
         session.talks.forEach((talk, i) => {
-            const talkStart = talk.idx + 1;
-            const talkEnd = i + 1 < session.talks.length ? session.talks[i + 1].idx - 1 : session.endIdx;
-
-            talk.impressions = collectImpressions(lines, talkStart, talkEnd);
-
-            /* サブ見出しがある場合、各サブ見出しの範囲で質問を収集 */
-            if (talk.subheadings.length > 0) {
-                /* サブ見出し前の範囲の質問はtalk直下に */
-                const firstSubIdx = talk.subheadings[0].idx;
-                talk.questions = collectQuestions(lines, talkStart, firstSubIdx - 1);
-
-                /* 各サブ見出しの範囲で質問を収集 */
-                talk.subheadings.forEach((sub, j) => {
-                    const subStart = sub.idx + 1;
-                    const subEnd = j + 1 < talk.subheadings.length
-                        ? talk.subheadings[j + 1].idx - 1
-                        : talkEnd;
-                    sub.questions = collectQuestions(lines, subStart, subEnd);
-                });
-            } else {
-                /* サブ見出しなし → 従来通りtalk全体で質問収集 */
-                talk.questions = collectQuestions(lines, talkStart, talkEnd);
-            }
+            const start = talk.idx + 1;
+            const end = i + 1 < session.talks.length ? session.talks[i + 1].idx - 1 : session.endIdx;
+            talk.questions = collectQuestions(lines, start, end);
+            talk.impressions = collectImpressions(lines, start, end);
         });
 
         if (session.talks.length === 0) {
@@ -128,7 +84,7 @@ const populateSessionData = (sessions, lines) => {
             if (ims.length || qs.length) {
                 session.talks.push({
                     id: session.id, title: 'comments', idx: session.startIdx,
-                    questions: qs, impressions: ims, subheadings: []
+                    questions: qs, impressions: ims
                 });
             }
         }
@@ -161,27 +117,11 @@ const renderMinutesFromLines = async (rawLines) => {
                 );
             }
 
-            /* talk直下の質問 */
             talk.questions.forEach(q => {
                 appendItemMuted(fragment,
                     '　　' + (q.author ? `${q.author}: ` : '?: ') + q.text,
                     () => jumpToLineId(q.id)
                 );
-            });
-
-            /* サブ見出し + その下の質問 */
-            talk.subheadings.forEach(sub => {
-                appendItemMuted(fragment,
-                    '　　' + sub.title,
-                    () => jumpToLineId(sub.id)
-                );
-
-                sub.questions.forEach(q => {
-                    appendItemMuted(fragment,
-                        '　　　　' + (q.author ? `${q.author}: ` : '?: ') + q.text,
-                        () => jumpToLineId(q.id)
-                    );
-                });
             });
         });
     });

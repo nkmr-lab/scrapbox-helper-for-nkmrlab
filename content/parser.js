@@ -81,30 +81,9 @@ const parseBracketTitle = (text) => {
     return title;
 };
 
-/* ブラケット記法の装飾文字列を返す（例: "**", "(&", "*("） */
-const getBracketDecorators = (text) => {
-    if (!text.startsWith('[')) return null;
-    const m = text.match(/^\[([\*\(\&]+)\s+(.+?)]$/);
-    return m ? m[1] : null;
-};
-
-/* タイトル行（セッション・発表タイトル・サブ見出し）かどうか判定する */
+/* タイトル行かどうか判定する */
 const isTitleLine = (t) =>
     !!parseBracketTitle(t) || /^タイトル\s*[:：『「]/.test(t);
-
-/* 発表タイトル行かどうかを判定する（&を含む装飾） */
-const isTalkTitleLine = (t) => {
-    const d = getBracketDecorators(t);
-    return d && d.includes('&');
-};
-
-/* サブ見出し行かどうかを判定する（タイトル行だが、セッションでも発表タイトルでもない） */
-const isSubHeadingLine = (t) => {
-    if (!isTitleLine(t)) return false;
-    if (isSessionStart(t)) return false;
-    if (isTalkTitleLine(t)) return false;
-    return true;
-};
 
 /* タイトル行からタイトル文字列を抽出・整形する */
 const cleanTitle = (t) => {
