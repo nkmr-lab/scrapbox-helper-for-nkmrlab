@@ -274,7 +274,7 @@ const openSettingsModal = async () => {
     const customColors = { ...(settings.customColors || {}) };
     const colorInputs = {};
     const colorSection = document.createElement('div');
-    colorSection.style = 'display:none';
+    colorSection.style.display = 'none';
 
     Object.entries(COLOR_KEY_LABELS).forEach(([key, label]) => {
         const baseTheme = THEMES[themeI.value] || THEMES.normal;
