@@ -21,7 +21,7 @@ const renderExperimentPlan = async (pageName) => {
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, () => {
         const p = document.createElement('div');
         p.className = 'sb-panel';
-        applyPanelSettings(p, 'main');
+        applyPanelSettings(p, 'other');
         return p;
     });
     panelNode.innerHTML = '';

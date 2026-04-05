@@ -15,6 +15,8 @@ const DEFAULT_SETTINGS = {
     todoShowCount: 5,
     mainWidth: 480,
     mainHeight: 560,
+    otherWidth: 480,
+    otherHeight: 560,
     theme: 'normal',
     customColors: {},
     showPageCreate: 'auto',
@@ -24,6 +26,7 @@ const getPanelSize = (settings, panelType) => {
     switch (panelType) {
         case 'calendar': return { width: settings.calendarWidth, height: settings.calendarHeight };
         case 'todo':     return { width: settings.todoWidth, height: settings.todoHeight };
+        case 'other':    return { width: settings.otherWidth, height: settings.otherHeight };
         default:         return { width: settings.mainWidth, height: settings.mainHeight };
     }
 };
@@ -219,6 +222,9 @@ const openSettingsModal = async () => {
     const mainWI = _input(settings.mainWidth, 'number');
     const mainHI = _input(settings.mainHeight, 'number');
 
+    const otherWI = _input(settings.otherWidth, 'number');
+    const otherHI = _input(settings.otherHeight, 'number');
+
     /* ===== 基本タブ ===== */
     const basicContent = document.createElement('div');
     basicContent.append(
@@ -300,18 +306,25 @@ const openSettingsModal = async () => {
         _field('横幅', todoWI), _field('縦幅', todoHI), _field('位置', todoPosI),
     );
 
-    /* ===== その他ページタブ ===== */
+    /* ===== メインタブ（トップページ） ===== */
+    const mainContent = document.createElement('div');
+    mainContent.append(
+        _field('横幅', mainWI), _field('縦幅', mainHI),
+    );
+
+    /* ===== その他ページタブ（議事録・論文紹介・実験計画書等） ===== */
     const otherContent = document.createElement('div');
     otherContent.append(
-        _field('横幅', mainWI), _field('縦幅', mainHI),
+        _field('横幅', otherWI), _field('縦幅', otherHI),
     );
 
     /* ===== タブ組み立て ===== */
     const { bar, panels } = createTabs([
         { label: '基本', content: basicContent },
+        { label: 'メイン', content: mainContent },
         { label: 'カレンダー', content: calContent },
         { label: 'TODO', content: todoContent },
-        { label: 'その他ページ', content: otherContent },
+        { label: 'その他', content: otherContent },
     ]);
 
     panelNode.append(bar, ...panels);
@@ -335,6 +348,7 @@ const openSettingsModal = async () => {
             todoWidth: +todoWI.value, todoHeight: +todoHI.value,
             todoShowCount: +todoShowI.value,
             mainWidth: +mainWI.value, mainHeight: +mainHI.value,
+            otherWidth: +otherWI.value, otherHeight: +otherHI.value,
             theme: themeI.value, customColors: newCustom,
             showPageCreate: pageCreateI.value,
         });

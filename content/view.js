@@ -16,10 +16,10 @@ const getOrCreatePanel = (id, create) => {
     return el;
 };
 
-const createStandardPanel = () => {
+const createStandardPanel = (panelType = 'other') => {
     const panelNode = document.createElement('div');
     panelNode.className = 'sb-panel';
-    applyPanelSettings(panelNode, 'main');
+    applyPanelSettings(panelNode, panelType);
     attachCloseButton(panelNode, MAIN_PANEL_ID);
     attachSettingsButton(panelNode);
 

@@ -209,14 +209,14 @@ const injectStyleSheet = () => {
 .sb-cal-cell--heat4 { background:var(--sb-heatmap4); }
 
 /* ===== Forms / UI ===== */
-.sb-input { width:100%; }
-.sb-select { width:100%; }
+.sb-input { width:100%; color:#000; }
+.sb-select { width:100%; color:#000; }
 .sb-color-input { width:28px; height:20px; padding:0; border:1px solid var(--sb-border); cursor:pointer; }
-.sb-color-text { flex:1; font-size:11px; font-family:monospace; }
-.sb-save-btn { margin-top:8px; }
+.sb-color-text { flex:1; font-size:11px; font-family:monospace; color:#000; }
+.sb-save-btn { margin-top:8px; color:#000; }
 .sb-form-row { display:flex; gap:4px; align-items:center; padding:0 6px; margin-bottom:6px; }
-.sb-form-input { flex:1; font-size:12px; padding:2px 4px; }
-.sb-small-btn { font-size:12px; cursor:pointer; }
+.sb-form-input { flex:1; font-size:12px; padding:2px 4px; color:#000; }
+.sb-small-btn { font-size:12px; cursor:pointer; color:#000; }
 
 /* ===== Float Menu ===== */
 .sb-float-toggle {
