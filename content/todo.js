@@ -2,16 +2,8 @@
 
 const createTodoRow = (todo) => {
     const itemNode = document.createElement('div');
-    itemNode.style =
-        `cursor:pointer;padding:4px 6px;border-bottom:1px solid ${Theme.todoBorder};` +
-        'white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    itemNode.textContent = '\u25a1 ' + todo.text + (todo.date ? ` (${todo.date})` : '');
-
-    if (todo.done) {
-        itemNode.style.color = Theme.textDone;
-        itemNode.style.textDecoration = 'line-through';
-    }
-
+    itemNode.className = 'sb-todo-row' + (todo.done ? ' sb-todo-row--done' : '');
+    itemNode.textContent = '□ ' + todo.text + (todo.date ? ` (${todo.date})` : '');
     itemNode.onclick = () => jumpToLineId(todo.id);
     return itemNode;
 };
@@ -23,21 +15,16 @@ const extractTodos = (settings, lines) => {
     lines.forEach(line => {
         const text = (line.text || '').trim();
         const dm = text.match(/^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/);
-        if (dm) {
-            currentDate = `${dm[1]}.${dm[2]}.${dm[3]}`;
-            return;
-        }
+        if (dm) { currentDate = `${dm[1]}.${dm[2]}.${dm[3]}`; return; }
 
         if (text.includes(settings.todoMark)) {
             todos.push({ id: line.id, text: text.replace(settings.todoMark, '').trim(), date: currentDate, done: false });
             return;
         }
-
         if (text.includes(settings.doneMark)) {
             todos.push({ id: line.id, text: text.replace(settings.doneMark, '').trim(), date: currentDate, done: true });
         }
     });
-
     return todos;
 };
 
@@ -58,14 +45,11 @@ const renderTodoPanel = async (lines) => {
     const settings = await loadSettings(currentProjectName);
     const todos = extractTodos(settings, lines);
 
-    if (!todos.length) {
-        document.getElementById(TODO_PANEL_ID)?.remove();
-        return;
-    }
+    if (!todos.length) { document.getElementById(TODO_PANEL_ID)?.remove(); return; }
 
     const panelNode = getOrCreatePanel(TODO_PANEL_ID, () => {
         const p = document.createElement('div');
-        applyStyle(p, Styles.panel.base);
+        p.className = 'sb-panel';
         applyPanelSettings(p, 'todo');
         positionTodoPanel(p, settings);
         return p;
@@ -73,8 +57,8 @@ const renderTodoPanel = async (lines) => {
     if (!panelNode) return;
     panelNode.innerHTML = '';
 
-    const activeTodos = todos.filter(todo => !todo.done);
-    const doneTodos = todos.filter(todo => todo.done);
+    const activeTodos = todos.filter(t => !t.done);
+    const doneTodos = todos.filter(t => t.done);
 
     appendPanelTitle(panelNode, `📝 TODO LIST（${activeTodos.length} / ${todos.length}）`);
     attachCloseButton(panelNode, TODO_PANEL_ID);
@@ -97,10 +81,7 @@ const renderTodoPanel = async (lines) => {
         activeItems.forEach((x, i) => { x.dom.style.display = i < TODO_SHOW_COUNT ? '' : 'none'; });
         doneItems.forEach(x => { x.dom.style.display = 'none'; });
     };
-
-    const showAll = () => {
-        items.forEach(x => { x.dom.style.display = ''; });
-    };
+    const showAll = () => { items.forEach(x => { x.dom.style.display = ''; }); };
     showCollapsed();
 
     panelNode.addEventListener('mouseenter', showAll);

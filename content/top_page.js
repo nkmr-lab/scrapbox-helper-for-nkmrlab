@@ -5,8 +5,8 @@ const renderMyResearchNote = (panelNode, settings) => {
     const pageName = `${formatYm(new Date())}_研究ノート_${settings.userName}`;
 
     appendSectionHeader(panelNode, '🧑 自分の研究ノート');
-    appendTextNode(
-        panelNode, '📅 ' + pageName, ITEM_STYLE,
+    appendItem(
+        panelNode, '📅 ' + pageName,
         () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`)
     );
 };
@@ -16,23 +16,12 @@ const PRESENTATION_SLOT_COUNT = 3;
 
 const generatePresentationBody = (conferenceName) => {
     const slot = [
-        '[(' + '* タイトル]',
-        '# 名前',
-        '発表時間：XX.XX',
-        '',
-        '[** コメント]',
-        '',
-        '',
-        '[** 質問] ',
-        ' ',
-        '',
-        '',
+        '[(' + '* タイトル]', '# 名前', '発表時間：XX.XX', '',
+        '[** コメント]', '', '', '[** 質問] ', ' ', '', '',
     ].join('\n');
 
     let body = `# ${conferenceName}\n\n`;
-    for (let i = 0; i < PRESENTATION_SLOT_COUNT; i++) {
-        body += slot + '\n';
-    }
+    for (let i = 0; i < PRESENTATION_SLOT_COUNT; i++) body += slot + '\n';
     return body;
 };
 
@@ -40,7 +29,8 @@ const renderPresentationCreateUI = (panelNode) => {
     appendSectionHeader(panelNode, '🎤 発表練習ページを作成');
 
     const row = document.createElement('div');
-    row.style = 'display:flex;gap:4px;align-items:center;padding:0 6px;margin-bottom:6px';
+    row.className = 'sb-row';
+    row.style = 'padding:0 6px;margin-bottom:6px';
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -54,12 +44,9 @@ const renderPresentationCreateUI = (panelNode) => {
     btn.onclick = () => {
         const name = input.value.trim();
         if (!name) return;
-
-        const today = formatYmd(new Date());
-        const pageName = `発表練習 ${name}（${today}）`;
+        const pageName = `発表練習 ${name}（${formatYmd(new Date())}）`;
         const body = generatePresentationBody(name);
-        const url = buildCreateNoteUrl(currentProjectName, pageName, body);
-        location.assign(url);
+        location.assign(buildCreateNoteUrl(currentProjectName, pageName, body));
     };
 
     row.append(input, btn);
@@ -78,25 +65,20 @@ const renderProjectTop = async () => {
     });
 
     if (!isExtensionAlive()) return;
-
     const settings = await loadSettings(projectName);
-
     if (!isExtensionAlive()) return;
     if (projectName !== currentProjectName) return;
 
     const history = normalizeHistoryEntries(historyData);
 
-    const panelNode = getOrCreatePanel(
-        MAIN_PANEL_ID,
-        () => {
-            const parent = document.createElement('div');
-            applyStyle(parent, Styles.panel.base);
-            applyPanelSettings(parent, 'main');
-            attachCloseButton(parent, MAIN_PANEL_ID);
-            appendPanelTitle(parent, 'Project: ' + currentProjectName);
-            return parent;
-        }
-    );
+    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, () => {
+        const parent = document.createElement('div');
+        parent.className = 'sb-panel';
+        applyPanelSettings(parent, 'main');
+        attachCloseButton(parent, MAIN_PANEL_ID);
+        appendPanelTitle(parent, 'Project: ' + currentProjectName);
+        return parent;
+    });
 
     renderMyResearchNote(panelNode, settings);
     renderPresentationCreateUI(panelNode);

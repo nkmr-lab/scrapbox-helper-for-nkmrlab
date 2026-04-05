@@ -35,18 +35,10 @@ const renderPresentationFromLines = (pageName, rawLines) => {
         if (!questions.length) return;
 
         appendSectionHeader(fragment, `🎤 ${session.title}`, () => jumpToLineId(session.id));
-        questions.forEach(q => {
-            appendTextNode(
-                fragment,
-                '・' + (q.author ? `${q.author}: ` : '?: ') + q.text,
-                ITEM_STYLE,
-                () => jumpToLineId(q.id)
-            );
-        });
+        appendQuestionList(fragment, questions);
     });
 
     const statsBlock = createTalkStatsBlock(rawLines);
     if (statsBlock) fragment.appendChild(statsBlock);
-
     bodyNode.replaceChildren(fragment);
 };

@@ -11,7 +11,7 @@
         "content/constants.js",
         "content/style.js",
         "content/config.js",
-        "content/dom.js",
+        "content/view.js",
         "content/parser.js",
         "content/api.js",
         "content/pagewatcher.js",

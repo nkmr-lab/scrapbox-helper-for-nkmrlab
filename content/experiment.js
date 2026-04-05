@@ -20,7 +20,7 @@ const renderExperimentPlan = async (pageName) => {
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, () => {
         const p = document.createElement('div');
-        applyStyle(p, Styles.panel.base);
+        p.className = 'sb-panel';
         applyPanelSettings(p, 'main');
         return p;
     });
@@ -36,52 +36,26 @@ const renderExperimentPlan = async (pageName) => {
         const text = (line.text || '').trim();
         if (!text) return;
 
-        /* セクション見出し */
         if (/^\[\*{3,}\(&/.test(text)) {
-            const title = text
-                .replace(/^\[\*+\(&\s*/, '')
-                .replace(/\]$/, '');
-
-            const sectionNode = appendSectionHeader(
-                panelNode,
-                '\u25a0 ' + title,
-                () => jumpToLineId(line.id)
-            );
-
-            currentSection = {
-                title,
-                id: line.id,
-                contents: [],
-                node: sectionNode
-            };
+            const title = text.replace(/^\[\*+\(&\s*/, '').replace(/\]$/, '');
+            const sectionNode = appendSectionHeader(panelNode, '■ ' + title, () => jumpToLineId(line.id));
+            currentSection = { title, id: line.id, contents: [], node: sectionNode };
             sections.push(currentSection);
             return;
         }
 
         if (!currentSection) return;
 
-        /* タイトル行 */
         if (/^\[\*&\s+/.test(text)) {
-            const titleText = text
-                .replace(/^\[\*&\s*/, '')
-                .replace(/\]$/, '');
-
-            appendTextNode(
-                panelNode,
-                '\u2514 ' + titleText,
-                ITEM_STYLE,
-                () => jumpToLineId(line.id)
-            );
-
-            currentSection.contents.push(`\u3010\u9805\u76ee\u3011${titleText}`);
+            const titleText = text.replace(/^\[\*&\s*/, '').replace(/\]$/, '');
+            appendItem(panelNode, '└ ' + titleText, () => jumpToLineId(line.id));
+            currentSection.contents.push(`【項目】${titleText}`);
             return;
         }
 
-        /* 通常テキスト */
         currentSection.contents.push(text);
     });
 
-    /* GPTレビューUI */
     if (titleNode && await isEnableOpenAI() && sections.length > 0) {
         const batchUI = createGPTBatchReviewUI(sections);
         titleNode.after(batchUI);
@@ -91,15 +65,11 @@ const renderExperimentPlan = async (pageName) => {
 };
 
 const runBatchGPTReview = async (sections, statusNode) => {
-    const total = sections.length;
     let index = 0;
-
     for (const section of sections) {
         index++;
-        statusNode.textContent = `(${index} / ${total}) \u300c${section.title}\u300d\u3092\u30c1\u30a7\u30c3\u30af\u4e2d\u2026`;
-
+        statusNode.textContent = `(${index} / ${sections.length}) 「${section.title}」をチェック中…`;
         if (!section.contents || section.contents.length === 0) continue;
-
         await runSingleSectionReview(section);
         await sleep(400);
     }
@@ -112,55 +82,52 @@ const runSingleSectionReview = async (section) => {
     let resultBox = section._resultBox;
     if (!resultBox) {
         resultBox = document.createElement('div');
-        resultBox.style =
-            'margin:4px 12px 8px 12px;padding:6px;' +
-            `border-left:3px solid ${Theme.aiSummaryBorder};font-size:12px;white-space:pre-wrap;`;
+        resultBox.className = 'sb-review-box';
         section.node.after(resultBox);
         section._resultBox = resultBox;
     }
 
-    resultBox.textContent = '\u23f3 GPT\u304c\u78ba\u8a8d\u4e2d\u2026';
+    resultBox.textContent = '⏳ GPTが確認中…';
+    resultBox.className = 'sb-review-box';
 
     const content =
-        `\u3010\u30bb\u30af\u30b7\u30e7\u30f3\u540d\u3011\n${section.title}\n\n` +
-        `\u3010\u5185\u5bb9\u3011\n` +
-        section.contents.map(t => `- ${t}`).join('\n');
+        `【セクション名】\n${section.title}\n\n` +
+        `【内容】\n` + section.contents.map(t => `- ${t}`).join('\n');
 
     try {
         const res = await callOpenAI(EXPERIMENT_REVIEW_PROMPT, content);
-
-        if (!res || /\u554f\u984c\u306f\u898b\u5f53\u305f\u308a\u307e\u305b\u3093/.test(res)) {
-            resultBox.textContent = '\u2705 \u7279\u306b\u554f\u984c\u306f\u898b\u5f53\u305f\u308a\u307e\u305b\u3093';
-            resultBox.style.borderLeftColor = Theme.reviewOk;
+        if (!res || /問題は見当たりません/.test(res)) {
+            resultBox.textContent = '✅ 特に問題は見当たりません';
+            resultBox.className = 'sb-review-box sb-review-box--ok';
         } else {
             resultBox.textContent = res;
-            resultBox.style.borderLeftColor = Theme.reviewNg;
+            resultBox.className = 'sb-review-box sb-review-box--ng';
         }
     } catch (e) {
-        resultBox.textContent = '\u274c GPT\u30ec\u30d3\u30e5\u30fc\u3067\u30a8\u30e9\u30fc\u304c\u767a\u751f\u3057\u307e\u3057\u305f';
-        resultBox.style.borderLeftColor = Theme.reviewNg;
+        resultBox.textContent = '❌ GPTレビューでエラーが発生しました';
+        resultBox.className = 'sb-review-box sb-review-box--ng';
         console.error(e);
     }
 };
 
 const createGPTBatchReviewUI = (sections) => {
     const box = document.createElement('div');
-    box.style = `margin:4px 0 8px 0;padding:6px 0;border-bottom:1px solid ${Theme.border};`;
+    box.className = 'sb-batch-ui';
 
     const btn = document.createElement('button');
-    btn.textContent = '\ud83e\udde0 GPT\u3067\u5168\u90e8\u30c1\u30a7\u30c3\u30af';
+    btn.textContent = '🧠 GPTで全部チェック';
     btn.style = 'font-size:12px;cursor:pointer;';
 
     const status = document.createElement('span');
-    status.style = `margin-left:10px;font-size:11px;color:${Theme.textFaint}`;
+    status.className = 'sb-batch-status';
 
     box.append(btn, status);
 
     btn.onclick = async () => {
         btn.disabled = true;
-        status.textContent = '\u958b\u59cb\u4e2d\u2026';
+        status.textContent = '開始中…';
         await runBatchGPTReview(sections, status);
-        status.textContent = '\u5b8c\u4e86';
+        status.textContent = '完了';
         btn.disabled = false;
     };
 

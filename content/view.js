@@ -1,8 +1,10 @@
-/* ================= DOM ユーティリティ ================= */
+/* ================= View レイヤー ================= */
+/* DOM 生成・操作は全てここに集約。className ベースでスタイル適用。 */
 
 const isExtensionAlive = () =>
     !!window.__SB_EXTENSION_RUNNING__;
 
+/* --- パネル管理 --- */
 const getOrCreatePanel = (id, create) => {
     if (closedPanels.has(id)) return null;
     let el = document.getElementById(id);
@@ -14,10 +16,9 @@ const getOrCreatePanel = (id, create) => {
     return el;
 };
 
-/* --- 共通パネル（title + body 構造） --- */
 const createStandardPanel = () => {
     const panelNode = document.createElement('div');
-    applyStyle(panelNode, Styles.panel.base);
+    panelNode.className = 'sb-panel';
     applyPanelSettings(panelNode, 'main');
     attachCloseButton(panelNode, MAIN_PANEL_ID);
     attachSettingsButton(panelNode);
@@ -33,7 +34,7 @@ const createStandardPanel = () => {
     return panelNode;
 };
 
-/* --- 共通パネルヘッダー設定（議事録・論文紹介・発表練習で共通） --- */
+/* --- パネルヘッダー設定（議事録・論文紹介・発表練習で共通） --- */
 const setupPanelHeader = (panelNode, rawLines, icon = '📌') => {
     const headerNode = panelNode.querySelector('#' + MAIN_TITLE_ID);
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
@@ -41,13 +42,13 @@ const setupPanelHeader = (panelNode, rawLines, icon = '📌') => {
     const titleId = rawLines[0]?.id;
 
     headerNode.textContent = icon + ' ' + title;
-    applyStyle(headerNode, Styles.text.panelTitle);
+    headerNode.className = 'sb-title';
     if (titleId) headerNode.onclick = () => jumpToLineId(titleId);
 
     return { headerNode, bodyNode, title, titleId };
 };
 
-/* --- テキストノード --- */
+/* --- テキスト要素生成 --- */
 const renderPageTitle = (parentNode, rawLines) => {
     if (!rawLines || !rawLines.length) return null;
     const text = (rawLines[0].text || '').trim();
@@ -56,45 +57,62 @@ const renderPageTitle = (parentNode, rawLines) => {
 };
 
 const appendPanelTitle = (parentNode, text, onClick) => {
-    return appendTextNode(parentNode, text, Styles.text.panelTitle, onClick);
+    return appendEl(parentNode, text, 'sb-title', onClick);
 };
 
 const appendSectionHeader = (parentNode, text, onClick) => {
-    return appendTextNode(
-        parentNode, text,
-        [Styles.text.sectionTitle, Styles.list.ellipsis].join(''),
-        onClick
-    );
+    return appendEl(parentNode, text, 'sb-section', onClick);
 };
 
-const appendTextNode = (parentNode, text, style, onClick) => {
+const appendItem = (parentNode, text, onClick) => {
+    return appendEl(parentNode, text, 'sb-item', onClick);
+};
+
+const appendItemMuted = (parentNode, text, onClick) => {
+    return appendEl(parentNode, text, 'sb-item sb-item--muted', onClick);
+};
+
+const appendItemSub = (parentNode, text, onClick) => {
+    return appendEl(parentNode, text, 'sb-item sb-item--sub', onClick);
+};
+
+const appendEl = (parentNode, text, className, onClick) => {
     const node = document.createElement('div');
     node.textContent = text;
-    applyStyle(node, style);
+    node.className = className;
     if (onClick) node.onclick = onClick;
     parentNode.appendChild(node);
     return node;
 };
 
+/* --- 質問リスト描画 --- */
+const appendQuestionList = (parentNode, questions) => {
+    questions.forEach(q => {
+        appendItem(
+            parentNode,
+            '・' + (q.author ? `${q.author}: ` : '?: ') + q.text,
+            () => jumpToLineId(q.id)
+        );
+    });
+};
+
 /* --- ボタン・コントロール --- */
 const attachCloseButton = (panelNode, panelId) => {
     const btn = document.createElement('div');
-    btn.textContent = '\u2715';
-    btn.style = `font-weight:bold;position:absolute;top:4px;right:6px;cursor:pointer;font-size:14px;color:${Theme.titleText};`;
-
+    btn.textContent = '✕';
+    btn.className = 'sb-close-btn';
     btn.onclick = () => {
         closedPanels.add(panelId);
         panelNode.remove();
     };
-
     panelNode.style.position = 'fixed';
     panelNode.appendChild(btn);
 };
 
 const attachSettingsButton = (panelNode) => {
     const btn = document.createElement('div');
-    btn.textContent = '\u2699';
-    btn.style = `position:absolute;top:4px;right:24px;cursor:pointer;font-size:14px;color:${Theme.titleText};`;
+    btn.textContent = '⚙';
+    btn.className = 'sb-settings-btn';
     btn.onclick = () => renderSettingsPanel(panelNode);
     panelNode.appendChild(btn);
 };
@@ -110,7 +128,7 @@ const jumpToLineId = id => {
 const createButton = (label, fn) => {
     const s = document.createElement('span');
     s.textContent = label;
-    s.style = 'cursor:pointer';
+    s.className = 'sb-btn';
     s.onclick = fn;
     return s;
 };

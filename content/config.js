@@ -31,30 +31,25 @@ const loadSettings = (projectName) => {
             resolve({ ...DEFAULT_SETTINGS });
             return;
         }
-
         chrome.storage.local.get(
             { [settingsKey(projectName)]: DEFAULT_SETTINGS },
-            data => {
-                resolve({ ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] });
-            }
+            data => resolve({ ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] })
         );
     });
 };
 
 const saveSettings = (projectName, settings) => {
     if (!projectName) return;
-    chrome.storage.local.set({
-        [settingsKey(projectName)]: settings
-    });
+    chrome.storage.local.set({ [settingsKey(projectName)]: settings });
 };
 
-/* --- テーマ初期化（main.js の tick から呼ばれる） --- */
 const initTheme = async (projectName) => {
     const settings = await loadSettings(projectName);
     applyTheme(settings);
+    injectStyleSheet();
 };
 
-/* --- パネルにサイズ + フェードを適用 --- */
+/* --- パネルにサイズ + フェード適用 --- */
 const applyPanelSettings = async (panelNode, panelType = 'main') => {
     const settings = await loadSettings(currentProjectName);
     const size = getPanelSize(settings, panelType);
@@ -69,13 +64,9 @@ const applyPanelSettings = async (panelNode, panelType = 'main') => {
     panelNode.style.opacity = '1';
 
     panelNode.onmouseenter = () => {
-        if (fadeTimer) {
-            clearTimeout(fadeTimer);
-            fadeTimer = null;
-        }
+        if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
         panelNode.style.opacity = '1';
     };
-
     panelNode.onmouseleave = () => {
         if (fadeTimer) clearTimeout(fadeTimer);
         fadeTimer = setTimeout(() => {
@@ -85,62 +76,43 @@ const applyPanelSettings = async (panelNode, panelType = 'main') => {
 };
 
 /* ================= 設定画面 ================= */
+const THEME_LABELS = { normal: 'ノーマル', dark: 'ダーク' };
 
-/* --- カラーテーマ名の表示ラベル --- */
-const THEME_LABELS = {
-    normal: 'ノーマル',
-    dark: 'ダーク',
-};
-
-/* --- カスタムカラーの表示ラベル --- */
 const COLOR_KEY_LABELS = {
-    panelBg:        'パネル背景',
-    panelBorder:    'パネル枠線',
-    titleBg:        'タイトル背景',
-    titleText:      'タイトル文字',
-    headerBg:       'ヘッダー背景',
-    headerText:     'ヘッダー文字',
-    sectionBg:      'セクション背景',
-    sectionBorder:  'セクション枠線',
-    subTitleBg:     'サブタイトル背景',
-    text:           '本文',
-    textMuted:      '薄い文字',
-    border:         '枠線',
-    calSunday:      'カレンダー日曜',
-    calSaturday:    'カレンダー土曜',
-    calToday:       'カレンダー今日',
-    statsBar:       '統計バー',
-    reviewOk:       'レビューOK',
-    reviewNg:       'レビューNG',
+    panelBg:'パネル背景', panelBorder:'パネル枠線',
+    titleBg:'タイトル背景', titleText:'タイトル文字',
+    headerBg:'ヘッダー背景', headerText:'ヘッダー文字',
+    sectionBg:'セクション背景', sectionBorder:'セクション枠線',
+    subTitleBg:'サブタイトル背景',
+    text:'本文', textMuted:'薄い文字', border:'枠線',
+    calSunday:'カレンダー日曜', calSaturday:'カレンダー土曜', calToday:'カレンダー今日',
+    statsBar:'統計バー', reviewOk:'レビューOK', reviewNg:'レビューNG',
 };
 
 const renderSettingsPanel = async (panelNode) => {
     panelNode.innerHTML = '';
-
     const settings = await loadSettings(currentProjectName);
 
     const sectionLabel = (text) => {
         const node = document.createElement('div');
         node.textContent = text;
-        node.style = `font-weight:bold;margin-top:10px;margin-bottom:4px;border-bottom:1px solid ${Theme.border};padding-bottom:2px;font-size:12px`;
+        node.className = 'sb-settings-section';
         return node;
     };
 
     const field = (label, el) => {
-        const itemNode = document.createElement('div');
-        itemNode.style = 'margin-bottom:6px';
-        const labelNode = document.createElement('div');
-        labelNode.textContent = label;
-        labelNode.style = `font-size:11px;color:${Theme.inputLabel}`;
-        itemNode.append(labelNode, el);
-        return itemNode;
+        const wrap = document.createElement('div');
+        wrap.className = 'sb-settings-field';
+        const lbl = document.createElement('div');
+        lbl.textContent = label;
+        lbl.className = 'sb-settings-label';
+        wrap.append(lbl, el);
+        return wrap;
     };
 
     const input = (v, type = 'text') => {
         const i = document.createElement('input');
-        i.type = type;
-        i.value = v;
-        i.style = 'width:100%';
+        i.type = type; i.value = v; i.style = 'width:100%';
         return i;
     };
 
@@ -149,15 +121,13 @@ const renderSettingsPanel = async (panelNode) => {
         s.style = 'width:100%';
         options.forEach(([val, label]) => {
             const opt = document.createElement('option');
-            opt.value = val;
-            opt.textContent = label;
+            opt.value = val; opt.textContent = label;
             if (val === value) opt.selected = true;
             s.appendChild(opt);
         });
         return s;
     };
 
-    /* 基本設定 */
     const nameI = input(settings.userName);
     const todoI = input(settings.todoMark);
     const doneI = input(settings.doneMark);
@@ -165,11 +135,8 @@ const renderSettingsPanel = async (panelNode) => {
     const apiKeyI = input(settings.openaiApiKey, 'password');
     apiKeyI.placeholder = 'sk-...';
     const todoPosI = select(settings.todoPosition, [
-        ['side', '横（カレンダーの隣）'],
-        ['below', '下（カレンダーの下）'],
+        ['side', '横（カレンダーの隣）'], ['below', '下（カレンダーの下）'],
     ]);
-
-    /* パネルサイズ */
     const calWI = input(settings.calendarWidth, 'number');
     const calHI = input(settings.calendarHeight, 'number');
     const calFI = input(settings.calendarFontSize, 'number');
@@ -177,32 +144,18 @@ const renderSettingsPanel = async (panelNode) => {
     const todoHI = input(settings.todoHeight, 'number');
     const mainWI = input(settings.mainWidth, 'number');
     const mainHI = input(settings.mainHeight, 'number');
-
-    /* テーマ */
     const themeI = select(settings.theme, Object.entries(THEME_LABELS));
 
     panelNode.append(
         sectionLabel('基本設定'),
-        field('名前', nameI),
-        field('TODO マーク', todoI),
-        field('完了マーク', doneI),
-        field('非アクティブ透明度', oI),
-        field('OpenAI API Key', apiKeyI),
-
+        field('名前', nameI), field('TODO マーク', todoI), field('完了マーク', doneI),
+        field('非アクティブ透明度', oI), field('OpenAI API Key', apiKeyI),
         sectionLabel('カレンダーパネル'),
-        field('横幅', calWI),
-        field('縦幅', calHI),
-        field('文字サイズ(px)', calFI),
-
+        field('横幅', calWI), field('縦幅', calHI), field('文字サイズ(px)', calFI),
         sectionLabel('TODO パネル'),
-        field('横幅', todoWI),
-        field('縦幅', todoHI),
-        field('位置', todoPosI),
-
+        field('横幅', todoWI), field('縦幅', todoHI), field('位置', todoPosI),
         sectionLabel('メインパネル（議事録・論文紹介等）'),
-        field('横幅', mainWI),
-        field('縦幅', mainHI),
-
+        field('横幅', mainWI), field('縦幅', mainHI),
         sectionLabel('カラーテーマ'),
         field('テーマ', themeI),
     );
@@ -210,7 +163,6 @@ const renderSettingsPanel = async (panelNode) => {
     /* カスタムカラー */
     const customColors = { ...(settings.customColors || {}) };
     const colorInputs = {};
-
     const colorSection = document.createElement('div');
     colorSection.style = 'display:none';
 
@@ -219,7 +171,7 @@ const renderSettingsPanel = async (panelNode) => {
         const currentVal = customColors[key] || '';
 
         const row = document.createElement('div');
-        row.style = 'display:flex;align-items:center;gap:4px;margin-bottom:3px';
+        row.className = 'sb-color-row';
 
         const colorI = document.createElement('input');
         colorI.type = 'color';
@@ -227,20 +179,17 @@ const renderSettingsPanel = async (panelNode) => {
         colorI.style = 'width:28px;height:20px;padding:0;border:1px solid #ccc;cursor:pointer';
 
         const textI = document.createElement('input');
-        textI.type = 'text';
-        textI.value = currentVal;
+        textI.type = 'text'; textI.value = currentVal;
         textI.placeholder = baseTheme[key] || '';
         textI.style = 'flex:1;font-size:11px;font-family:monospace';
 
         const labelNode = document.createElement('div');
         labelNode.textContent = label;
-        labelNode.style = `font-size:10px;color:${Theme.inputLabel};width:7em;flex-shrink:0`;
+        labelNode.className = 'sb-color-label';
 
         colorI.oninput = () => { textI.value = colorI.value; };
         textI.oninput = () => {
-            if (/^#[0-9a-fA-F]{3,8}$/.test(textI.value)) {
-                colorI.value = textI.value;
-            }
+            if (/^#[0-9a-fA-F]{3,8}$/.test(textI.value)) colorI.value = textI.value;
         };
 
         colorInputs[key] = textI;
@@ -250,27 +199,23 @@ const renderSettingsPanel = async (panelNode) => {
 
     const toggleBtn = document.createElement('div');
     toggleBtn.textContent = '▶ カスタムカラー（詳細）';
-    toggleBtn.style = `cursor:pointer;font-size:11px;color:${Theme.textMuted};margin:4px 0`;
+    toggleBtn.className = 'sb-toggle-btn';
     toggleBtn.onclick = () => {
         const open = colorSection.style.display !== 'none';
         colorSection.style.display = open ? 'none' : '';
         toggleBtn.textContent = (open ? '▶' : '▼') + ' カスタムカラー（詳細）';
     };
 
-    /* テーマ変更時にプレースホルダー更新 */
     themeI.onchange = () => {
         const base = THEMES[themeI.value] || THEMES.normal;
         Object.entries(colorInputs).forEach(([key, textI]) => {
             textI.placeholder = base[key] || '';
-            if (!textI.value) {
-                textI.previousElementSibling.value = base[key] || '#000000';
-            }
+            if (!textI.value) textI.previousElementSibling.value = base[key] || '#000000';
         });
     };
 
     panelNode.append(toggleBtn, colorSection);
 
-    /* 保存ボタン */
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '保存';
     saveBtn.style = 'margin-top:8px';
@@ -280,27 +225,18 @@ const renderSettingsPanel = async (panelNode) => {
             const v = textI.value.trim();
             if (v) newCustom[key] = v;
         });
-
         saveSettings(currentProjectName, {
-            userName: nameI.value.trim(),
-            idleOpacity: +oI.value,
-            todoMark: todoI.value,
-            doneMark: doneI.value,
-            todoPosition: todoPosI.value,
-            openaiApiKey: apiKeyI.value.trim(),
-            calendarWidth: +calWI.value,
-            calendarHeight: +calHI.value,
+            userName: nameI.value.trim(), idleOpacity: +oI.value,
+            todoMark: todoI.value, doneMark: doneI.value,
+            todoPosition: todoPosI.value, openaiApiKey: apiKeyI.value.trim(),
+            calendarWidth: +calWI.value, calendarHeight: +calHI.value,
             calendarFontSize: +calFI.value,
-            todoWidth: +todoWI.value,
-            todoHeight: +todoHI.value,
-            mainWidth: +mainWI.value,
-            mainHeight: +mainHI.value,
-            theme: themeI.value,
-            customColors: newCustom,
+            todoWidth: +todoWI.value, todoHeight: +todoHI.value,
+            mainWidth: +mainWI.value, mainHeight: +mainHI.value,
+            theme: themeI.value, customColors: newCustom,
         });
         location.reload();
     };
-
     panelNode.appendChild(saveBtn);
 };
 

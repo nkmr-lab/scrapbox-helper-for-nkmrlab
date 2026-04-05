@@ -11,21 +11,13 @@ const renderPaperPanelFromLines = (pageName, rawLines) => {
     lines.forEach((line, idx) => {
         const t = line.text;
 
-        if (t === '[*** 質問・コメント]') {
-            inQnA = true;
-            return;
-        }
-
-        if (inQnA && /^\[\*{3}\s/.test(t)) {
-            inQnA = false;
-            return;
-        }
+        if (t === '[*** 質問・コメント]') { inQnA = true; return; }
+        if (inQnA && /^\[\*{3}\s/.test(t)) { inQnA = false; return; }
 
         if (inQnA && /^\?\s/.test(t)) {
             const text = normalize(t.replace(/^\?\s*/, ''));
             const author = findAuthorAbove(lines, idx);
             const existing = questionMap.get(text);
-
             if (!existing || (!existing.author && author)) {
                 questionMap.set(text, { id: line.id, text, author });
             }
@@ -39,17 +31,9 @@ const renderPaperPanelFromLines = (pageName, rawLines) => {
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
 
     const fragment = document.createDocumentFragment();
-    questions.forEach(q => {
-        appendTextNode(
-            fragment,
-            '・' + (q.author ? `${q.author}: ` : '?: ') + q.text,
-            ITEM_STYLE,
-            () => jumpToLineId(q.id)
-        );
-    });
+    appendQuestionList(fragment, questions);
 
     const statsBlock = createTalkStatsBlock(rawLines);
     if (statsBlock) fragment.appendChild(statsBlock);
-
     bodyNode.replaceChildren(fragment);
 };
