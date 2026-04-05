@@ -251,9 +251,6 @@ const openSettingsModal = async () => {
     const otherWI = _input(settings.otherWidth, 'number');
     const otherHI = _input(settings.otherHeight, 'number');
 
-    const otherWI = _input(settings.otherWidth, 'number');
-    const otherHI = _input(settings.otherHeight, 'number');
-
     /* ===== 基本タブ ===== */
     const basicContent = document.createElement('div');
     basicContent.append(
