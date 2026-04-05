@@ -1,6 +1,5 @@
-/* ================= ページ生成テンプレート + メニュー ================= */
+/* ================= ページ生成テンプレート + モーダル ================= */
 
-/* --- 発表練習テンプレート --- */
 const PRESENTATION_SLOT_COUNT = 3;
 
 const generatePresentationBody = (conferenceName) => {
@@ -14,18 +13,43 @@ const generatePresentationBody = (conferenceName) => {
     return body;
 };
 
-/* --- ページ生成メニュー（フロートメニュー等から呼ばれる） --- */
-const renderPageCreateMenu = (panelNode, settings) => {
-    const container = document.createElement('div');
-    container.className = 'sb-settings-field';
+/* --- モーダル --- */
+const openPageCreateModal = async () => {
+    document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
 
-    appendMenuHeader(panelNode, '📝 ページ生成', () => {
-        container.style.display = container.style.display !== 'none' ? 'none' : '';
-    });
-    container.style.display = 'none';
+    const settings = await loadSettings(currentProjectName);
+
+    const overlay = document.createElement('div');
+    overlay.id = PAGE_CREATE_MODAL_ID;
+    overlay.className = 'sb-modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    const modal = document.createElement('div');
+    modal.className = 'sb-modal';
+    modal.onclick = (e) => e.stopPropagation();
+
+    const closeBtn = document.createElement('div');
+    closeBtn.textContent = '✕';
+    closeBtn.className = 'sb-modal-close';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+
+    const title = document.createElement('div');
+    title.textContent = '📝 ページ生成';
+    title.className = 'sb-modal-title';
+    modal.appendChild(title);
+
+    const _label = (text) => {
+        const el = document.createElement('div');
+        el.textContent = text;
+        el.className = 'sb-settings-label';
+        return el;
+    };
 
     /* 研究ノート */
     if (settings.userName) {
+        modal.appendChild(_label('研究ノート（年月指定）'));
+
         const noteRow = document.createElement('div');
         noteRow.className = 'sb-form-row';
 
@@ -53,15 +77,13 @@ const renderPageCreateMenu = (panelNode, settings) => {
             location.assign(buildCreateNoteUrl(currentProjectName, pageName, generateResearchNoteBody(date, settings.userName)));
         };
 
-        const label = document.createElement('div');
-        label.textContent = '研究ノート（年月指定）';
-        label.className = 'sb-settings-label';
-
         noteRow.append(yearInput, monthInput, noteBtn);
-        container.append(label, noteRow);
+        modal.appendChild(noteRow);
     }
 
     /* 発表練習 */
+    modal.appendChild(_label('発表練習ページ'));
+
     const presRow = document.createElement('div');
     presRow.className = 'sb-form-row';
 
@@ -79,12 +101,12 @@ const renderPageCreateMenu = (panelNode, settings) => {
             generatePresentationBody(name)));
     };
 
-    const presLabel = document.createElement('div');
-    presLabel.textContent = '発表練習ページ'; presLabel.className = 'sb-settings-label';
     presRow.append(presInput, presBtn);
-    container.append(presLabel, presRow);
+    modal.appendChild(presRow);
 
     /* 論文紹介 */
+    modal.appendChild(_label('論文紹介ページ'));
+
     const paperRow = document.createElement('div');
     paperRow.className = 'sb-form-row';
 
@@ -100,10 +122,9 @@ const renderPageCreateMenu = (panelNode, settings) => {
         location.assign(buildCreateNoteUrl(currentProjectName, title, generatePaperIntroBody(title, settings.userName)));
     };
 
-    const paperLabel = document.createElement('div');
-    paperLabel.textContent = '論文紹介ページ'; paperLabel.className = 'sb-settings-label';
     paperRow.append(paperInput, paperBtn);
-    container.append(paperLabel, paperRow);
+    modal.appendChild(paperRow);
 
-    panelNode.appendChild(container);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 };

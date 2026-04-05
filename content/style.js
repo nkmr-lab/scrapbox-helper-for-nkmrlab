@@ -101,11 +101,6 @@ const injectStyleSheet = () => {
 .sb-section--static {
     cursor:default;
 }
-.sb-section--menu {
-    cursor:pointer;
-    background:var(--sb-sectionStaticBg);
-}
-.sb-section--menu:hover { opacity:0.8; }
 .sb-subtitle {
     margin-bottom:4px; padding-bottom:3px;
     background:var(--sb-subTitleBg);
@@ -230,6 +225,11 @@ const injectStyleSheet = () => {
 .sb-form-row { display:flex; gap:4px; align-items:center; padding:0 6px; margin-bottom:6px; }
 .sb-form-input { flex:1; font-size:12px; padding:2px 4px; color:#000; }
 .sb-small-btn { font-size:12px; cursor:pointer; color:#000; }
+.sb-menu-btn {
+    flex:1; padding:6px 10px; cursor:pointer; font-size:12px; color:#000;
+    border:1px solid var(--sb-border); background:var(--sb-panelBg);
+}
+.sb-menu-btn:hover { opacity:0.8; }
 
 /* ===== Float Menu ===== */
 .sb-float-toggle {

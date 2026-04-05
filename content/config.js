@@ -406,6 +406,3 @@ const openSettingsModal = async () => {
     document.body.appendChild(overlay);
 };
 
-const renderSettingsEntry = (panelNode) => {
-    appendMenuHeader(panelNode, '\u3000⚙ 設定', () => openSettingsModal());
-};

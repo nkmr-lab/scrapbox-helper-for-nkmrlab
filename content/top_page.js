@@ -45,11 +45,24 @@ const renderProjectTop = async () => {
     renderFrequentPages(panelNode, history);
     renderHistory(panelNode, history);
 
+    const btnRow = document.createElement('div');
+    btnRow.className = 'sb-form-row';
+
     if (shouldShowPageCreate(settings)) {
-        renderPageCreateMenu(panelNode, settings);
+        const createBtn = document.createElement('button');
+        createBtn.textContent = '📝 ページ生成';
+        createBtn.className = 'sb-menu-btn';
+        createBtn.onclick = () => openPageCreateModal();
+        btnRow.appendChild(createBtn);
     }
 
-    renderSettingsEntry(panelNode);
+    const settingsBtn = document.createElement('button');
+    settingsBtn.textContent = '⚙ 設定';
+    settingsBtn.className = 'sb-menu-btn';
+    settingsBtn.onclick = () => openSettingsModal();
+    btnRow.appendChild(settingsBtn);
+
+    panelNode.appendChild(btnRow);
 
     document.body.appendChild(panelNode);
 };
