@@ -4,7 +4,7 @@ const DEFAULT_SETTINGS = {
     idleOpacity: 0.35,
     todoMark: '[_]',
     doneMark: '[x]',
-    todoPosition: 'side',
+    todoPosition: 'below',
     openaiApiKey: '',
     calendarWidth: 480,
     calendarHeight: 560,
