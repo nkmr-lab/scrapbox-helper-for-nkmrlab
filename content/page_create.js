@@ -1,4 +1,32 @@
-/* ================= ページ生成テンプレート + モーダル ================= */
+/* ================= ページ生成 ================= */
+/* テンプレート生成関数 + ページ生成モーダル */
+
+/* --- Scrapbox ページ作成URL --- */
+
+/* テンプレート本文付きのScrapboxページ作成URLを生成する */
+const generateCreateNoteUrl = (project, pageName, body) =>
+    `https://scrapbox.io/${project}/${encodeURIComponent(pageName)}?body=${encodeURIComponent(body)}`;
+
+/* --- テンプレート --- */
+
+const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+/* 指定月の研究ノートテンプレート本文を��成する */
+const generateResearchNoteBody = (date, userName) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const prev = new Date(year, month - 1, 1);
+    const next = new Date(year, month + 1, 1);
+    const lastDay = new Date(year, month + 1, 0).getDate();
+
+    let body = `#${formatYm(prev)}_研究ノート_${userName} #${formatYm(next)}_研究ノート_${userName} #研究ノート_${userName}\n\n`;
+    for (let d = 1; d <= lastDay; d++) {
+        const day = new Date(year, month, d);
+        body += `[*( ${formatYmd(day)} (${WEEK_LABELS[day.getDay()]})]\n\n\n`;
+    }
+    body += `#研究ノート\n\n`;
+    return body;
+};
 
 const PRESENTATION_SLOT_COUNT = 3;
 
@@ -14,8 +42,67 @@ const generatePresentationBody = (conferenceName) => {
     return body;
 };
 
+/* 論文紹介ページのテンプレート本文を生���する */
+const generatePaperIntroBody = (title, userName) => {
+    const today = formatYmd(new Date());
+    const year = new Date().getFullYear();
+
+    return [
+        '',
+        '日付',
+        `#${today}`,
+        '',
+        '発表者',
+        userName ? `#${userName}` : '# 発表者名',
+        '',
+        '指定質問者',
+        '# 指定質問者名',
+        '',
+        '著者',
+        '[論文著者名] （共著含む。所属も）',
+        '',
+        'URL',
+        '[論文のpdf]',
+        '[slide]',
+        '',
+        '論文が投稿された学会',
+        '',
+        '',
+        '論文の種類',
+        '  #論文誌 , #学会誌',
+        '',
+        '[/icons/hr.icon]',
+        '書記',
+        '',
+        '',
+        '[(** 概要]',
+        '[* 背景]',
+        '',
+        '[* 目的]',
+        '',
+        '[* 関連研究]',
+        '',
+        '[* 提案手法]',
+        '',
+        '[* 実験]',
+        '',
+        '[* 結果]',
+        '',
+        '[* 考察]',
+        '',
+        '[* まとめ]',
+        '',
+        '[(** 質問・コメント]',
+        '',
+        '',
+        `#論文紹介関連 `,
+        `#論文紹介${year}`,
+    ].join('\n');
+};
+
 /* --- モーダル --- */
-/* ページ生成モーダルを開いて各種テンプレートを選択可能にする */
+
+/* ページ���成モーダルを開いて各種テンプレートを選択可能にする */
 const openPageCreateModal = async () => {
     document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
 

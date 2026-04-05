@@ -1,23 +1,7 @@
-/* ================= 研究ノート：作成ヘルパー ================= */
+/* ================= 研究ノート ================= */
+/* カレンダー上の研究ノート作成UIとページ判定 */
 
-const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
-
-/* 指定月の研究ノートテンプレート本文を生成する */
-const generateResearchNoteBody = (date, userName) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const prev = new Date(year, month - 1, 1);
-    const next = new Date(year, month + 1, 1);
-    const lastDay = new Date(year, month + 1, 0).getDate();
-
-    let body = `#${formatYm(prev)}_研究ノート_${userName} #${formatYm(next)}_研究ノート_${userName} #研究ノート_${userName}\n\n`;
-    for (let d = 1; d <= lastDay; d++) {
-        const day = new Date(year, month, d);
-        body += `[*( ${formatYmd(day)} (${WEEK_LABELS[day.getDay()]})]\n\n\n`;
-    }
-    body += `#研究ノート\n\n`;
-    return body;
-};
+/* --- ページ判定 --- */
 
 /* ページが自分の研究ノートかどうか判定する */
 const isMyResearchNotePage = (pageName, userName) => {
@@ -25,7 +9,7 @@ const isMyResearchNotePage = (pageName, userName) => {
     return pageName.includes(`研究ノート_${userName}`);
 };
 
-/* ページが自分の今月の研究ノートかどうか判定する */
+/* ペー���が自分の今月の研究ノートかどう���判定する */
 const isMyThisMonthResearchNote = (pageName, userName) => {
     if (!isMyResearchNotePage(pageName, userName)) return false;
     const m = pageName.match(/(20\d{2})\.(\d{2})/);
@@ -34,9 +18,7 @@ const isMyThisMonthResearchNote = (pageName, userName) => {
     return +m[1] === now.getFullYear() && +m[2] === now.getMonth() + 1;
 };
 
-/* 研究ノート作成用のScrapbox URLを生成する */
-const generateCreateNoteUrl = (project, pageName, body) =>
-    `https://scrapbox.io/${project}/${encodeURIComponent(pageName)}?body=${encodeURIComponent(body)}`;
+/* --- カレンダー上の作成UI --- */
 
 /* 行データ中の日付ヘッダーの数を数える */
 const countDateHeaders = (lines) =>
