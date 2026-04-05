@@ -6,6 +6,9 @@ const applyCalendarLayout = async (panelNode, gridNode) => {
 
     if (calendarExpanded) {
         panelNode.className = 'sb-panel sb-panel-calendar sb-panel-calendar-expanded';
+        panelNode.style.width = '';
+        panelNode.style.height = '';
+        panelNode.style.maxHeight = '';
         gridNode.className = CALENDAR_GRID_CLASS + ' sb-cal-grid sb-cal-grid--expanded';
         document.getElementById(TODO_PANEL_ID)?.style.setProperty('display', 'none');
     } else {
