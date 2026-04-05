@@ -60,7 +60,8 @@ const appendPanelTitle = (parentNode, text, onClick) => {
 };
 
 const appendSectionHeader = (parentNode, text, onClick) => {
-    return appendEl(parentNode, text, 'sb-section', onClick);
+    const cls = onClick ? 'sb-section sb-section--clickable' : 'sb-section sb-section--static';
+    return appendEl(parentNode, text, cls, onClick);
 };
 
 const appendItem = (parentNode, text, onClick) => {

@@ -90,9 +90,16 @@ const injectStyleSheet = () => {
 .sb-section {
     font-weight:bold; margin:6px 0;
     border-bottom:1px solid var(--sb-sectionBorder);
-    padding:3px 5px; cursor:pointer;
+    padding:3px 5px;
     background:var(--sb-sectionBg);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sb-section--clickable {
+    cursor:pointer;
+}
+.sb-section--clickable:hover { opacity:0.8; }
+.sb-section--static {
+    cursor:default;
 }
 .sb-subtitle {
     margin-bottom:4px; padding-bottom:3px;
