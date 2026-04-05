@@ -9,7 +9,6 @@ const parseSessions = (lines) => {
     lines.forEach((line, idx) => {
         const text = line.text || '';
 
-        /* セッション開始 */
         if (isSessionStart(text)) {
             currentTalk = null;
             currentSession = {
@@ -21,7 +20,6 @@ const parseSessions = (lines) => {
             return;
         }
 
-        /* 発表タイトル（&付き装飾） */
         if (isTalkTitleLine(text)) {
             if (!currentSession) {
                 currentSession = { id: line.id, title: 'comments', talks: [], startIdx: idx, endIdx: null };
@@ -35,13 +33,14 @@ const parseSessions = (lines) => {
             return;
         }
 
-        /* サブ見出し（概要・質疑・コメント等） → 直前のtalkに紐づける */
         if (isSubHeadingLine(text) && currentTalk) {
-            currentTalk.subheadings.push({ id: line.id, title: cleanTitle(text) });
+            currentTalk.subheadings.push({
+                id: line.id, title: cleanTitle(text), idx,
+                questions: []
+            });
             return;
         }
 
-        /* 従来のタイトル行（&なし、セッションでもサブ見出しでもない） */
         if (isTitleLine(text)) {
             if (!currentSession) {
                 currentSession = { id: line.id, title: 'comments', talks: [], startIdx: idx, endIdx: null };
@@ -94,14 +93,33 @@ const collectImpressions = (lines, start, end) => {
     return ims;
 };
 
-/* 各トークに質問と感想を割り当てる */
+/* 各トークに質問・感想を割り当て、サブ見出しにも質問を紐づける */
 const populateSessionData = (sessions, lines) => {
     sessions.forEach(session => {
         session.talks.forEach((talk, i) => {
-            const start = talk.idx + 1;
-            const end = i + 1 < session.talks.length ? session.talks[i + 1].idx - 1 : session.endIdx;
-            talk.questions = collectQuestions(lines, start, end);
-            talk.impressions = collectImpressions(lines, start, end);
+            const talkStart = talk.idx + 1;
+            const talkEnd = i + 1 < session.talks.length ? session.talks[i + 1].idx - 1 : session.endIdx;
+
+            talk.impressions = collectImpressions(lines, talkStart, talkEnd);
+
+            /* サブ見出しがある場合、各サブ見出しの範囲で質問を収集 */
+            if (talk.subheadings.length > 0) {
+                /* サブ見出し前の範囲の質問はtalk直下に */
+                const firstSubIdx = talk.subheadings[0].idx;
+                talk.questions = collectQuestions(lines, talkStart, firstSubIdx - 1);
+
+                /* 各サブ見出しの範囲で質問を収集 */
+                talk.subheadings.forEach((sub, j) => {
+                    const subStart = sub.idx + 1;
+                    const subEnd = j + 1 < talk.subheadings.length
+                        ? talk.subheadings[j + 1].idx - 1
+                        : talkEnd;
+                    sub.questions = collectQuestions(lines, subStart, subEnd);
+                });
+            } else {
+                /* サブ見出しなし → 従来通りtalk全体で質問収集 */
+                talk.questions = collectQuestions(lines, talkStart, talkEnd);
+            }
         });
 
         if (session.talks.length === 0) {
@@ -129,7 +147,6 @@ const renderMinutesFromLines = async (rawLines) => {
     const sessions = parseSessions(lines);
     populateSessionData(sessions, lines);
 
-    /* 描画 */
     sessions.forEach(session => {
         appendSectionHeader(fragment, session.title, () => jumpToLineId(session.id));
 
@@ -144,19 +161,27 @@ const renderMinutesFromLines = async (rawLines) => {
                 );
             }
 
-            /* サブ見出し（概要・質疑等）をタイトルの子としてインデント表示 */
-            talk.subheadings.forEach(sub => {
-                appendItemMuted(fragment,
-                    '　　📎 ' + sub.title,
-                    () => jumpToLineId(sub.id)
-                );
-            });
-
+            /* talk直下の質問 */
             talk.questions.forEach(q => {
                 appendItemMuted(fragment,
                     '　　' + (q.author ? `${q.author}: ` : '?: ') + q.text,
                     () => jumpToLineId(q.id)
                 );
+            });
+
+            /* サブ見出し + その下の質問 */
+            talk.subheadings.forEach(sub => {
+                appendItemMuted(fragment,
+                    '　　' + sub.title,
+                    () => jumpToLineId(sub.id)
+                );
+
+                sub.questions.forEach(q => {
+                    appendItemMuted(fragment,
+                        '　　　　' + (q.author ? `${q.author}: ` : '?: ') + q.text,
+                        () => jumpToLineId(q.id)
+                    );
+                });
             });
         });
     });
