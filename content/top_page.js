@@ -108,6 +108,33 @@ const renderPageCreateMenu = (panelNode, settings) => {
     presRow.append(presInput, presBtn);
     container.append(presLabel, presRow);
 
+    /* --- 論文紹介ページ作成 --- */
+    const paperLabel = document.createElement('div');
+    paperLabel.textContent = '論文紹介ページ';
+    paperLabel.className = 'sb-settings-label';
+
+    const paperRow = document.createElement('div');
+    paperRow.className = 'sb-form-row';
+
+    const paperInput = document.createElement('input');
+    paperInput.type = 'text';
+    paperInput.placeholder = '論文タイトル';
+    paperInput.className = 'sb-form-input';
+
+    const paperBtn = document.createElement('button');
+    paperBtn.textContent = '作成';
+    paperBtn.className = 'sb-small-btn';
+
+    paperBtn.onclick = () => {
+        const title = paperInput.value.trim();
+        if (!title) return;
+        const body = generatePaperIntroBody(title, settings.userName);
+        location.assign(buildCreateNoteUrl(currentProjectName, title, body));
+    };
+
+    paperRow.append(paperInput, paperBtn);
+    container.append(paperLabel, paperRow);
+
     panelNode.appendChild(container);
 };
 
