@@ -44,15 +44,26 @@ const positionTodoPanel = (panelNode, settings) => {
     panelNode.style.left = '';
     panelNode.style.right = '';
 
+    const calOnBottom = !!cal.style.bottom && cal.style.bottom !== '';
+
     if (settings.todoPosition === 'below') {
-        panelNode.style.top = (rect.bottom + 10) + 'px';
+        if (calOnBottom) {
+            /* カレンダーが下配置 → TODOはカレンダーの上に */
+            panelNode.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+        } else {
+            panelNode.style.top = (rect.bottom + 10) + 'px';
+        }
         if (calOnRight) {
             panelNode.style.right = calRight;
         } else {
             panelNode.style.left = calLeft;
         }
     } else {
-        panelNode.style.top = (cal.style.top || rect.top + 'px');
+        if (calOnBottom) {
+            panelNode.style.bottom = cal.style.bottom;
+        } else {
+            panelNode.style.top = (cal.style.top || rect.top + 'px');
+        }
         if (calOnRight) {
             panelNode.style.right = (parseFloat(calRight) + rect.width + 10) + 'px';
         } else {
