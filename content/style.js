@@ -223,6 +223,11 @@ const injectStyleSheet = () => {
 .sb-form-row { display:flex; gap:4px; align-items:center; padding:0 6px; margin-bottom:6px; }
 .sb-form-input { flex:1; font-size:12px; padding:2px 4px; color:#000; }
 .sb-small-btn { font-size:12px; cursor:pointer; color:#000; }
+.sb-textarea {
+    width:100%; min-height:120px; font-size:11px; font-family:monospace;
+    color:#000; resize:vertical; box-sizing:border-box;
+}
+.sb-textarea--result { min-height:200px; background:var(--sb-createUiBg); }
 .sb-menu-btn-row { margin-top:10px; }
 .sb-menu-btn {
     flex:1; padding:6px 10px; cursor:pointer; font-size:12px; color:#000;

@@ -100,6 +100,56 @@ const generatePaperIntroBody = (title, userName) => {
     ].join('\n');
 };
 
+/* --- 学会プログラムからの議事録テンプレート生成 --- */
+
+const PROGRAM_PARSE_PROMPT = `
+以下は学会のプログラム（発表一覧）です。
+このプログラムをパースして、以下のScrapbox記法の議事録テンプレートに変換してください。
+
+セッションごとに以下の形式で出力:
+
+[(** セッション名：座長名（あれば）]
+
+[&* 発表タイトル]
+[著者名1]（所属）, [著者名2]（所属）, ...
+
+書記：
+[** 概要]
+[* 背景]
+
+[* 関連研究]
+
+[* 提案手法]
+
+[* 実験]
+
+[* 結果]
+
+[* 考察]
+
+[* まとめ]
+
+[** 質疑]
+
+[** コメント]
+
+
+上記を各発表について繰り返してください。
+
+ルール:
+- 著者名は全員 [名前] の形式で括る
+- 所属がある場合は（所属）を付ける
+- 発表番号は不要
+- セッション名に座長が記載されていれば「セッション名：座長名」の形式にする
+- 座長情報がない場合はセッション名のみ
+- 余計な説明は不要。テンプレートのみ出力すること
+`;
+
+/* 学会プログラムテキストからScrapbox議事録テンプレートを生成する */
+const generateFromProgram = async (programText) => {
+    return await callOpenAI(PROGRAM_PARSE_PROMPT, programText);
+};
+
 /* --- モーダル --- */
 
 /* ページ���成モーダルを開いて各種テンプレートを選択可能にする */
@@ -213,6 +263,76 @@ const openPageCreateModal = async () => {
 
     paperRow.append(paperInput, paperBtn);
     modal.appendChild(paperRow);
+
+    /* 学会プログラムから生成（API Key設定時のみ） */
+    if (settings.openaiApiKey) {
+        modal.appendChild(_label('学会プログラムから議事録テンプレート生成'));
+
+        const progArea = document.createElement('textarea');
+        progArea.className = 'sb-textarea';
+        progArea.placeholder = '学会プログラムのテキストを貼り付け';
+        modal.appendChild(progArea);
+
+        const progRow = document.createElement('div');
+        progRow.className = 'sb-form-row';
+
+        const progBtn = document.createElement('button');
+        progBtn.textContent = '🧠 AIで生成';
+        progBtn.className = 'sb-small-btn';
+
+        const progStatus = document.createElement('span');
+        progStatus.className = 'sb-batch-status';
+
+        progRow.append(progBtn, progStatus);
+        modal.appendChild(progRow);
+
+        const resultArea = document.createElement('textarea');
+        resultArea.className = 'sb-textarea sb-textarea--result';
+        resultArea.readOnly = true;
+        resultArea.placeholder = '生成結果がここに表示されます';
+        resultArea.style.display = 'none';
+        modal.appendChild(resultArea);
+
+        const copyRow = document.createElement('div');
+        copyRow.className = 'sb-form-row';
+        copyRow.style.display = 'none';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '📋 コピー';
+        copyBtn.className = 'sb-small-btn';
+        copyBtn.onclick = () => {
+            resultArea.select();
+            navigator.clipboard.writeText(resultArea.value);
+            copyBtn.textContent = '✅ コピーしました';
+            setTimeout(() => { copyBtn.textContent = '📋 コピー'; }, 2000);
+        };
+
+        copyRow.appendChild(copyBtn);
+        modal.appendChild(copyRow);
+
+        progBtn.onclick = async () => {
+            const text = progArea.value.trim();
+            if (!text) return;
+
+            progBtn.disabled = true;
+            progStatus.textContent = '生成中…';
+            resultArea.style.display = 'none';
+            copyRow.style.display = 'none';
+
+            try {
+                const result = await generateFromProgram(text);
+                resultArea.value = result;
+                resultArea.style.display = '';
+                copyRow.style.display = '';
+                progStatus.textContent = '';
+            } catch (e) {
+                progStatus.textContent = '❌ エラーが発生しました';
+                console.error(e);
+            } finally {
+                progBtn.disabled = false;
+            }
+        };
+    }
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
