@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS = {
     mainHeight: 560,
     theme: 'normal',
     customColors: {},
-    showPageCreate: 'auto',  // 'auto'(nkmr-labのみ) | 'show' | 'hide'
+    showPageCreate: 'auto',
 };
 
 const getPanelSize = (settings, panelType) => {
@@ -34,10 +34,7 @@ const loadSettings = (projectName) => {
         return Promise.resolve(_settingsCache);
     }
     return new Promise(resolve => {
-        if (!projectName) {
-            resolve({ ...DEFAULT_SETTINGS });
-            return;
-        }
+        if (!projectName) { resolve({ ...DEFAULT_SETTINGS }); return; }
         chrome.storage.local.get(
             { [settingsKey(projectName)]: DEFAULT_SETTINGS },
             data => {
@@ -61,7 +58,6 @@ const initTheme = async (projectName) => {
     injectStyleSheet();
 };
 
-/* --- パネルにサイズ + フェード適用 --- */
 const applyPanelSettings = async (panelNode, panelType = 'main') => {
     const settings = await loadSettings(currentProjectName);
     const size = getPanelSize(settings, panelType);
@@ -87,7 +83,7 @@ const applyPanelSettings = async (panelNode, panelType = 'main') => {
     };
 };
 
-/* ================= 設定画面 ================= */
+/* ================= 設定画面（タブ式） ================= */
 const THEME_LABELS = { normal: 'ノーマル', dark: 'ダーク' };
 
 const COLOR_KEY_LABELS = {
@@ -101,9 +97,99 @@ const COLOR_KEY_LABELS = {
     statsBar:'統計バー', reviewOk:'レビューOK', reviewNg:'レビューNG',
 };
 
+/* --- UI部品 --- */
+const _field = (label, el) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'sb-settings-field';
+    const lbl = document.createElement('div');
+    lbl.textContent = label;
+    lbl.className = 'sb-settings-label';
+    wrap.append(lbl, el);
+    return wrap;
+};
+
+const _input = (v, type = 'text') => {
+    const i = document.createElement('input');
+    i.type = type; i.value = v; i.className = 'sb-input';
+    return i;
+};
+
+const _select = (value, options) => {
+    const s = document.createElement('select');
+    s.className = 'sb-select';
+    options.forEach(([val, label]) => {
+        const opt = document.createElement('option');
+        opt.value = val; opt.textContent = label;
+        if (val === value) opt.selected = true;
+        s.appendChild(opt);
+    });
+    return s;
+};
+
+/* --- タブ切替ヘルパー --- */
+const createTabs = (tabs) => {
+    const bar = document.createElement('div');
+    bar.className = 'sb-tab-bar';
+    const panels = [];
+
+    tabs.forEach(({ label, content }, i) => {
+        const tab = document.createElement('div');
+        tab.className = 'sb-tab' + (i === 0 ? ' sb-tab--active' : '');
+        tab.textContent = label;
+
+        const panel = document.createElement('div');
+        panel.className = 'sb-tab-content' + (i === 0 ? ' sb-tab-content--active' : '');
+        panel.appendChild(content);
+
+        tab.onclick = () => {
+            bar.querySelectorAll('.sb-tab').forEach(t => t.classList.remove('sb-tab--active'));
+            panels.forEach(p => p.classList.remove('sb-tab-content--active'));
+            tab.classList.add('sb-tab--active');
+            panel.classList.add('sb-tab-content--active');
+        };
+
+        bar.appendChild(tab);
+        panels.push(panel);
+    });
+
+    return { bar, panels };
+};
+
+/* --- メイン --- */
 const renderSettingsPanel = async (panelNode) => {
     panelNode.innerHTML = '';
     const settings = await loadSettings(currentProjectName);
+
+    /* ===== 基本タブ ===== */
+    const basicTab = document.createDocumentFragment();
+    const nameI = _input(settings.userName);
+    const todoI = _input(settings.todoMark);
+    const doneI = _input(settings.doneMark);
+    const oI = _input(settings.idleOpacity, 'number');
+    const apiKeyI = _input(settings.openaiApiKey, 'password');
+    apiKeyI.placeholder = 'sk-...';
+    const pageCreateI = _select(settings.showPageCreate, [
+        ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
+    ]);
+
+    basicTab.append(
+        _field('名前', nameI), _field('TODO マーク', todoI), _field('完了マーク', doneI),
+        _field('非アクティブ透明度', oI), _field('OpenAI API Key', apiKeyI),
+        _field('ページ生成メニュー', pageCreateI),
+    );
+
+    /* ===== パネルタブ ===== */
+    const panelTab = document.createDocumentFragment();
+    const calWI = _input(settings.calendarWidth, 'number');
+    const calHI = _input(settings.calendarHeight, 'number');
+    const calFI = _input(settings.calendarFontSize, 'number');
+    const todoPosI = _select(settings.todoPosition, [
+        ['side', '横（カレンダーの隣）'], ['below', '下（カレンダーの下）'],
+    ]);
+    const todoWI = _input(settings.todoWidth, 'number');
+    const todoHI = _input(settings.todoHeight, 'number');
+    const mainWI = _input(settings.mainWidth, 'number');
+    const mainHI = _input(settings.mainHeight, 'number');
 
     const sectionLabel = (text) => {
         const node = document.createElement('div');
@@ -112,72 +198,19 @@ const renderSettingsPanel = async (panelNode) => {
         return node;
     };
 
-    const field = (label, el) => {
-        const wrap = document.createElement('div');
-        wrap.className = 'sb-settings-field';
-        const lbl = document.createElement('div');
-        lbl.textContent = label;
-        lbl.className = 'sb-settings-label';
-        wrap.append(lbl, el);
-        return wrap;
-    };
-
-    const input = (v, type = 'text') => {
-        const i = document.createElement('input');
-        i.type = type; i.value = v; i.className = 'sb-input';
-        return i;
-    };
-
-    const select = (value, options) => {
-        const s = document.createElement('select');
-        s.className = 'sb-select';
-        options.forEach(([val, label]) => {
-            const opt = document.createElement('option');
-            opt.value = val; opt.textContent = label;
-            if (val === value) opt.selected = true;
-            s.appendChild(opt);
-        });
-        return s;
-    };
-
-    const nameI = input(settings.userName);
-    const todoI = input(settings.todoMark);
-    const doneI = input(settings.doneMark);
-    const oI = input(settings.idleOpacity, 'number');
-    const apiKeyI = input(settings.openaiApiKey, 'password');
-    apiKeyI.placeholder = 'sk-...';
-    const todoPosI = select(settings.todoPosition, [
-        ['side', '横（カレンダーの隣）'], ['below', '下（カレンダーの下）'],
-    ]);
-    const calWI = input(settings.calendarWidth, 'number');
-    const calHI = input(settings.calendarHeight, 'number');
-    const calFI = input(settings.calendarFontSize, 'number');
-    const todoWI = input(settings.todoWidth, 'number');
-    const todoHI = input(settings.todoHeight, 'number');
-    const mainWI = input(settings.mainWidth, 'number');
-    const mainHI = input(settings.mainHeight, 'number');
-    const themeI = select(settings.theme, Object.entries(THEME_LABELS));
-    const pageCreateI = select(settings.showPageCreate, [
-        ['auto', '自動（nkmr-labのみ表示）'],
-        ['show', '常に表示'],
-        ['hide', '非表示'],
-    ]);
-
-    panelNode.append(
-        sectionLabel('基本設定'),
-        field('名前', nameI), field('TODO マーク', todoI), field('完了マーク', doneI),
-        field('非アクティブ透明度', oI), field('OpenAI API Key', apiKeyI),
-        sectionLabel('カレンダーパネル'),
-        field('横幅', calWI), field('縦幅', calHI), field('文字サイズ(px)', calFI),
-        sectionLabel('TODO パネル'),
-        field('横幅', todoWI), field('縦幅', todoHI), field('位置', todoPosI),
-        sectionLabel('メインパネル（議事録・論文紹介等）'),
-        field('横幅', mainWI), field('縦幅', mainHI),
-        sectionLabel('カラーテーマ'),
-        field('テーマ', themeI),
-        sectionLabel('フロートメニュー'),
-        field('ページ生成メニュー', pageCreateI),
+    panelTab.append(
+        sectionLabel('カレンダー'),
+        _field('横幅', calWI), _field('縦幅', calHI), _field('文字サイズ(px)', calFI),
+        sectionLabel('TODO'),
+        _field('横幅', todoWI), _field('縦幅', todoHI), _field('位置', todoPosI),
+        sectionLabel('メイン（議事録等）'),
+        _field('横幅', mainWI), _field('縦幅', mainHI),
     );
+
+    /* ===== テーマタブ ===== */
+    const themeTab = document.createDocumentFragment();
+    const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
+    themeTab.appendChild(_field('テーマ', themeI));
 
     /* カスタムカラー */
     const customColors = { ...(settings.customColors || {}) };
@@ -233,8 +266,25 @@ const renderSettingsPanel = async (panelNode) => {
         });
     };
 
-    panelNode.append(toggleBtn, colorSection);
+    themeTab.append(toggleBtn, colorSection);
 
+    /* ===== タブ組み立て ===== */
+    const basicWrap = document.createElement('div');
+    basicWrap.appendChild(basicTab);
+    const panelWrap = document.createElement('div');
+    panelWrap.appendChild(panelTab);
+    const themeWrap = document.createElement('div');
+    themeWrap.appendChild(themeTab);
+
+    const { bar, panels } = createTabs([
+        { label: '基本', content: basicWrap },
+        { label: 'パネル', content: panelWrap },
+        { label: 'テーマ', content: themeWrap },
+    ]);
+
+    panelNode.append(bar, ...panels);
+
+    /* 保存ボタン */
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '保存';
     saveBtn.className = 'sb-save-btn';

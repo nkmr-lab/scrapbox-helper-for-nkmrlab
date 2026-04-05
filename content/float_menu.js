@@ -1,5 +1,6 @@
 /* ================= フロートメニュー ================= */
-/* 全ページ共通で表示。トグルボタン + 展開パネル。 */
+
+const FLOAT_MENU_SEEN_KEY = '__sb_float_menu_seen__';
 
 const shouldShowPageCreate = (settings) => {
     const v = settings.showPageCreate || 'auto';
@@ -9,31 +10,49 @@ const shouldShowPageCreate = (settings) => {
 };
 
 const renderFloatMenu = async () => {
-    /* 既に存在する場合は除去して再生成 */
     document.getElementById(FLOAT_MENU_ID)?.remove();
 
     const settings = await loadSettings(currentProjectName);
     const showCreate = shouldShowPageCreate(settings);
+    const firstTime = !sessionStorage.getItem(FLOAT_MENU_SEEN_KEY);
 
-    /* ===== トグルボタン ===== */
     const wrapper = document.createElement('div');
     wrapper.id = FLOAT_MENU_ID;
 
+    /* トグルボタン */
     const toggleBtn = document.createElement('div');
     toggleBtn.className = 'sb-float-toggle';
-    toggleBtn.textContent = '☰';
+    toggleBtn.textContent = '☰ メニュー';
 
+    /* パネル */
     const panel = document.createElement('div');
     panel.className = 'sb-float-panel';
-    panel.style.display = 'none';
 
-    toggleBtn.onclick = () => {
-        const open = panel.style.display !== 'none';
-        panel.style.display = open ? 'none' : '';
-        toggleBtn.textContent = open ? '☰' : '✕';
+    const setOpen = (open) => {
+        panel.style.display = open ? '' : 'none';
+        toggleBtn.textContent = open ? '✕ 閉じる' : '☰ メニュー';
     };
 
-    /* ===== 履歴セクション ===== */
+    toggleBtn.onclick = () => {
+        const open = panel.style.display === 'none';
+        setOpen(open);
+        if (!firstTime || open) sessionStorage.setItem(FLOAT_MENU_SEEN_KEY, '1');
+    };
+
+    /* 初回は開いた状態 */
+    setOpen(firstTime);
+
+    /* 初回は数秒後に自動で閉じる */
+    if (firstTime) {
+        setTimeout(() => {
+            if (panel.style.display !== 'none') {
+                setOpen(false);
+                sessionStorage.setItem(FLOAT_MENU_SEEN_KEY, '1');
+            }
+        }, 4000);
+    }
+
+    /* 履歴 */
     const historyData = await new Promise(resolve => {
         chrome.storage.local.get(
             { [historyKey(currentProjectName)]: [] },
@@ -45,12 +64,7 @@ const renderFloatMenu = async () => {
     renderFrequentPages(panel, history);
     renderHistory(panel, history);
 
-    /* ===== ページ生成セクション ===== */
-    if (showCreate) {
-        renderPageCreateMenu(panel, settings);
-    }
-
-    /* ===== 設定 ===== */
+    if (showCreate) renderPageCreateMenu(panel, settings);
     renderSettingsEntry(panel);
 
     wrapper.append(toggleBtn, panel);
