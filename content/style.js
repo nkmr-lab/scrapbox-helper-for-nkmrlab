@@ -221,7 +221,7 @@ const injectStyleSheet = () => {
 
 /* ===== Float Menu ===== */
 .sb-float-toggle {
-    position:fixed; bottom:16px; right:16px; z-index:100000;
+    position:fixed; z-index:100000;
     padding:6px 14px; border-radius:20px;
     background:var(--sb-titleBg); color:var(--sb-titleText);
     border:1px solid var(--sb-panelBorder);
@@ -231,7 +231,7 @@ const injectStyleSheet = () => {
 }
 .sb-float-toggle:hover { opacity:0.8; }
 .sb-float-panel {
-    position:fixed; bottom:52px; right:16px; z-index:100000;
+    position:fixed; z-index:100000;
     background:var(--sb-panelBg); color:var(--sb-text);
     border:1px solid var(--sb-panelBorder);
     box-shadow:0 2px 10px var(--sb-panelShadow);

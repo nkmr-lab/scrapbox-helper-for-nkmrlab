@@ -23,6 +23,10 @@ const renderFloatMenu = async () => {
 
     document.documentElement.style.setProperty('--sb-floatMenuWidth', settings.floatMenuWidth + 'px');
 
+    const pos = settings.floatMenuPosition || 'bottom-right';
+    const isBottom = pos.startsWith('bottom');
+    const isRight = pos.endsWith('right');
+
     const wrapper = document.createElement('div');
     wrapper.id = FLOAT_MENU_ID;
 
@@ -31,9 +35,15 @@ const renderFloatMenu = async () => {
     toggleBtn.className = 'sb-float-toggle';
     toggleBtn.textContent = '☰ メニュー';
 
+    if (isBottom) { toggleBtn.style.bottom = '16px'; } else { toggleBtn.style.top = '16px'; }
+    if (isRight)  { toggleBtn.style.right = '16px'; }  else { toggleBtn.style.left = '16px'; }
+
     /* パネル */
     const panel = document.createElement('div');
     panel.className = 'sb-float-panel';
+
+    if (isBottom) { panel.style.bottom = '52px'; } else { panel.style.top = '52px'; }
+    if (isRight)  { panel.style.right = '16px'; }  else { panel.style.left = '16px'; }
 
     const setOpen = (open) => {
         panel.style.display = open ? '' : 'none';
