@@ -9,6 +9,7 @@ const CALENDAR_ID = '__sb_calendar_panel__';
 const CALENDAR_GRID_CLASS = '__sb_calendar_grid__';
 const CALENDAR_CREATE_UI_ID = '__sb_create_note_ui__';
 const FLOAT_MENU_ID = '__sb_float_menu__';
+const SETTINGS_MODAL_ID = '__sb_settings_modal__';
 
 /* nkmr-lab プロジェクト判定 */
 const isNkmrLabProject = () => currentProjectName === 'nkmr-lab';

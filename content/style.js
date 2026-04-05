@@ -238,6 +238,31 @@ const injectStyleSheet = () => {
     width:320px; max-height:70vh; padding:8px;
 }
 
+/* ===== Settings Modal ===== */
+.sb-modal-overlay {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.4); z-index:200000;
+    display:flex; align-items:center; justify-content:center;
+}
+.sb-modal {
+    background:var(--sb-panelBg); color:var(--sb-text);
+    border:1px solid var(--sb-panelBorder);
+    box-shadow:0 4px 20px var(--sb-panelShadow);
+    font:12px/1.5 sans-serif;
+    width:420px; max-height:80vh; overflow:auto;
+    padding:12px 16px; position:relative;
+}
+.sb-modal-close {
+    position:absolute; top:6px; right:10px;
+    cursor:pointer; font-size:16px; font-weight:bold;
+    color:var(--sb-textMuted);
+}
+.sb-modal-close:hover { color:var(--sb-text); }
+.sb-modal-title {
+    font-weight:bold; font-size:14px; margin-bottom:8px;
+    padding-bottom:6px; border-bottom:1px solid var(--sb-border);
+}
+
 /* ===== Settings Tabs ===== */
 .sb-tab-bar {
     display:flex; border-bottom:1px solid var(--sb-border); margin-bottom:6px;

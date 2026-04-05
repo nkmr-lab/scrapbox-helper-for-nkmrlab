@@ -156,9 +156,37 @@ const createTabs = (tabs) => {
 };
 
 /* --- メイン --- */
-const renderSettingsPanel = async (panelNode) => {
-    panelNode.innerHTML = '';
+const openSettingsModal = async () => {
+    /* 既に開いていたら閉じる */
+    document.getElementById(SETTINGS_MODAL_ID)?.remove();
+
     const settings = await loadSettings(currentProjectName);
+
+    /* オーバーレイ */
+    const overlay = document.createElement('div');
+    overlay.id = SETTINGS_MODAL_ID;
+    overlay.className = 'sb-modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    /* モーダル本体 */
+    const modal = document.createElement('div');
+    modal.className = 'sb-modal';
+    modal.onclick = (e) => e.stopPropagation();
+
+    /* 閉じるボタン */
+    const closeBtn = document.createElement('div');
+    closeBtn.textContent = '✕';
+    closeBtn.className = 'sb-modal-close';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+
+    /* タイトル */
+    const title = document.createElement('div');
+    title.textContent = '⚙ 設定';
+    title.className = 'sb-modal-title';
+    modal.appendChild(title);
+
+    const panelNode = modal;
 
     /* ===== 基本タブ ===== */
     const basicTab = document.createDocumentFragment();
@@ -308,8 +336,11 @@ const renderSettingsPanel = async (panelNode) => {
         location.reload();
     };
     panelNode.appendChild(saveBtn);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 };
 
 const renderSettingsEntry = (panelNode) => {
-    appendSectionHeader(panelNode, '\u3000⚙ 設定', () => renderSettingsPanel(panelNode));
+    appendSectionHeader(panelNode, '\u3000⚙ 設定', () => openSettingsModal());
 };

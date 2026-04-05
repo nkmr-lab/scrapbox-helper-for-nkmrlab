@@ -6,6 +6,7 @@ const createRouter = (watcherManager) => {
         document.getElementById(MAIN_PANEL_ID)?.remove();
         document.getElementById(TODO_PANEL_ID)?.remove();
         removeFloatMenu();
+        document.getElementById(SETTINGS_MODAL_ID)?.remove();
     };
 
     const routeByContent = async (projectName, pageName) => {

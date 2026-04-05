@@ -142,7 +142,7 @@ const attachSettingsButton = (panelNode) => {
     const btn = document.createElement('div');
     btn.textContent = '⚙';
     btn.className = 'sb-settings-btn';
-    btn.onclick = () => renderSettingsPanel(panelNode);
+    btn.onclick = () => openSettingsModal();
     panelNode.appendChild(btn);
 };
 

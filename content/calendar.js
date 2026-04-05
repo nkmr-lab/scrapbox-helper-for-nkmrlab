@@ -98,7 +98,7 @@ const createCalendarPanel = (pageName) => {
             panelNode.remove();
             document.getElementById(TODO_PANEL_ID)?.style.removeProperty('display');
         }),
-        createButton('⚙', () => renderSettingsPanel(panelNode))
+        createButton('⚙', () => openSettingsModal())
     );
 
     panelNode.append(headerNode, gridNode);
