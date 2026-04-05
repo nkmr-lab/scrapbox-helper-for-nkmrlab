@@ -17,6 +17,7 @@
         "content/pagewatcher.js",
         "content/stats.js",
         "content/history.js",
+        "content/templates.js",
         "content/top_page.js",
         "content/research_note.js",
         "content/calendar.js",

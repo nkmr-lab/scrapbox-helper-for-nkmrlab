@@ -96,6 +96,36 @@ const appendQuestionList = (parentNode, questions) => {
     });
 };
 
+/* --- AI要約（キャッシュ付き） --- */
+const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
+    const cached = getCachedAiResult(cacheKey);
+
+    if (cached) {
+        const box = document.createElement('div');
+        box.className = 'sb-ai-summary';
+        box.textContent = '🧠 AI要約\n' + cached;
+        titleNode.after(box);
+        return;
+    }
+
+    const btn = document.createElement('span');
+    btn.textContent = ' 🧠';
+    btn.className = 'sb-ai-btn';
+    btn.onclick = async () => {
+        btn.textContent = ' ⏳';
+        const result = await generateFn();
+        btn.textContent = ' 🧠';
+        if (!result) return;
+        setCachedAiResult(cacheKey, result);
+        const box = document.createElement('div');
+        box.className = 'sb-ai-summary';
+        box.textContent = '🧠 AI要約\n' + result;
+        titleNode.after(box);
+        btn.remove();
+    };
+    titleNode.appendChild(btn);
+};
+
 /* --- ボタン・コントロール --- */
 const attachCloseButton = (panelNode, panelId) => {
     const btn = document.createElement('div');

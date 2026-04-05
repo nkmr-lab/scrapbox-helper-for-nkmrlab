@@ -100,32 +100,11 @@ const renderMinutesFromLines = async (rawLines) => {
             const titleNode = appendItemSub(fragment, '└ ' + talk.title, () => jumpToLineId(talk.id));
 
             if (enableOpenAI && talk.impressions.length >= 2) {
-                const cacheKey = `summary:${talk.id}`;
-                const cached = getCachedAiResult(cacheKey);
-
-                if (cached) {
-                    const box = document.createElement('div');
-                    box.className = 'sb-ai-summary';
-                    box.textContent = '🧠 AI要約\n' + cached;
-                    titleNode.after(box);
-                } else {
-                    const btn = document.createElement('span');
-                    btn.textContent = ' 🧠';
-                    btn.className = 'sb-ai-btn';
-                    btn.onclick = async () => {
-                        btn.textContent = ' ⏳';
-                        const summary = await summarizeImpressionsByAuthor(talk.impressions);
-                        btn.textContent = ' 🧠';
-                        if (!summary) return;
-                        setCachedAiResult(cacheKey, summary);
-                        const box = document.createElement('div');
-                        box.className = 'sb-ai-summary';
-                        box.textContent = '🧠 AI要約\n' + summary;
-                        titleNode.after(box);
-                        btn.remove();
-                    };
-                    titleNode.appendChild(btn);
-                }
+                attachAiSummaryButton(
+                    titleNode,
+                    `summary:${talk.id}`,
+                    () => summarizeImpressionsByAuthor(talk.impressions)
+                );
             }
 
             talk.questions.forEach(q => {

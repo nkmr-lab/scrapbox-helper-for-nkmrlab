@@ -122,27 +122,7 @@ const renderCalendarFromLines = (pageName, json) => {
 
     if (countDateHeaders(json.lines) > 0) removeResearchNoteCreateUI();
 
-    const days = {}, snip = {};
-    let cur = null, year, month, day;
-
-    for (const line of json.lines) {
-        let text = (line.text || '').trim();
-        const mm = text.match(/^\[[\*\(]+\s*(20\d{2})\.(\d{2})\.(\d{2})/);
-        if (mm) {
-            cur = `${mm[1]}.${mm[2]}.${mm[3]}`;
-            days[cur] = line.id;
-            snip[cur] = [];
-            year = mm[1]; month = mm[2];
-            continue;
-        }
-        text = text.replace(/\[[^\]]+\.icon\]/g, '').trim();
-        if (cur && text && !text.startsWith('#') && !text.startsWith('>') &&
-            !text.startsWith('[https://') && !text.startsWith('[[https://') &&
-            !text.startsWith('[| ') && snip[cur].length < CALENDAR_SNIPPET_LIMIT) {
-            snip[cur].push(text);
-        }
-    }
-
+    const { days, snippets } = parseCalendarData(json.lines);
     const today = formatYmd(new Date());
     const ds = Object.keys(days).sort();
 
@@ -154,7 +134,7 @@ const renderCalendarFromLines = (pageName, json) => {
     ds.forEach(d => {
         const dateObj = new Date(d.replace(/\./g, '-'));
         const weekday = dateObj.getDay();
-        day = d.split('.').pop();
+        const dayNum = d.split('.').pop();
 
         const c = document.createElement('div');
         c.className = 'sb-cal-cell' +
@@ -163,11 +143,11 @@ const renderCalendarFromLines = (pageName, json) => {
             (weekday === 6 ? ' sb-cal-cell--sat' : '');
 
         const dd = document.createElement('div');
-        dd.textContent = day;
+        dd.textContent = dayNum;
         dd.className = 'sb-cal-day';
         c.appendChild(dd);
 
-        (snip[d] || []).forEach(t => {
+        (snippets[d] || []).forEach(t => {
             const p = document.createElement('div');
             p.textContent = t;
             p.className = 'sb-cal-snippet';
@@ -175,7 +155,7 @@ const renderCalendarFromLines = (pageName, json) => {
         });
 
         c.dataset.dayCell = '1';
-        c.dataset.count = String(snip[d]?.length || 0);
+        c.dataset.count = String(snippets[d]?.length || 0);
         c.onclick = () => jumpToLineId(days[d]);
         gridNode.appendChild(c);
     });

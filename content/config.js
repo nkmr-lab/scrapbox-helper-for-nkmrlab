@@ -26,7 +26,13 @@ const getPanelSize = (settings, panelType) => {
     }
 };
 
+let _settingsCache = null;
+let _settingsCacheProject = null;
+
 const loadSettings = (projectName) => {
+    if (_settingsCache && _settingsCacheProject === projectName) {
+        return Promise.resolve(_settingsCache);
+    }
     return new Promise(resolve => {
         if (!projectName) {
             resolve({ ...DEFAULT_SETTINGS });
@@ -34,13 +40,18 @@ const loadSettings = (projectName) => {
         }
         chrome.storage.local.get(
             { [settingsKey(projectName)]: DEFAULT_SETTINGS },
-            data => resolve({ ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] })
+            data => {
+                _settingsCache = { ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] };
+                _settingsCacheProject = projectName;
+                resolve(_settingsCache);
+            }
         );
     });
 };
 
 const saveSettings = (projectName, settings) => {
     if (!projectName) return;
+    _settingsCache = null;
     chrome.storage.local.set({ [settingsKey(projectName)]: settings });
 };
 

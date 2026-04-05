@@ -94,6 +94,31 @@ const isSessionStart = (t) => {
     return title && t.includes('(');
 };
 
+/* --- カレンダーデータ抽出 --- */
+const parseCalendarData = (rawLines) => {
+    const days = {}, snippets = {};
+    let cur = null, year = null, month = null;
+
+    for (const line of rawLines) {
+        let text = (line.text || '').trim();
+        const mm = text.match(/^\[[\*\(]+\s*(20\d{2})\.(\d{2})\.(\d{2})/);
+        if (mm) {
+            cur = `${mm[1]}.${mm[2]}.${mm[3]}`;
+            days[cur] = line.id;
+            snippets[cur] = [];
+            year = mm[1]; month = mm[2];
+            continue;
+        }
+        text = text.replace(/\[[^\]]+\.icon\]/g, '').trim();
+        if (cur && text && !text.startsWith('#') && !text.startsWith('>') &&
+            !text.startsWith('[https://') && !text.startsWith('[[https://') &&
+            !text.startsWith('[| ') && snippets[cur].length < CALENDAR_SNIPPET_LIMIT) {
+            snippets[cur].push(text);
+        }
+    }
+    return { days, snippets };
+};
+
 /* --- 質問抽出（議事録・論文紹介・発表練習で共通） --- */
 const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
     const qs = [];
