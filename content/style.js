@@ -236,7 +236,7 @@ const injectStyleSheet = () => {
     border:1px solid var(--sb-panelBorder);
     box-shadow:0 2px 10px var(--sb-panelShadow);
     font:12px/1.5 sans-serif; overflow:auto;
-    width:320px; max-height:70vh; padding:8px;
+    width:var(--sb-floatMenuWidth, 320px); max-height:70vh; padding:8px;
 }
 
 /* ===== Settings Modal ===== */

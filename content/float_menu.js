@@ -21,6 +21,8 @@ const renderFloatMenu = async () => {
     const showCreate = shouldShowPageCreate(settings);
     const firstTime = !sessionStorage.getItem(FLOAT_MENU_SEEN_KEY);
 
+    document.documentElement.style.setProperty('--sb-floatMenuWidth', settings.floatMenuWidth + 'px');
+
     const wrapper = document.createElement('div');
     wrapper.id = FLOAT_MENU_ID;
 

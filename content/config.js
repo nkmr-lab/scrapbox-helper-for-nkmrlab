@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
     otherHeight: 560,
     theme: 'normal',
     customColors: {},
+    floatMenuWidth: 320,
     showPageCreate: 'auto',
 };
 
@@ -227,6 +228,7 @@ const openSettingsModal = async () => {
         ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
     ]);
     const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
+    const floatWI = _input(settings.floatMenuWidth, 'number');
 
     const calPosI = _select(settings.calendarPosition, POSITION_OPTIONS);
     const calWI = _input(settings.calendarWidth, 'number');
@@ -261,6 +263,7 @@ const openSettingsModal = async () => {
         _field('非アクティブ透明度', oI),
         _field('OpenAI API Key', apiKeyI),
         _field('ページ生成メニュー', pageCreateI),
+        _field('メニュー横幅', floatWI),
         _field('テーマ', themeI),
     );
 
@@ -388,6 +391,7 @@ const openSettingsModal = async () => {
             otherPosition: otherPosI.value,
             otherWidth: +otherWI.value, otherHeight: +otherHI.value,
             theme: themeI.value, customColors: newCustom,
+            floatMenuWidth: +floatWI.value,
             showPageCreate: pageCreateI.value,
         });
         location.reload();
