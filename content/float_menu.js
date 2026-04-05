@@ -44,7 +44,6 @@ const openFloatMenu = async () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
 
     const settings = await loadSettings(currentProjectName);
-    const showCreate = shouldShowPageCreate(settings);
     const firstTime = !sessionStorage.getItem(FLOAT_MENU_SEEN_KEY);
 
     document.documentElement.style.setProperty('--sb-floatMenuWidth', settings.floatMenuWidth + 'px');
@@ -93,41 +92,14 @@ const openFloatMenu = async () => {
         }, 4000);
     }
 
-    /* ピン留めセクション */
-    const pageName = getCurrentPageName();
-    await _renderPinSection(panel, pageName);
+    /* コンテンツ */
+    await _renderPinSection(panel, getCurrentPageName());
 
-    /* 履歴 */
-    const historyData = await new Promise(resolve => {
-        chrome.storage.local.get(
-            { [historyKey(currentProjectName)]: [] },
-            data => resolve(data[historyKey(currentProjectName)])
-        );
-    });
-    const history = normalizeHistoryEntries(historyData);
-
+    const history = await loadHistory(currentProjectName);
     renderFrequentPages(panel, history);
     renderHistory(panel, history);
 
-    /* メニューボタン */
-    const btnRow = document.createElement('div');
-    btnRow.className = 'sb-form-row sb-menu-btn-row';
-
-    if (showCreate) {
-        const createBtn = document.createElement('button');
-        createBtn.textContent = '📝 ページ生成';
-        createBtn.className = 'sb-menu-btn';
-        createBtn.onclick = () => openPageCreateModal();
-        btnRow.appendChild(createBtn);
-    }
-
-    const settingsBtn = document.createElement('button');
-    settingsBtn.textContent = '⚙ 設定';
-    settingsBtn.className = 'sb-menu-btn';
-    settingsBtn.onclick = () => openSettingsModal();
-    btnRow.appendChild(settingsBtn);
-
-    panel.appendChild(btnRow);
+    renderMenuButtons(panel, shouldShowPageCreate(settings));
 
     wrapper.append(toggleBtn, panel);
     document.body.appendChild(wrapper);

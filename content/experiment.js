@@ -1,5 +1,7 @@
 /* ================= 実験計画書 ================= */
 
+/* --- 定数 --- */
+
 const EXPERIMENT_REVIEW_PROMPT = `
 以下は研究の実験計画書の一部です。
 このセクションについて、研究計画として問題がないかをチェックしてください。
@@ -13,6 +15,93 @@ const EXPERIMENT_REVIEW_PROMPT = `
 問題がある場合のみ、簡潔な箇条書きで指摘してください。
 問題がなければ「特に問題は見当たりません」と答えてください。
 `;
+
+/* --- GPTレビュー --- */
+
+/* 単一セクションをGPTでレビューして結果を表示する */
+const runSingleSectionReview = async (section) => {
+    const cacheKey = `review:${section.id}`;
+    const cached = getCachedAiResult(cacheKey);
+
+    let resultBox = section._resultBox;
+    if (!resultBox) {
+        resultBox = document.createElement('div');
+        resultBox.className = 'sb-review-box';
+        section.node.after(resultBox);
+        section._resultBox = resultBox;
+    }
+
+    if (cached) {
+        resultBox.textContent = cached.text;
+        resultBox.className = 'sb-review-box ' + cached.cls;
+        return;
+    }
+
+    resultBox.textContent = '⏳ GPTが確認中…';
+    resultBox.className = 'sb-review-box';
+
+    const content =
+        `【セクション名】\n${section.title}\n\n` +
+        `【内容】\n` + section.contents.map(t => `- ${t}`).join('\n');
+
+    try {
+        const res = await callOpenAI(EXPERIMENT_REVIEW_PROMPT, content);
+        if (!res || /問題は見当たりません/.test(res)) {
+            resultBox.textContent = '✅ 特に問題は見当たりません';
+            resultBox.className = 'sb-review-box sb-review-box--ok';
+            setCachedAiResult(cacheKey, { text: resultBox.textContent, cls: 'sb-review-box--ok' });
+        } else {
+            resultBox.textContent = res;
+            resultBox.className = 'sb-review-box sb-review-box--ng';
+            setCachedAiResult(cacheKey, { text: res, cls: 'sb-review-box--ng' });
+        }
+    } catch (e) {
+        resultBox.textContent = '❌ GPTレビューでエラーが発生しました';
+        resultBox.className = 'sb-review-box sb-review-box--ng';
+        console.error(e);
+    }
+};
+
+/* 複数セクションを順番にGPTレビューする */
+const runBatchGPTReview = async (sections, statusNode) => {
+    let index = 0;
+    for (const section of sections) {
+        index++;
+        statusNode.textContent = `(${index} / ${sections.length}) 「${section.title}」をチェック中…`;
+        if (!section.contents || section.contents.length === 0) continue;
+        await runSingleSectionReview(section);
+        await sleep(400);
+    }
+};
+
+/* --- View --- */
+
+/* GPT一括レビューのUIボタンを生成する */
+const renderGPTBatchReviewUI = (sections) => {
+    const box = document.createElement('div');
+    box.className = 'sb-batch-ui';
+
+    const btn = document.createElement('button');
+    btn.textContent = '🧠 GPTで全部チェック';
+    btn.className = 'sb-small-btn';
+
+    const status = document.createElement('span');
+    status.className = 'sb-batch-status';
+
+    box.append(btn, status);
+
+    btn.onclick = async () => {
+        btn.disabled = true;
+        status.textContent = '開始中…';
+        await runBatchGPTReview(sections, status);
+        status.textContent = '完了';
+        btn.disabled = false;
+    };
+
+    return box;
+};
+
+/* --- メイン描画 --- */
 
 /* 実験計画書ページをフェッチしてパネルに描画する */
 const renderExperimentPlan = async (pageName) => {
@@ -63,86 +152,4 @@ const renderExperimentPlan = async (pageName) => {
     }
 
     document.body.appendChild(panelNode);
-};
-
-/* 複数セクションを順番にGPTレビューする */
-const runBatchGPTReview = async (sections, statusNode) => {
-    let index = 0;
-    for (const section of sections) {
-        index++;
-        statusNode.textContent = `(${index} / ${sections.length}) 「${section.title}」をチェック中…`;
-        if (!section.contents || section.contents.length === 0) continue;
-        await runSingleSectionReview(section);
-        await sleep(400);
-    }
-};
-
-/* 単一セクションをGPTでレビューして結果を表示する */
-const runSingleSectionReview = async (section) => {
-    const cacheKey = `review:${section.id}`;
-    const cached = getCachedAiResult(cacheKey);
-
-    let resultBox = section._resultBox;
-    if (!resultBox) {
-        resultBox = document.createElement('div');
-        resultBox.className = 'sb-review-box';
-        section.node.after(resultBox);
-        section._resultBox = resultBox;
-    }
-
-    /* キャッシュがあれば復元して終了 */
-    if (cached) {
-        resultBox.textContent = cached.text;
-        resultBox.className = 'sb-review-box ' + cached.cls;
-        return;
-    }
-
-    resultBox.textContent = '⏳ GPTが確認中…';
-    resultBox.className = 'sb-review-box';
-
-    const content =
-        `【セクション名】\n${section.title}\n\n` +
-        `【内容】\n` + section.contents.map(t => `- ${t}`).join('\n');
-
-    try {
-        const res = await callOpenAI(EXPERIMENT_REVIEW_PROMPT, content);
-        if (!res || /問題は見当たりません/.test(res)) {
-            resultBox.textContent = '✅ 特に問題は見当たりません';
-            resultBox.className = 'sb-review-box sb-review-box--ok';
-            setCachedAiResult(cacheKey, { text: resultBox.textContent, cls: 'sb-review-box--ok' });
-        } else {
-            resultBox.textContent = res;
-            resultBox.className = 'sb-review-box sb-review-box--ng';
-            setCachedAiResult(cacheKey, { text: res, cls: 'sb-review-box--ng' });
-        }
-    } catch (e) {
-        resultBox.textContent = '❌ GPTレビューでエラーが発生しました';
-        resultBox.className = 'sb-review-box sb-review-box--ng';
-        console.error(e);
-    }
-};
-
-/* GPT一括レビューのUIボタンを生成する */
-const renderGPTBatchReviewUI = (sections) => {
-    const box = document.createElement('div');
-    box.className = 'sb-batch-ui';
-
-    const btn = document.createElement('button');
-    btn.textContent = '🧠 GPTで全部チェック';
-    btn.className = 'sb-small-btn';
-
-    const status = document.createElement('span');
-    status.className = 'sb-batch-status';
-
-    box.append(btn, status);
-
-    btn.onclick = async () => {
-        btn.disabled = true;
-        status.textContent = '開始中…';
-        await runBatchGPTReview(sections, status);
-        status.textContent = '完了';
-        btn.disabled = false;
-    };
-
-    return box;
 };

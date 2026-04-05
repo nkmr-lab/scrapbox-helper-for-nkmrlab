@@ -1,5 +1,15 @@
 /* ================= 履歴管理 ================= */
 
+/* 正規化済みの閲覧履歴をス��レージから読み込む */
+const loadHistory = (projectName) => {
+    return new Promise(resolve => {
+        chrome.storage.local.get(
+            { [historyKey(projectName)]: [] },
+            data => resolve(normalizeHistoryEntries(data[historyKey(projectName)]))
+        );
+    });
+};
+
 /* 閲覧履歴をストレージに追記する */
 const saveHistory = (projectName, pageName) => {
     if (!projectName || !pageName) return;

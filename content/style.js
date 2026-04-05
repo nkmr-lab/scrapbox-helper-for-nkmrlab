@@ -120,10 +120,6 @@ const injectStyleSheet = () => {
     font-weight:bold; position:absolute; top:4px; right:6px;
     cursor:pointer; font-size:14px; color:var(--sb-titleText);
 }
-.sb-settings-btn {
-    position:absolute; top:4px; right:24px;
-    cursor:pointer; font-size:14px; color:var(--sb-titleText);
-}
 .sb-btn { cursor:pointer; }
 
 /* ===== Calendar ===== */

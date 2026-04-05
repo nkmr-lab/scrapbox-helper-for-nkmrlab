@@ -70,8 +70,6 @@ const appendSectionHeader = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, cls, onClick);
 };
 
-
-
 /* クリック可能な通常アイテム要素を追加する */
 const appendItem = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-item', onClick);
@@ -140,6 +138,29 @@ const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
     titleNode.appendChild(btn);
 };
 
+/* --- メニューボタン --- */
+/* ページ生成・設定ボタン行をパネルに追加する */
+const renderMenuButtons = (panelNode, showCreate) => {
+    const btnRow = document.createElement('div');
+    btnRow.className = 'sb-form-row sb-menu-btn-row';
+
+    if (showCreate) {
+        const createBtn = document.createElement('button');
+        createBtn.textContent = '📝 ページ生成';
+        createBtn.className = 'sb-menu-btn';
+        createBtn.onclick = () => openPageCreateModal();
+        btnRow.appendChild(createBtn);
+    }
+
+    const settingsBtn = document.createElement('button');
+    settingsBtn.textContent = '⚙ 設定';
+    settingsBtn.className = 'sb-menu-btn';
+    settingsBtn.onclick = () => openSettingsModal();
+    btnRow.appendChild(settingsBtn);
+
+    panelNode.appendChild(btnRow);
+};
+
 /* --- ボタン・コントロール --- */
 /* パネルに閉じるボタンを追加する */
 const attachCloseButton = (panelNode, panelId) => {
@@ -150,15 +171,6 @@ const attachCloseButton = (panelNode, panelId) => {
         closedPanels.add(panelId);
         panelNode.remove();
     };
-    panelNode.appendChild(btn);
-};
-
-/* パネルに設定ボタンを追加する */
-const attachSettingsButton = (panelNode) => {
-    const btn = document.createElement('div');
-    btn.textContent = '⚙';
-    btn.className = 'sb-settings-btn';
-    btn.onclick = () => openSettingsModal();
     panelNode.appendChild(btn);
 };
 
