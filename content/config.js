@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
     calendarHeight: 560,
     calendarFontSize: 11,
     calendarHeatmap: true,
+    calendarFontSizeExpanded: 14,
     todoWidth: 320,
     todoHeight: 400,
     todoShowCount: 5,
@@ -206,6 +207,7 @@ const openSettingsModal = async () => {
     const calWI = _input(settings.calendarWidth, 'number');
     const calHI = _input(settings.calendarHeight, 'number');
     const calFI = _input(settings.calendarFontSize, 'number');
+    const calFEI = _input(settings.calendarFontSizeExpanded, 'number');
     const calHeatI = _select(settings.calendarHeatmap ? 'on' : 'off', [
         ['on', 'ON'], ['off', 'OFF'],
     ]);
@@ -295,7 +297,8 @@ const openSettingsModal = async () => {
     const calContent = document.createElement('div');
     calContent.append(
         _field('横幅', calWI), _field('縦幅', calHI),
-        _field('文字サイズ(px)', calFI), _field('ヒートマップ', calHeatI),
+        _field('文字サイズ(px)', calFI), _field('拡大時文字サイズ(px)', calFEI),
+        _field('ヒートマップ', calHeatI),
     );
 
     /* ===== TODOタブ ===== */
@@ -344,7 +347,8 @@ const openSettingsModal = async () => {
             todoMark: todoI.value, doneMark: doneI.value,
             todoPosition: todoPosI.value, openaiApiKey: apiKeyI.value.trim(),
             calendarWidth: +calWI.value, calendarHeight: +calHI.value,
-            calendarFontSize: +calFI.value, calendarHeatmap: calHeatI.value === 'on',
+            calendarFontSize: +calFI.value, calendarFontSizeExpanded: +calFEI.value,
+            calendarHeatmap: calHeatI.value === 'on',
             todoWidth: +todoWI.value, todoHeight: +todoHI.value,
             todoShowCount: +todoShowI.value,
             mainWidth: +mainWI.value, mainHeight: +mainHI.value,

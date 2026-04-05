@@ -132,6 +132,7 @@ const injectStyleSheet = () => {
 }
 .sb-cal-grid--expanded {
     grid-template-rows:auto repeat(6, minmax(140px, 1fr)); gap:8px;
+    font-size:var(--sb-calFontSizeExpanded, 14px);
 }
 .sb-cal-weekday { font-weight:bold; text-align:center; }
 .sb-cal-weekday--sun { color:var(--sb-calSundayHeader); }

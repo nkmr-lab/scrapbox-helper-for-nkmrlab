@@ -28,7 +28,9 @@ const applyCalendarLayout = async (panelNode, gridNode) => {
         if (todo) todo.style.removeProperty('display');
     }
 
-    document.documentElement.style.setProperty('--sb-calFontSize', settings.calendarFontSize + 'px');
+    const root = document.documentElement;
+    root.style.setProperty('--sb-calFontSize', settings.calendarFontSize + 'px');
+    root.style.setProperty('--sb-calFontSizeExpanded', settings.calendarFontSizeExpanded + 'px');
 };
 
 const shiftMonthInPageName = (pageName, offset) => {
