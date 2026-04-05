@@ -24,7 +24,7 @@ const headPageETag = async (projectName, pageName) => {
 };
 
 /* --- OpenAI API --- */
-const isEnableOpenAI = async () => {
+const isOpenAIEnabled = async () => {
     const settings = await loadSettings(currentProjectName);
     return !!settings.openaiApiKey;
 };

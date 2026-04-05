@@ -2,10 +2,10 @@
 
 const createRouter = (watcherManager) => {
     const clearUI = () => {
-        document.getElementById(CALENDAR_ID)?.remove();
+        document.getElementById(CALENDAR_PANEL_ID)?.remove();
         document.getElementById(MAIN_PANEL_ID)?.remove();
         document.getElementById(TODO_PANEL_ID)?.remove();
-        removeFloatMenu();
+        closeFloatMenu();
         document.getElementById(SETTINGS_MODAL_ID)?.remove();
         document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
     };
@@ -55,7 +55,7 @@ const createRouter = (watcherManager) => {
         saveHistory(currentProjectName, pageName);
 
         /* フロートメニューは全ページで表示 */
-        renderFloatMenu();
+        openFloatMenu();
 
         if (!pageName) {
             if (!isExtensionAlive()) return;

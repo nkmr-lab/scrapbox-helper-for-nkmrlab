@@ -56,8 +56,8 @@ const renderExperimentPlan = async (pageName) => {
         currentSection.contents.push(text);
     });
 
-    if (titleNode && await isEnableOpenAI() && sections.length > 0) {
-        const batchUI = createGPTBatchReviewUI(sections);
+    if (titleNode && await isOpenAIEnabled() && sections.length > 0) {
+        const batchUI = renderGPTBatchReviewUI(sections);
         titleNode.after(batchUI);
     }
 
@@ -119,7 +119,7 @@ const runSingleSectionReview = async (section) => {
     }
 };
 
-const createGPTBatchReviewUI = (sections) => {
+const renderGPTBatchReviewUI = (sections) => {
     const box = document.createElement('div');
     box.className = 'sb-batch-ui';
 

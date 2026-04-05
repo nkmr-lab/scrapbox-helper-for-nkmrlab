@@ -16,7 +16,7 @@ const getOrCreatePanel = (id, create) => {
     return el;
 };
 
-const createStandardPanel = (panelType = 'other') => {
+const renderStandardPanel = (panelType = 'other') => {
     const panelNode = document.createElement('div');
     panelNode.className = 'sb-panel';
     applyPanelSettings(panelNode, panelType);
@@ -156,7 +156,7 @@ const jumpToLineId = id => {
     a.remove();
 };
 
-const createButton = (label, fn) => {
+const renderButton = (label, fn) => {
     const s = document.createElement('span');
     s.textContent = label;
     s.className = 'sb-btn';

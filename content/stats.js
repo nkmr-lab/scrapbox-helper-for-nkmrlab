@@ -82,7 +82,7 @@ const renderTalkStats = (parentNode, stats, idToName) => {
     });
 };
 
-const createTalkStatsBlock = (rawLines) => {
+const renderTalkStatsBlock = (rawLines) => {
     const { stats, idToName } = buildTalkStats(rawLines);
     if (!Object.keys(stats).length) return null;
     const box = document.createElement('div');

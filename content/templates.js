@@ -74,7 +74,7 @@ const openPageCreateModal = async () => {
             if (!y || m < 1 || m > 12) return;
             const date = new Date(y, m - 1, 1);
             const pageName = `${formatYm(date)}_研究ノート_${settings.userName}`;
-            location.assign(buildCreateNoteUrl(currentProjectName, pageName, generateResearchNoteBody(date, settings.userName)));
+            location.assign(generateCreateNoteUrl(currentProjectName, pageName, generateResearchNoteBody(date, settings.userName)));
         };
 
         noteRow.append(yearInput, monthInput, noteBtn);
@@ -96,7 +96,7 @@ const openPageCreateModal = async () => {
     presBtn.onclick = () => {
         const name = presInput.value.trim();
         if (!name) return;
-        location.assign(buildCreateNoteUrl(currentProjectName,
+        location.assign(generateCreateNoteUrl(currentProjectName,
             `発表練習 ${name}（${formatYmd(new Date())}）`,
             generatePresentationBody(name)));
     };
@@ -119,7 +119,7 @@ const openPageCreateModal = async () => {
     paperBtn.onclick = () => {
         const title = paperInput.value.trim();
         if (!title) return;
-        location.assign(buildCreateNoteUrl(currentProjectName, title, generatePaperIntroBody(title, settings.userName)));
+        location.assign(generateCreateNoteUrl(currentProjectName, title, generatePaperIntroBody(title, settings.userName)));
     };
 
     paperRow.append(paperInput, paperBtn);

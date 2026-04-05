@@ -159,7 +159,7 @@ const _select = (value, options) => {
 };
 
 /* --- タブ切替ヘルパー --- */
-const createTabs = (tabs) => {
+const renderTabs = (tabs) => {
     const bar = document.createElement('div');
     bar.className = 'sb-tab-bar';
     const panels = [];
@@ -359,7 +359,7 @@ const openSettingsModal = async () => {
     );
 
     /* ===== タブ組み立て ===== */
-    const { bar, panels } = createTabs([
+    const { bar, panels } = renderTabs([
         { label: '基本', content: basicContent },
         { label: 'メイン', content: mainContent },
         { label: 'カレンダー', content: calContent },

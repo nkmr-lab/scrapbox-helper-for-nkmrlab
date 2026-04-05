@@ -2,7 +2,7 @@
 
 const renderPresentationFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines);
-    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, createStandardPanel);
+    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
 
     const isPresentationTitleLine = (lineText) =>
@@ -38,7 +38,7 @@ const renderPresentationFromLines = (pageName, rawLines) => {
         appendQuestionList(fragment, questions);
     });
 
-    const statsBlock = createTalkStatsBlock(rawLines);
+    const statsBlock = renderTalkStatsBlock(rawLines);
     if (statsBlock) fragment.appendChild(statsBlock);
     bodyNode.replaceChildren(fragment);
 };

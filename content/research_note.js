@@ -31,7 +31,7 @@ const isMyThisMonthResearchNote = (pageName, userName) => {
     return +m[1] === now.getFullYear() && +m[2] === now.getMonth() + 1;
 };
 
-const buildCreateNoteUrl = (project, pageName, body) =>
+const generateCreateNoteUrl = (project, pageName, body) =>
     `https://scrapbox.io/${project}/${encodeURIComponent(pageName)}?body=${encodeURIComponent(body)}`;
 
 const countDateHeaders = (lines) =>
@@ -51,7 +51,7 @@ const renderResearchNoteCreateUI = ({ userName, pageName, rawLines }) => {
     if (!pageName || !/研究ノート/.test(pageName) || !userName) return;
     if (!isMyResearchNotePage(pageName, userName)) return;
 
-    const calendarPanel = document.getElementById(CALENDAR_ID);
+    const calendarPanel = document.getElementById(CALENDAR_PANEL_ID);
     if (!calendarPanel) return;
     if (countDateHeaders(rawLines) > 0) return;
 
@@ -75,7 +75,7 @@ const renderResearchNoteCreateUI = ({ userName, pageName, rawLines }) => {
         const targetPage = `${ym}_研究ノート_${userName}`;
         const body = generateResearchNoteBody(baseDate, userName);
         removeResearchNoteCreateUI();
-        location.assign(buildCreateNoteUrl(currentProjectName, targetPage, body));
+        location.assign(generateCreateNoteUrl(currentProjectName, targetPage, body));
     };
 
     box.appendChild(btn);

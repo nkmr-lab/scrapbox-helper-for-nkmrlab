@@ -51,7 +51,7 @@ const findTodayLine = (lines) => {
 };
 
 /* ========== パネル生成 ========== */
-const createCalendarPanel = (pageName) => {
+const renderCalendarPanel = (pageName) => {
     const panelNode = document.createElement('div');
     panelNode.className = 'sb-panel sb-panel-calendar';
     applyPanelSettings(panelNode, 'calendar');
@@ -75,30 +75,30 @@ const createCalendarPanel = (pageName) => {
 
     applyCalendarLayout(panelNode, gridNode);
 
-    const toggleBtn = createButton('[拡大]', () => {
+    const toggleBtn = renderButton('[拡大]', () => {
         calendarExpanded = !calendarExpanded;
         applyCalendarLayout(panelNode, gridNode);
         toggleBtn.textContent = calendarExpanded ? '[縮小]' : '[拡大]';
     });
 
     headerNode.append(
-        createButton('◀', () => {
+        renderButton('◀', () => {
             const np = shiftMonthInPageName(pageName, -1);
             if (np) location.assign(`/${currentProjectName}/${encodeURIComponent(np)}`);
         }),
         document.createTextNode(ym ? `${ym[1]}年${parseInt(ym[2], 10)}月` : ''),
-        createButton('▶', () => {
+        renderButton('▶', () => {
             const np = shiftMonthInPageName(pageName, 1);
             if (np) location.assign(`/${currentProjectName}/${encodeURIComponent(np)}`);
         }),
         Object.assign(document.createElement('span'), { className: 'sb-flex-spacer' }),
-        createButton('[今月へ]', () => {
+        renderButton('[今月へ]', () => {
             const np = todayPage(pageName);
             if (np) location.assign(`/${currentProjectName}/${encodeURIComponent(np)}`);
         }),
         toggleBtn,
-        createButton('✕', () => {
-            closedPanels.add(CALENDAR_ID);
+        renderButton('✕', () => {
+            closedPanels.add(CALENDAR_PANEL_ID);
             panelNode.remove();
             document.getElementById(TODO_PANEL_ID)?.style.removeProperty('display');
         })
@@ -110,12 +110,12 @@ const createCalendarPanel = (pageName) => {
 };
 
 const renderCalendar = (pageName) => {
-    getOrCreatePanel(CALENDAR_ID, () => createCalendarPanel(pageName));
+    getOrCreatePanel(CALENDAR_PANEL_ID, () => renderCalendarPanel(pageName));
 };
 
 /* ========== カレンダーデータ描画 ========== */
 const renderCalendarFromLines = (pageName, json) => {
-    const panelNode = document.getElementById(CALENDAR_ID);
+    const panelNode = document.getElementById(CALENDAR_PANEL_ID);
     if (!panelNode) return;
 
     const gridNode = panelNode.querySelector('.' + CALENDAR_GRID_CLASS);

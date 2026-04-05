@@ -14,7 +14,7 @@ const getCurrentPageName = () => {
     return match ? decodeURIComponent(match[1]) : null;
 };
 
-const renderFloatMenu = async () => {
+const openFloatMenu = async () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
 
     const settings = await loadSettings(currentProjectName);
@@ -126,6 +126,6 @@ const renderFloatMenu = async () => {
     document.body.appendChild(wrapper);
 };
 
-const removeFloatMenu = () => {
+const closeFloatMenu = () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
 };

@@ -60,7 +60,7 @@ const generatePaperIntroBody = (title, userName) => {
 
 /* --- パネル描画 --- */
 
-const renderPaperPanelFromLines = (pageName, rawLines) => {
+const renderPaperIntroFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines);
     if (!isPaperIntroPage(lines)) return;
 
@@ -86,14 +86,14 @@ const renderPaperPanelFromLines = (pageName, rawLines) => {
 
     const questions = Array.from(questionMap.values());
 
-    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, createStandardPanel);
+    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     setupPanelHeader(panelNode, rawLines, '📄');
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
 
     const fragment = document.createDocumentFragment();
     appendQuestionList(fragment, questions);
 
-    const statsBlock = createTalkStatsBlock(rawLines);
+    const statsBlock = renderTalkStatsBlock(rawLines);
     if (statsBlock) fragment.appendChild(statsBlock);
     bodyNode.replaceChildren(fragment);
 };

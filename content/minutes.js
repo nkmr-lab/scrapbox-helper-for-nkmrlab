@@ -1,10 +1,10 @@
 /* ==================== 議事録 ====================== */
 
 const renderMinutesFromLines = async (rawLines) => {
-    const enableOpenAI = await isEnableOpenAI();
+    const enableOpenAI = await isOpenAIEnabled();
     const lines = normalizeLines(rawLines, { withUid: true });
 
-    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, createStandardPanel);
+    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
     const fragment = document.createDocumentFragment();
 
@@ -116,7 +116,7 @@ const renderMinutesFromLines = async (rawLines) => {
         });
     });
 
-    const statsBlock = createTalkStatsBlock(rawLines);
+    const statsBlock = renderTalkStatsBlock(rawLines);
     if (statsBlock) fragment.appendChild(statsBlock);
     bodyNode.replaceChildren(fragment);
 };

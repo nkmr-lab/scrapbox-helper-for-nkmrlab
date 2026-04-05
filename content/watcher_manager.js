@@ -9,10 +9,10 @@ class WatcherManager {
                 fetchPage,
                 headPageETag,
                 onInit: ({ pageName, json }) => {
-                    if (isPaperIntroPage(json.lines)) renderPaperPanelFromLines(pageName, json.lines);
+                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines);
                 },
                 onUpdate: ({ pageName, json }) => {
-                    if (isPaperIntroPage(json.lines)) renderPaperPanelFromLines(pageName, json.lines);
+                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines);
                 }
             }),
 

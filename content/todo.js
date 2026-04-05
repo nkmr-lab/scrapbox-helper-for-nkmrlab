@@ -1,6 +1,6 @@
 /* ================= TODO パネル ================= */
 
-const createTodoRow = (todo) => {
+const renderTodoRow = (todo) => {
     const itemNode = document.createElement('div');
     itemNode.className = 'sb-todo-row' + (todo.done ? ' sb-todo-row--done' : '');
     itemNode.textContent = '□ ' + todo.text + (todo.date ? ` (${todo.date})` : '');
@@ -29,7 +29,7 @@ const extractTodos = (settings, lines) => {
 };
 
 const positionTodoPanel = (panelNode, settings) => {
-    const cal = document.getElementById(CALENDAR_ID);
+    const cal = document.getElementById(CALENDAR_PANEL_ID);
     if (!cal) return;
 
     const rect = cal.getBoundingClientRect();
@@ -99,7 +99,7 @@ const renderTodoPanel = async (lines) => {
 
     const items = [];
     [...activeTodos, ...doneTodos].forEach(todo => {
-        const row = createTodoRow(todo);
+        const row = renderTodoRow(todo);
         items.push({ dom: row, done: todo.done });
         list.appendChild(row);
     });
