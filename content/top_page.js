@@ -38,6 +38,10 @@ const renderProjectTop = async () => {
     });
 
     renderMyResearchNote(panelNode, settings);
+
+    const pinnedPages = await loadPinnedPages(projectName);
+    renderPinnedPages(panelNode, pinnedPages);
+
     renderFrequentPages(panelNode, history);
     renderHistory(panelNode, history);
 
