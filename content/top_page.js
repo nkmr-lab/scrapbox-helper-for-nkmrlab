@@ -46,7 +46,7 @@ const renderProjectTop = async () => {
     renderHistory(panelNode, history);
 
     const btnRow = document.createElement('div');
-    btnRow.className = 'sb-form-row';
+    btnRow.className = 'sb-form-row sb-menu-btn-row';
 
     if (shouldShowPageCreate(settings)) {
         const createBtn = document.createElement('button');

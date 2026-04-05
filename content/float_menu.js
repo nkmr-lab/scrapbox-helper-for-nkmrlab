@@ -104,7 +104,7 @@ const renderFloatMenu = async () => {
 
     /* メニューボタン */
     const btnRow = document.createElement('div');
-    btnRow.className = 'sb-form-row';
+    btnRow.className = 'sb-form-row sb-menu-btn-row';
 
     if (showCreate) {
         const createBtn = document.createElement('button');
