@@ -21,7 +21,6 @@ const createStandardPanel = (panelType = 'other') => {
     panelNode.className = 'sb-panel';
     applyPanelSettings(panelNode, panelType);
     attachCloseButton(panelNode, MAIN_PANEL_ID);
-    attachSettingsButton(panelNode);
 
     const titleNode = document.createElement('div');
     titleNode.id = MAIN_TITLE_ID;

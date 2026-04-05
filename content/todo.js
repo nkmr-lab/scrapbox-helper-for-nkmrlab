@@ -93,7 +93,6 @@ const renderTodoPanel = async (lines) => {
 
     appendPanelTitle(panelNode, `📝 TODO LIST（${activeTodos.length} / ${todos.length}）`);
     attachCloseButton(panelNode, TODO_PANEL_ID);
-    attachSettingsButton(panelNode);
 
     const list = document.createElement('div');
     panelNode.appendChild(list);
