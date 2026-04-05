@@ -19,7 +19,7 @@ const renderPageCreateMenu = (panelNode, settings) => {
     const container = document.createElement('div');
     container.className = 'sb-settings-field';
 
-    appendSectionHeader(panelNode, '📝 ページ生成', () => {
+    appendMenuHeader(panelNode, '📝 ページ生成', () => {
         container.style.display = container.style.display !== 'none' ? 'none' : '';
     });
     container.style.display = 'none';

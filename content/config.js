@@ -407,5 +407,5 @@ const openSettingsModal = async () => {
 };
 
 const renderSettingsEntry = (panelNode) => {
-    appendSectionHeader(panelNode, '\u3000⚙ 設定', () => openSettingsModal());
+    appendMenuHeader(panelNode, '\u3000⚙ 設定', () => openSettingsModal());
 };

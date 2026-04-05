@@ -64,6 +64,10 @@ const appendSectionHeader = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, cls, onClick);
 };
 
+const appendMenuHeader = (parentNode, text, onClick) => {
+    return appendEl(parentNode, text, 'sb-section sb-section--menu', onClick);
+};
+
 const appendItem = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-item', onClick);
 };
