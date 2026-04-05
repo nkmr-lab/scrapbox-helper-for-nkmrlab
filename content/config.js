@@ -95,7 +95,10 @@ const applyPanelSettings = async (panelNode, panelType = 'main') => {
     } else {
         panelNode.style.maxHeight = layout.height + 'px';
     }
-    applyPosition(panelNode, layout.position);
+    /* TODOパネルの位置はカレンダーに追従するため、ここでは設定しない */
+    if (panelType !== 'todo') {
+        applyPosition(panelNode, layout.position);
+    }
     panelNode.style.opacity = '1';
 
     panelNode.onmouseenter = () => {

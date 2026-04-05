@@ -57,11 +57,11 @@ const renderTodoPanel = async (lines) => {
     const panelNode = getOrCreatePanel(TODO_PANEL_ID, () => {
         const p = document.createElement('div');
         p.className = 'sb-panel';
-        applyPanelSettings(p, 'todo');
-        positionTodoPanel(p, settings);
         return p;
     });
     if (!panelNode) return;
+    await applyPanelSettings(panelNode, 'todo');
+    positionTodoPanel(panelNode, settings);
     panelNode.innerHTML = '';
 
     const activeTodos = todos.filter(t => !t.done);
