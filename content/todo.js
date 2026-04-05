@@ -33,19 +33,20 @@ const positionTodoPanel = (panelNode, settings) => {
     if (!calendarPanel) return;
 
     const rect = calendarPanel.getBoundingClientRect();
+    const rightGap = window.innerWidth - rect.right;
     const calOnRight = rect.left > window.innerWidth / 2;
 
     if (settings.todoPosition === 'below') {
         panelNode.style.top = (rect.bottom + 10) + 'px';
         if (calOnRight) {
-            panelNode.style.right = (window.innerWidth - rect.right) + 'px';
+            panelNode.style.right = rightGap + 'px';
         } else {
             panelNode.style.left = rect.left + 'px';
         }
     } else {
         panelNode.style.top = rect.top + 'px';
         if (calOnRight) {
-            panelNode.style.right = (window.innerWidth - rect.left + 10) + 'px';
+            panelNode.style.right = (rightGap + rect.width + 10) + 'px';
         } else {
             panelNode.style.left = (rect.right + 10) + 'px';
         }
