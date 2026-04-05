@@ -25,6 +25,7 @@
         "content/minutes.js",
         "content/paper_intro.js",
         "content/presentation.js",
+        "content/float_menu.js",
         "content/watcher_manager.js",
         "content/router.js",
         "content/main.js"

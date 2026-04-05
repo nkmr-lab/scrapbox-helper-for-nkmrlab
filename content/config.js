@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS = {
     mainHeight: 560,
     theme: 'normal',
     customColors: {},
+    showPageCreate: 'auto',  // 'auto'(nkmr-labのみ) | 'show' | 'hide'
 };
 
 const getPanelSize = (settings, panelType) => {
@@ -145,6 +146,11 @@ const renderSettingsPanel = async (panelNode) => {
     const mainWI = input(settings.mainWidth, 'number');
     const mainHI = input(settings.mainHeight, 'number');
     const themeI = select(settings.theme, Object.entries(THEME_LABELS));
+    const pageCreateI = select(settings.showPageCreate, [
+        ['auto', '自動（nkmr-labのみ表示）'],
+        ['show', '常に表示'],
+        ['hide', '非表示'],
+    ]);
 
     panelNode.append(
         sectionLabel('基本設定'),
@@ -158,6 +164,8 @@ const renderSettingsPanel = async (panelNode) => {
         field('横幅', mainWI), field('縦幅', mainHI),
         sectionLabel('カラーテーマ'),
         field('テーマ', themeI),
+        sectionLabel('フロートメニュー'),
+        field('ページ生成メニュー', pageCreateI),
     );
 
     /* カスタムカラー */
@@ -234,6 +242,7 @@ const renderSettingsPanel = async (panelNode) => {
             todoWidth: +todoWI.value, todoHeight: +todoHI.value,
             mainWidth: +mainWI.value, mainHeight: +mainHI.value,
             theme: themeI.value, customColors: newCustom,
+            showPageCreate: pageCreateI.value,
         });
         location.reload();
     };

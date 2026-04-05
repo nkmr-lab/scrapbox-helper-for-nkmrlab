@@ -218,6 +218,26 @@ const injectStyleSheet = () => {
 .sb-form-input { flex:1; font-size:12px; padding:2px 4px; }
 .sb-small-btn { font-size:12px; cursor:pointer; }
 
+/* ===== Float Menu ===== */
+.sb-float-toggle {
+    position:fixed; bottom:16px; right:16px; z-index:100000;
+    width:36px; height:36px; border-radius:50%;
+    background:var(--sb-titleBg); color:var(--sb-titleText);
+    border:1px solid var(--sb-panelBorder);
+    box-shadow:0 2px 8px var(--sb-panelShadow);
+    cursor:pointer; font-size:18px; line-height:36px; text-align:center;
+    transition:opacity .2s;
+}
+.sb-float-toggle:hover { opacity:0.8; }
+.sb-float-panel {
+    position:fixed; bottom:60px; right:16px; z-index:100000;
+    background:var(--sb-panelBg); color:var(--sb-text);
+    border:1px solid var(--sb-panelBorder);
+    box-shadow:0 2px 10px var(--sb-panelShadow);
+    font:12px/1.5 sans-serif; overflow:auto;
+    width:320px; max-height:70vh; padding:8px;
+}
+
 /* ===== Layout helpers ===== */
 .sb-flex-spacer { margin-left:auto; }
 .sb-row { display:flex; gap:4px; align-items:center; }

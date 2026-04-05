@@ -5,9 +5,9 @@ const createRouter = (watcherManager) => {
         document.getElementById(CALENDAR_ID)?.remove();
         document.getElementById(MAIN_PANEL_ID)?.remove();
         document.getElementById(TODO_PANEL_ID)?.remove();
+        removeFloatMenu();
     };
 
-    /* 名前で分類できなかったページ → 中身を見て判定 */
     const routeByContent = async (projectName, pageName) => {
         const json = await fetchPage(projectName, pageName);
         if (!isExtensionAlive() || !json) return;
@@ -20,7 +20,6 @@ const createRouter = (watcherManager) => {
         }
     };
 
-    /* 種別ごとのハンドラ */
     const handlers = {
         'research-note': (pj, pg) => watcherManager.start('researchNote', pj, pg),
         'experiment-plan': (_pj, pg) => renderExperimentPlan(pg),
@@ -51,6 +50,9 @@ const createRouter = (watcherManager) => {
         await initTheme(currentProjectName);
         await loadUserNameCache(currentProjectName);
         saveHistory(currentProjectName, pageName);
+
+        /* フロートメニューは全ページで表示 */
+        renderFloatMenu();
 
         if (!pageName) {
             if (!isExtensionAlive()) return;

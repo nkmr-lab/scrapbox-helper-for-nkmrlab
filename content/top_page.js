@@ -11,7 +11,8 @@ const renderMyResearchNote = (panelNode, settings) => {
     );
 };
 
-/* ================= ページ生成メニュー ================= */
+/* ================= ページ生成テンプレート ================= */
+/* フロートメニューから呼ばれる */
 
 const PRESENTATION_SLOT_COUNT = 3;
 
@@ -25,6 +26,9 @@ const generatePresentationBody = (conferenceName) => {
     for (let i = 0; i < PRESENTATION_SLOT_COUNT; i++) body += slot + '\n';
     return body;
 };
+
+/* ================= ページ生成メニュー ================= */
+/* フロートメニュー・トップページ両方から呼べる */
 
 const renderPageCreateMenu = (panelNode, settings) => {
     const container = document.createElement('div');
@@ -142,20 +146,10 @@ const renderPageCreateMenu = (panelNode, settings) => {
 
 const renderProjectTop = async () => {
     const projectName = currentProjectName;
-
-    const historyData = await new Promise(resolve => {
-        chrome.storage.local.get(
-            { [historyKey(projectName)]: [] },
-            data => resolve(data[historyKey(projectName)])
-        );
-    });
-
-    if (!isExtensionAlive()) return;
     const settings = await loadSettings(projectName);
+
     if (!isExtensionAlive()) return;
     if (projectName !== currentProjectName) return;
-
-    const history = normalizeHistoryEntries(historyData);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, () => {
         const parent = document.createElement('div');
@@ -167,10 +161,6 @@ const renderProjectTop = async () => {
     });
 
     renderMyResearchNote(panelNode, settings);
-    renderFrequentPages(panelNode, history);
-    renderHistory(panelNode, history);
-    renderPageCreateMenu(panelNode, settings);
-    renderSettingsEntry(panelNode);
 
     document.body.appendChild(panelNode);
 };
