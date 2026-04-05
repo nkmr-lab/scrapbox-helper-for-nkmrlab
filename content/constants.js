@@ -18,6 +18,7 @@ const isNkmrLabProject = () => currentProjectName === 'nkmr-lab';
 const settingsKey = projectName => `sb:${projectName}:settings`;
 const historyKey = projectName => `sb:${projectName}:history`;
 const userMapKey = projectName => `sb:${projectName}:userMap`;
+const pinnedKey = projectName => `sb:${projectName}:pinned`;
 
 /* --- Timing (ms) --- */
 const TICK_INTERVAL = 600;

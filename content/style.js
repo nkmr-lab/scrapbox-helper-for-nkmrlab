@@ -278,6 +278,24 @@ const injectStyleSheet = () => {
 .sb-tab-content { display:none; }
 .sb-tab-content--active { display:block; }
 
+/* ===== Pin ===== */
+.sb-pin-row {
+    display:flex; align-items:center; gap:4px;
+}
+.sb-pin-link {
+    flex:1; cursor:pointer;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sb-pin-remove {
+    cursor:pointer; font-size:10px; color:var(--sb-textMuted);
+    flex-shrink:0; padding:0 2px;
+}
+.sb-pin-remove:hover { color:var(--sb-text); }
+.sb-pin-btn {
+    cursor:pointer; font-size:11px; padding:2px 8px;
+    border:1px solid var(--sb-border); color:#000;
+}
+
 /* ===== Layout helpers ===== */
 .sb-flex-spacer { margin-left:auto; }
 .sb-row { display:flex; gap:4px; align-items:center; }

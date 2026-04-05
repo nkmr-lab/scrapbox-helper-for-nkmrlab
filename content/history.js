@@ -1,3 +1,63 @@
+/* ================= ピン留め ================= */
+
+const loadPinnedPages = (projectName) => {
+    return new Promise(resolve => {
+        chrome.storage.local.get(
+            { [pinnedKey(projectName)]: [] },
+            data => resolve(data[pinnedKey(projectName)] || [])
+        );
+    });
+};
+
+const savePinnedPages = (projectName, pinned) => {
+    chrome.storage.local.set({ [pinnedKey(projectName)]: pinned });
+};
+
+const pinPage = async (projectName, pageName) => {
+    const pinned = await loadPinnedPages(projectName);
+    if (pinned.includes(pageName)) return;
+    pinned.push(pageName);
+    savePinnedPages(projectName, pinned);
+};
+
+const unpinPage = async (projectName, pageName) => {
+    const pinned = await loadPinnedPages(projectName);
+    const filtered = pinned.filter(p => p !== pageName);
+    savePinnedPages(projectName, filtered);
+};
+
+const isPagePinned = async (projectName, pageName) => {
+    const pinned = await loadPinnedPages(projectName);
+    return pinned.includes(pageName);
+};
+
+const renderPinnedPages = (panelNode, pinned) => {
+    if (!pinned.length) return;
+
+    appendSectionHeader(panelNode, '📌 ピン留め');
+    pinned.forEach(pageName => {
+        const row = document.createElement('div');
+        row.className = 'sb-item sb-pin-row';
+
+        const link = document.createElement('span');
+        link.textContent = '・' + pageName;
+        link.className = 'sb-pin-link';
+        link.onclick = () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`);
+
+        const removeBtn = document.createElement('span');
+        removeBtn.textContent = '✕';
+        removeBtn.className = 'sb-pin-remove';
+        removeBtn.onclick = async (e) => {
+            e.stopPropagation();
+            await unpinPage(currentProjectName, pageName);
+            row.remove();
+        };
+
+        row.append(link, removeBtn);
+        panelNode.appendChild(row);
+    });
+};
+
 /* ================= 履歴管理 ================= */
 
 const saveHistory = (projectName, pageName) => {
