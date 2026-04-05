@@ -29,24 +29,32 @@ const extractTodos = (settings, lines) => {
 };
 
 const positionTodoPanel = (panelNode, settings) => {
-    const calendarPanel = document.getElementById(CALENDAR_ID);
-    if (!calendarPanel) return;
+    const cal = document.getElementById(CALENDAR_ID);
+    if (!cal) return;
 
-    const rect = calendarPanel.getBoundingClientRect();
-    const rightGap = window.innerWidth - rect.right;
-    const calOnRight = rect.left > window.innerWidth / 2;
+    const rect = cal.getBoundingClientRect();
+    /* カレンダーに設定されているインラインの位置プロパティを直接参照 */
+    const calRight = cal.style.right;
+    const calLeft = cal.style.left;
+    const calOnRight = !!calRight && calRight !== '';
+
+    /* 位置プロパティをリセット */
+    panelNode.style.top = '';
+    panelNode.style.bottom = '';
+    panelNode.style.left = '';
+    panelNode.style.right = '';
 
     if (settings.todoPosition === 'below') {
         panelNode.style.top = (rect.bottom + 10) + 'px';
         if (calOnRight) {
-            panelNode.style.right = rightGap + 'px';
+            panelNode.style.right = calRight;
         } else {
-            panelNode.style.left = rect.left + 'px';
+            panelNode.style.left = calLeft;
         }
     } else {
-        panelNode.style.top = rect.top + 'px';
+        panelNode.style.top = (cal.style.top || rect.top + 'px');
         if (calOnRight) {
-            panelNode.style.right = (rightGap + rect.width + 10) + 'px';
+            panelNode.style.right = (parseFloat(calRight) + rect.width + 10) + 'px';
         } else {
             panelNode.style.left = (rect.right + 10) + 'px';
         }
