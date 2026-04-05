@@ -26,6 +26,7 @@
         "content/paper_intro.js",
         "content/presentation.js",
         "content/watcher_manager.js",
+        "content/router.js",
         "content/main.js"
       ],
       "type": "module"

@@ -22,7 +22,22 @@ const formatYmd = (date) => {
     return `${formatYm(date)}.${String(date.getDate()).padStart(2, '0')}`;
 };
 
-/* --- ページ判定 --- */
+/* --- ページ種別判定 --- */
+const PAGE_TYPES = {
+    'research-note':   /研究ノート/,
+    'experiment-plan': /実験計画書/,
+    'presentation':    /発表練習/,
+    'minutes':         /議事録/,
+};
+
+const classifyPageByName = (pageName) => {
+    if (!pageName) return 'project-top';
+    for (const [type, pattern] of Object.entries(PAGE_TYPES)) {
+        if (pattern.test(pageName)) return type;
+    }
+    return 'unknown';
+};
+
 const isPaperIntroPage = (lines) =>
     lines.some(line => (line.text || '').includes('#論文紹介'));
 
