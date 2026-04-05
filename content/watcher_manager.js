@@ -1,113 +1,63 @@
+/* ================= Watcher 管理 ================= */
+
 class WatcherManager {
-  constructor() {
-    this.currentProjectName = null;
+    constructor() {
+        this.projectName = null;
 
-    this.paperIntroWatcher = new PageWatcher({
-      fetchPage,
-      headPageETag,
+        this.watchers = {
+            paperIntro: new PageWatcher({
+                fetchPage,
+                headPageETag,
+                onInit: ({ pageName, json }) => {
+                    if (isPaperIntroPage(json.lines)) renderPaperPanelFromLines(pageName, json.lines);
+                },
+                onUpdate: ({ pageName, json }) => {
+                    if (isPaperIntroPage(json.lines)) renderPaperPanelFromLines(pageName, json.lines);
+                }
+            }),
 
-      onInit: ({ pageName, json }) => {
-        if (!isPaperIntroPage(json.lines)) return;
-        renderPaperPanelFromLines(pageName, json.lines);
-      },
+            presentation: new PageWatcher({
+                fetchPage,
+                headPageETag,
+                onInit: ({ pageName, json }) => renderPresentationFromLines(pageName, json.lines),
+                onUpdate: ({ pageName, json }) => renderPresentationFromLines(pageName, json.lines),
+            }),
 
-      onUpdate: ({ pageName, json }) => {
-        if (!isPaperIntroPage(json.lines)) return;
-        renderPaperPanelFromLines(pageName, json.lines);
-      }
-    });
+            researchNote: new PageWatcher({
+                fetchPage,
+                headPageETag,
+                onInit: async ({ pageName, json }) => {
+                    const settings = await loadSettings(this.projectName);
+                    renderCalendar(pageName);
+                    renderCalendarFromLines(pageName, json);
+                    renderResearchNoteCreateUI({
+                        userName: settings.userName,
+                        pageName,
+                        rawLines: json.lines
+                    });
+                    renderTodoPanel(json.lines);
+                },
+                onUpdate: ({ pageName, json }) => {
+                    renderCalendarFromLines(pageName, json);
+                    renderTodoPanel(json.lines);
+                }
+            }),
 
-    this.presentationTrainingWatcher = new PageWatcher({
-      fetchPage,
-      headPageETag,
-
-      onInit: ({ pageName, json }) => {
-        renderPresentationTrainingFromLines(pageName, json.lines);
-      },
-
-      onUpdate: ({ pageName, json }) => {
-        renderPresentationTrainingFromLines(pageName, json.lines);
-      }
-    });
-
-    this.researchNoteWatcher = new PageWatcher({
-      fetchPage,
-      headPageETag,
-
-      onInit: ({ pageName, json }) => {
-        loadSettings(this.currentProjectName, settings => {
-          renderCalendar(pageName);
-          renderCalendarFromLines(pageName, json);
-          renderResearchNoteCreateUI({
-            userName: settings.userName,
-            pageName,
-            rawLines: json.lines
-          });
-          renderTodoPanel(json.lines);
-        });
-      },
-
-      onUpdate: ({ pageName, json }) => {
-        renderCalendarFromLines(pageName, json);
-        renderTodoPanel(json.lines);
-      }
-    });
-
-    this.minutesWatcher = new PageWatcher({
-      fetchPage,
-      headPageETag,
-
-      onInit: ({ pageName, json }) => {
-        renderMinutesFromLines(json.lines);
-      },
-
-      onUpdate: ({ pageName, json }) => {
-        renderMinutesFromLines(json.lines);
-      }
-    });
-  }
-
-  setProjectName(projectName) {
-    this.currentProjectName = projectName;
-  }
-
-  stopAllWatchers() {
-    this.researchNoteWatcher?.stop();
-    this.paperIntroWatcher?.stop();
-    this.minutesWatcher?.stop();
-    this.presentationTrainingWatcher?.stop();
-  }
-
-  startResearchNoteWatcher(projectName, pageName) {
-    this.currentProjectName = projectName;
-    this.researchNoteWatcher.start(projectName, pageName);
-  }
-
-  startPaperIntroWatcher(projectName, pageName) {
-    this.currentProjectName = projectName;
-    this.paperIntroWatcher.start(projectName, pageName);
-  }
-
-  startMinutesWatcher(projectName, pageName) {
-    this.currentProjectName = projectName;
-    this.minutesWatcher.start(projectName, pageName);
-  }
-
-  startPresentationTrainingWatcher(projectName, pageName) {
-    this.currentProjectName = projectName;
-    this.presentationTrainingWatcher.start(projectName, pageName);
-  }
-
-  route(projectName, pageName, json) {
-    this.currentProjectName = projectName;
-    const lines = normalizeLines(json.lines);
-
-    if (isPaperIntroPage(lines)) {
-      this.paperIntroWatcher.start(projectName, pageName);
-    } else {
-      this.minutesWatcher.start(projectName, pageName);
+            minutes: new PageWatcher({
+                fetchPage,
+                headPageETag,
+                onInit: ({ pageName, json }) => renderMinutesFromLines(json.lines),
+                onUpdate: ({ pageName, json }) => renderMinutesFromLines(json.lines),
+            }),
+        };
     }
-  }
-}
 
-window.WatcherManager = WatcherManager;
+    stopAll() {
+        Object.values(this.watchers).forEach(w => w.stop());
+    }
+
+    start(type, projectName, pageName) {
+        this.projectName = projectName;
+        this.watchers[type]?.start(projectName, pageName);
+    }
+}

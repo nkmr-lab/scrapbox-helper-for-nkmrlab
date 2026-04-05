@@ -1,48 +1,51 @@
-  /* ================= トップページ ================= */
-  const renderMyResearchNote = (panelNode, setting) => {
-    if (!setting.userName) return;
-    const date = new Date();
+/* ================= トップページ ================= */
 
-    const ym = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const pageName = `${ym}_研究ノート_${setting.userName}`;
+const renderMyResearchNote = (panelNode, settings) => {
+    if (!settings.userName) return;
+    const pageName = `${formatYm(new Date())}_研究ノート_${settings.userName}`;
+
     appendSectionHeader(panelNode, '🧑 自分の研究ノート');
-    appendTextNode(panelNode, '📅 ' + pageName, [Styles.text.item, Styles.list.ellipsis].join(""), () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`));
-  };
+    appendTextNode(
+        panelNode, '📅 ' + pageName, ITEM_STYLE,
+        () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`)
+    );
+};
 
-  const renderProjectTop = () => {
+const renderProjectTop = async () => {
     const projectName = currentProjectName;
 
-    chrome.storage.local.get(
-      { [historyKey(projectName)]: [] },
-      data => {
-        if (!isExtensionAlive()) return;
-        loadSettings(projectName, setting => {
-          if (!isExtensionAlive()) return;
-          if (projectName !== currentProjectName) return;
+    const historyData = await new Promise(resolve => {
+        chrome.storage.local.get(
+            { [historyKey(projectName)]: [] },
+            data => resolve(data[historyKey(projectName)])
+        );
+    });
 
-          const history = normalizeHistoryEntries(
-            data[historyKey(projectName)]
-          );
+    if (!isExtensionAlive()) return;
 
-          const panelNode = getOrCreatePanel(
-            MAIN_PANEL_ID,
-            () => {
-              const parent = document.createElement('div');
-              applyStyle(parent, Styles.panel.base, Styles.panelMain);
-              applyPanelSettings(parent);
-              attachCloseButton(parent, MAIN_PANEL_ID);
-              appendPanelTitle(parent, "Project: " + currentProjectName);
-              return parent;
-            }
-          );
+    const settings = await loadSettings(projectName);
 
-          renderMyResearchNote(panelNode, setting);
-          renderFrequentPages(panelNode, history);
-          renderHistory(panelNode, history);
-          renderSettingsEntry(panelNode);
+    if (!isExtensionAlive()) return;
+    if (projectName !== currentProjectName) return;
 
-          document.body.appendChild(panelNode);
-        });
-      }
+    const history = normalizeHistoryEntries(historyData);
+
+    const panelNode = getOrCreatePanel(
+        MAIN_PANEL_ID,
+        () => {
+            const parent = document.createElement('div');
+            applyStyle(parent, Styles.panel.base);
+            applyPanelSettings(parent, 'main');
+            attachCloseButton(parent, MAIN_PANEL_ID);
+            appendPanelTitle(parent, 'Project: ' + currentProjectName);
+            return parent;
+        }
     );
-  };
+
+    renderMyResearchNote(panelNode, settings);
+    renderFrequentPages(panelNode, history);
+    renderHistory(panelNode, history);
+    renderSettingsEntry(panelNode);
+
+    document.body.appendChild(panelNode);
+};
