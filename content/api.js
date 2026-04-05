@@ -90,3 +90,11 @@ const summarizeImpressionsByAuthor = async (impressions) => {
 };
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* --- AI結果キャッシュ（ページ遷移でクリア） --- */
+const _aiCache = new Map();
+
+const clearAiCache = () => _aiCache.clear();
+
+const getCachedAiResult = (key) => _aiCache.get(key) ?? null;
+const setCachedAiResult = (key, value) => _aiCache.set(key, value);

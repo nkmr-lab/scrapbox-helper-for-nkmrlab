@@ -140,9 +140,9 @@ const renderProjectTop = async () => {
     });
 
     renderMyResearchNote(panelNode, settings);
-    renderPageCreateMenu(panelNode, settings);
     renderFrequentPages(panelNode, history);
     renderHistory(panelNode, history);
+    renderPageCreateMenu(panelNode, settings);
     renderSettingsEntry(panelNode);
 
     document.body.appendChild(panelNode);

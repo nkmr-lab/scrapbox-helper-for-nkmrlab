@@ -76,8 +76,8 @@ const runBatchGPTReview = async (sections, statusNode) => {
 };
 
 const runSingleSectionReview = async (section) => {
-    if (section._reviewed) return;
-    section._reviewed = true;
+    const cacheKey = `review:${section.id}`;
+    const cached = getCachedAiResult(cacheKey);
 
     let resultBox = section._resultBox;
     if (!resultBox) {
@@ -85,6 +85,13 @@ const runSingleSectionReview = async (section) => {
         resultBox.className = 'sb-review-box';
         section.node.after(resultBox);
         section._resultBox = resultBox;
+    }
+
+    /* キャッシュがあれば復元して終了 */
+    if (cached) {
+        resultBox.textContent = cached.text;
+        resultBox.className = 'sb-review-box ' + cached.cls;
+        return;
     }
 
     resultBox.textContent = '⏳ GPTが確認中…';
@@ -99,9 +106,11 @@ const runSingleSectionReview = async (section) => {
         if (!res || /問題は見当たりません/.test(res)) {
             resultBox.textContent = '✅ 特に問題は見当たりません';
             resultBox.className = 'sb-review-box sb-review-box--ok';
+            setCachedAiResult(cacheKey, { text: resultBox.textContent, cls: 'sb-review-box--ok' });
         } else {
             resultBox.textContent = res;
             resultBox.className = 'sb-review-box sb-review-box--ng';
+            setCachedAiResult(cacheKey, { text: res, cls: 'sb-review-box--ng' });
         }
     } catch (e) {
         resultBox.textContent = '❌ GPTレビューでエラーが発生しました';
