@@ -35,19 +35,19 @@ class WatcherManager {
                         pageName,
                         rawLines: json.lines
                     });
-                    renderTodoPanel(json.lines);
+                    await renderTodoPanel(json.lines);
                 },
-                onUpdate: ({ pageName, json }) => {
+                onUpdate: async ({ pageName, json }) => {
                     renderCalendarFromLines(pageName, json);
-                    renderTodoPanel(json.lines);
+                    await renderTodoPanel(json.lines);
                 }
             }),
 
             minutes: new PageWatcher({
                 fetchPage,
                 headPageETag,
-                onInit: ({ pageName, json }) => renderMinutesFromLines(json.lines),
-                onUpdate: ({ pageName, json }) => renderMinutesFromLines(json.lines),
+                onInit: async ({ pageName, json }) => await renderMinutesFromLines(json.lines),
+                onUpdate: async ({ pageName, json }) => await renderMinutesFromLines(json.lines),
             }),
         };
     }

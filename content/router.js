@@ -24,7 +24,7 @@ const createRouter = (watcherManager) => {
 
     const handlers = {
         'research-note': (pj, pg) => watcherManager.start('researchNote', pj, pg),
-        'experiment-plan': (_pj, pg) => renderExperimentPlan(pg),
+        'experiment-plan': async (_pj, pg) => await renderExperimentPlan(pg),
         'presentation': (pj, pg) => watcherManager.start('presentation', pj, pg),
         'minutes': (pj, pg) => watcherManager.start('minutes', pj, pg),
     };
@@ -66,7 +66,7 @@ const createRouter = (watcherManager) => {
         const type = classifyPageByName(pageName);
         const handler = handlers[type];
         if (handler) {
-            handler(currentProjectName, pageName);
+            await handler(currentProjectName, pageName);
         } else {
             await routeByContent(currentProjectName, pageName);
         }
