@@ -188,59 +188,42 @@ const openSettingsModal = async () => {
 
     const panelNode = modal;
 
-    /* ===== 基本タブ ===== */
-    const basicTab = document.createDocumentFragment();
+    /* ===== 入力要素 ===== */
     const nameI = _input(settings.userName);
-    const todoI = _input(settings.todoMark);
-    const doneI = _input(settings.doneMark);
     const oI = _input(settings.idleOpacity, 'number');
     const apiKeyI = _input(settings.openaiApiKey, 'password');
     apiKeyI.placeholder = 'sk-...';
     const pageCreateI = _select(settings.showPageCreate, [
         ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
     ]);
+    const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
 
-    basicTab.append(
-        _field('名前', nameI), _field('TODO マーク', todoI), _field('完了マーク', doneI),
-        _field('非アクティブ透明度', oI), _field('OpenAI API Key', apiKeyI),
-        _field('ページ生成メニュー', pageCreateI),
-    );
-
-    /* ===== パネルタブ ===== */
-    const panelTab = document.createDocumentFragment();
     const calWI = _input(settings.calendarWidth, 'number');
     const calHI = _input(settings.calendarHeight, 'number');
     const calFI = _input(settings.calendarFontSize, 'number');
+
+    const todoI = _input(settings.todoMark);
+    const doneI = _input(settings.doneMark);
     const todoPosI = _select(settings.todoPosition, [
         ['side', '横（カレンダーの隣）'], ['below', '下（カレンダーの下）'],
     ]);
     const todoWI = _input(settings.todoWidth, 'number');
     const todoHI = _input(settings.todoHeight, 'number');
+
     const mainWI = _input(settings.mainWidth, 'number');
     const mainHI = _input(settings.mainHeight, 'number');
 
-    const sectionLabel = (text) => {
-        const node = document.createElement('div');
-        node.textContent = text;
-        node.className = 'sb-settings-section';
-        return node;
-    };
-
-    panelTab.append(
-        sectionLabel('カレンダー'),
-        _field('横幅', calWI), _field('縦幅', calHI), _field('文字サイズ(px)', calFI),
-        sectionLabel('TODO'),
-        _field('横幅', todoWI), _field('縦幅', todoHI), _field('位置', todoPosI),
-        sectionLabel('メイン（議事録等）'),
-        _field('横幅', mainWI), _field('縦幅', mainHI),
+    /* ===== 基本タブ ===== */
+    const basicContent = document.createElement('div');
+    basicContent.append(
+        _field('名前', nameI),
+        _field('非アクティブ透明度', oI),
+        _field('OpenAI API Key', apiKeyI),
+        _field('ページ生成メニュー', pageCreateI),
+        _field('テーマ', themeI),
     );
 
-    /* ===== テーマタブ ===== */
-    const themeTab = document.createDocumentFragment();
-    const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
-    themeTab.appendChild(_field('テーマ', themeI));
-
-    /* カスタムカラー */
+    /* カスタムカラー（基本タブ内に折りたたみ） */
     const customColors = { ...(settings.customColors || {}) };
     const colorInputs = {};
     const colorSection = document.createElement('div');
@@ -277,13 +260,13 @@ const openSettingsModal = async () => {
         colorSection.appendChild(row);
     });
 
-    const toggleBtn = document.createElement('div');
-    toggleBtn.textContent = '▶ カスタムカラー（詳細）';
-    toggleBtn.className = 'sb-toggle-btn';
-    toggleBtn.onclick = () => {
+    const colorToggle = document.createElement('div');
+    colorToggle.textContent = '▶ カスタムカラー（詳細）';
+    colorToggle.className = 'sb-toggle-btn';
+    colorToggle.onclick = () => {
         const open = colorSection.style.display !== 'none';
         colorSection.style.display = open ? 'none' : '';
-        toggleBtn.textContent = (open ? '▶' : '▼') + ' カスタムカラー（詳細）';
+        colorToggle.textContent = (open ? '▶' : '▼') + ' カスタムカラー（詳細）';
     };
 
     themeI.onchange = () => {
@@ -294,20 +277,33 @@ const openSettingsModal = async () => {
         });
     };
 
-    themeTab.append(toggleBtn, colorSection);
+    basicContent.append(colorToggle, colorSection);
+
+    /* ===== カレンダータブ ===== */
+    const calContent = document.createElement('div');
+    calContent.append(
+        _field('横幅', calWI), _field('縦幅', calHI), _field('文字サイズ(px)', calFI),
+    );
+
+    /* ===== TODOタブ ===== */
+    const todoContent = document.createElement('div');
+    todoContent.append(
+        _field('TODO マーク', todoI), _field('完了マーク', doneI),
+        _field('横幅', todoWI), _field('縦幅', todoHI), _field('位置', todoPosI),
+    );
+
+    /* ===== その他タブ ===== */
+    const otherContent = document.createElement('div');
+    otherContent.append(
+        _field('横幅', mainWI), _field('縦幅', mainHI),
+    );
 
     /* ===== タブ組み立て ===== */
-    const basicWrap = document.createElement('div');
-    basicWrap.appendChild(basicTab);
-    const panelWrap = document.createElement('div');
-    panelWrap.appendChild(panelTab);
-    const themeWrap = document.createElement('div');
-    themeWrap.appendChild(themeTab);
-
     const { bar, panels } = createTabs([
-        { label: '基本', content: basicWrap },
-        { label: 'パネル', content: panelWrap },
-        { label: 'テーマ', content: themeWrap },
+        { label: '基本', content: basicContent },
+        { label: 'カレンダー', content: calContent },
+        { label: 'TODO', content: todoContent },
+        { label: 'その他', content: otherContent },
     ]);
 
     panelNode.append(bar, ...panels);
