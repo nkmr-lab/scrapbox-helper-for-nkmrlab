@@ -2,6 +2,7 @@
 let userNameCache = {};
 let userNameCacheLoaded = false;
 
+/* ユーザーID→名前のマッピングをストレージから読み込む */
 const loadUserNameCache = (projectName) => {
     if (userNameCacheLoaded) return Promise.resolve(userNameCache);
     return new Promise(resolve => {
@@ -16,6 +17,7 @@ const loadUserNameCache = (projectName) => {
     });
 };
 
+/* ユーザーID→名前のマッピングをキャッシュとストレージに保存する */
 const saveUserNameToCache = (projectName, uid, name) => {
     if (!uid || !name) return;
     if (userNameCache[uid] === name) return;
@@ -23,6 +25,7 @@ const saveUserNameToCache = (projectName, uid, name) => {
     chrome.storage.local.set({ [userMapKey(projectName)]: userNameCache });
 };
 
+/* 行データからユーザーごとの発言量統計を集計する */
 const buildTalkStats = (rawLines) => {
     const stats = {};
     const idToName = { ...userNameCache };
@@ -44,6 +47,7 @@ const buildTalkStats = (rawLines) => {
     return { stats, idToName };
 };
 
+/* 発言量統計をバーチャートとして描画する */
 const renderTalkStats = (parentNode, stats, idToName) => {
     const entries = Object.entries(stats);
     if (!entries.length) return;
@@ -82,6 +86,7 @@ const renderTalkStats = (parentNode, stats, idToName) => {
     });
 };
 
+/* 発言量統計ブロックを生成して返す */
 const renderTalkStatsBlock = (rawLines) => {
     const { stats, idToName } = buildTalkStats(rawLines);
     if (!Object.keys(stats).length) return null;

@@ -4,12 +4,14 @@ let calendarExpanded = false;
 const heatLevel = (count) =>
     count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
 
+/* セルにヒートマップの色クラスを適用する */
 const applyHeatmapToCell = (cell) => {
     cell.classList.remove('sb-cal-cell--heat1', 'sb-cal-cell--heat2', 'sb-cal-cell--heat3', 'sb-cal-cell--heat4');
     const level = heatLevel(Number(cell.dataset.count || 0));
     if (level > 0) cell.classList.add(`sb-cal-cell--heat${level}`);
 };
 
+/* カレンダーの拡大/縮小レイアウトを切り替える */
 const applyCalendarLayout = async (panelNode, gridNode) => {
     const settings = await loadSettings(currentProjectName);
 
@@ -33,6 +35,7 @@ const applyCalendarLayout = async (panelNode, gridNode) => {
     root.style.setProperty('--sb-calFontSizeExpanded', settings.calendarFontSizeExpanded + 'px');
 };
 
+/* ページ名の年月を指定オフセット分ずらした新しいページ名を返す */
 const shiftMonthInPageName = (pageName, offset) => {
     const m = pageName.match(/(20\d{2})\.(\d{2})/);
     if (!m) return null;
@@ -45,12 +48,14 @@ const shiftMonthInPageName = (pageName, offset) => {
 const todayPage = (pageName) =>
     pageName.replace(/20\d{2}\.\d{2}/, formatYm(new Date()));
 
+/* 今日の日付に対応する行を検索する */
 const findTodayLine = (lines) => {
     const today = formatYmd(new Date());
     return lines.find(line => typeof line.text === 'string' && line.text.includes(today));
 };
 
 /* ========== パネル生成 ========== */
+/* カレンダーパネルのDOM要素を生成する */
 const renderCalendarPanel = (pageName) => {
     const panelNode = document.createElement('div');
     panelNode.className = 'sb-panel sb-panel-calendar';
@@ -109,11 +114,13 @@ const renderCalendarPanel = (pageName) => {
     return panelNode;
 };
 
+/* カレンダーパネルを取得または新規作成する */
 const renderCalendar = (pageName) => {
     getOrCreatePanel(CALENDAR_PANEL_ID, () => renderCalendarPanel(pageName));
 };
 
 /* ========== カレンダーデータ描画 ========== */
+/* ページ行データからカレンダーのセルを描画する */
 const renderCalendarFromLines = (pageName, json) => {
     const panelNode = document.getElementById(CALENDAR_PANEL_ID);
     if (!panelNode) return;

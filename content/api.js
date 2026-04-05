@@ -1,6 +1,7 @@
 /* ================= API ================= */
 
 /* --- Scrapbox API --- */
+/* Scrapboxページをフェッチして返す */
 const fetchPage = async (projectName, pageName) => {
     if (projectName === null) return null;
     const r = await fetch(
@@ -10,6 +11,7 @@ const fetchPage = async (projectName, pageName) => {
     return r.json();
 };
 
+/* ページのETagをHEADリクエストで取得する */
 const headPageETag = async (projectName, pageName) => {
     try {
         const r = await fetch(
@@ -24,11 +26,13 @@ const headPageETag = async (projectName, pageName) => {
 };
 
 /* --- OpenAI API --- */
+/* OpenAI APIキーが設定済みか判定する */
 const isOpenAIEnabled = async () => {
     const settings = await loadSettings(currentProjectName);
     return !!settings.openaiApiKey;
 };
 
+/* OpenAI APIにプロンプトを送信して応答テキストを返す */
 const callOpenAI = async (prompt, content) => {
     const settings = await loadSettings(currentProjectName);
     const apiKey = settings.openaiApiKey || null;
@@ -61,6 +65,7 @@ const SUMMARY_PROMPT = `
 形式は「名前: 要約」のみ、改行区切りで出力してください。
 `;
 
+/* 著者ごとの感想をAIで要約する */
 const summarizeImpressionsByAuthor = async (impressions) => {
     if (impressions.length < 2) return null;
 

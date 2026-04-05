@@ -1,5 +1,6 @@
 /* ================= SPA ルーター ================= */
 
+/* URL変更を検知してページ種別に応じた描画を行うルーターを生成する */
 const createRouter = (watcherManager) => {
     const clearUI = () => {
         document.getElementById(CALENDAR_PANEL_ID)?.remove();

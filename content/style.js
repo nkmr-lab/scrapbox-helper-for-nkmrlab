@@ -47,6 +47,7 @@ const THEMES = {
 };
 
 /* --- CSS変数をルートに適用 --- */
+/* テーマとカスタムカラーをCSS変数としてドキュメントに適用する */
 const applyTheme = (settings) => {
     const base = THEMES[settings.theme] || THEMES.normal;
     const merged = { ...base, ...(settings.customColors || {}) };
@@ -59,6 +60,7 @@ const applyTheme = (settings) => {
 /* --- スタイルシート注入（一度だけ） --- */
 const SB_STYLE_ID = '__sb_injected_style__';
 
+/* 拡張機能用のCSSスタイルシートをページに注入する */
 const injectStyleSheet = () => {
     if (document.getElementById(SB_STYLE_ID)) return;
     const style = document.createElement('style');

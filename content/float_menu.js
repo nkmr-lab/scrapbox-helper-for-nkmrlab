@@ -2,6 +2,7 @@
 
 const FLOAT_MENU_SEEN_KEY = '__sb_float_menu_seen__';
 
+/* ページ生成メニューを表示すべきか判定する */
 const shouldShowPageCreate = (settings) => {
     const v = settings.showPageCreate || 'auto';
     if (v === 'show') return true;
@@ -9,11 +10,36 @@ const shouldShowPageCreate = (settings) => {
     return isNkmrLabProject();
 };
 
+/* 現在表示中のページ名をURLから取得する */
 const getCurrentPageName = () => {
     const match = location.pathname.match(/^\/[^/]+\/(.+)$/);
     return match ? decodeURIComponent(match[1]) : null;
 };
 
+/* ピン留めボタンとピン留めリストをパネルに描画する */
+const _renderPinSection = async (panel, pageName) => {
+    if (pageName) {
+        const pinned = await isPagePinned(currentProjectName, pageName);
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'sb-pin-btn';
+        pinBtn.textContent = pinned ? '📌 ピン留め解除' : '📌 このページをピン留め';
+        pinBtn.onclick = async () => {
+            if (await isPagePinned(currentProjectName, pageName)) {
+                await unpinPage(currentProjectName, pageName);
+                pinBtn.textContent = '📌 このページをピン留め';
+            } else {
+                await pinPage(currentProjectName, pageName);
+                pinBtn.textContent = '📌 ピン留め解除';
+            }
+        };
+        panel.appendChild(pinBtn);
+    }
+
+    const pinnedPages = await loadPinnedPages(currentProjectName);
+    renderPinnedPages(panel, pinnedPages);
+};
+
+/* フロートメニューを開く */
 const openFloatMenu = async () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
 
@@ -67,28 +93,9 @@ const openFloatMenu = async () => {
         }, 4000);
     }
 
-    /* ピン留めボタン（ページ閲覧時のみ） */
+    /* ピン留めセクション */
     const pageName = getCurrentPageName();
-    if (pageName) {
-        const pinned = await isPagePinned(currentProjectName, pageName);
-        const pinBtn = document.createElement('button');
-        pinBtn.className = 'sb-pin-btn';
-        pinBtn.textContent = pinned ? '📌 ピン留め解除' : '📌 このページをピン留め';
-        pinBtn.onclick = async () => {
-            if (await isPagePinned(currentProjectName, pageName)) {
-                await unpinPage(currentProjectName, pageName);
-                pinBtn.textContent = '📌 このページをピン留め';
-            } else {
-                await pinPage(currentProjectName, pageName);
-                pinBtn.textContent = '📌 ピン留め解除';
-            }
-        };
-        panel.appendChild(pinBtn);
-    }
-
-    /* ピン留めリスト */
-    const pinnedPages = await loadPinnedPages(currentProjectName);
-    renderPinnedPages(panel, pinnedPages);
+    await _renderPinSection(panel, pageName);
 
     /* 履歴 */
     const historyData = await new Promise(resolve => {
@@ -126,6 +133,7 @@ const openFloatMenu = async () => {
     document.body.appendChild(wrapper);
 };
 
+/* フロートメニューを閉じる */
 const closeFloatMenu = () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
 };

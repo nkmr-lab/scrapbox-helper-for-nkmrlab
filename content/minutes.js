@@ -1,14 +1,7 @@
 /* ==================== 議事録 ====================== */
 
-const renderMinutesFromLines = async (rawLines) => {
-    const enableOpenAI = await isOpenAIEnabled();
-    const lines = normalizeLines(rawLines, { withUid: true });
-
-    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
-    const { bodyNode } = setupPanelHeader(panelNode, rawLines);
-    const fragment = document.createDocumentFragment();
-
-    /* 1. session / title 抽出 */
+/* セッションとトークの構造をテキスト行から抽出する */
+const parseSessions = (lines) => {
     const sessions = [];
     let currentSession = null;
 
@@ -52,36 +45,41 @@ const renderMinutesFromLines = async (rawLines) => {
         s.endIdx = i + 1 < sessions.length ? sessions[i + 1].startIdx - 1 : lines.length - 1;
     });
 
-    /* 2. 質問・感想 抽出 */
+    return sessions;
+};
+
+/* 指定範囲の行からアイコン付き感想を収集する */
+const collectImpressions = (lines, start, end) => {
     const isBoundaryLine = (text) =>
         isSessionStart(text) || isTitleLine(text) || extractIconName(text) || /^\?\s*/.test(text);
 
-    const collectImpressions = (start, end) => {
-        const ims = [];
-        for (let i = start; i <= end; i++) {
-            const author = extractIconName(lines[i]?.text);
-            if (!author) continue;
-            const texts = [];
-            let j = i + 1;
-            while (j <= end && lines[j]?.text && !isBoundaryLine(lines[j].text)) {
-                texts.push(lines[j].text.trim()); j++;
-            }
-            if (texts.length) ims.push({ author, text: texts.join(' ') });
-            i = j - 1;
+    const ims = [];
+    for (let i = start; i <= end; i++) {
+        const author = extractIconName(lines[i]?.text);
+        if (!author) continue;
+        const texts = [];
+        let j = i + 1;
+        while (j <= end && lines[j]?.text && !isBoundaryLine(lines[j].text)) {
+            texts.push(lines[j].text.trim()); j++;
         }
-        return ims;
-    };
+        if (texts.length) ims.push({ author, text: texts.join(' ') });
+        i = j - 1;
+    }
+    return ims;
+};
 
+/* 各トークに質問と感想を割り当てる */
+const populateSessionData = (sessions, lines) => {
     sessions.forEach(session => {
         session.talks.forEach((talk, i) => {
             const start = talk.idx + 1;
             const end = i + 1 < session.talks.length ? session.talks[i + 1].idx - 1 : session.endIdx;
             talk.questions = collectQuestions(lines, start, end);
-            talk.impressions = collectImpressions(start, end);
+            talk.impressions = collectImpressions(lines, start, end);
         });
 
         if (session.talks.length === 0) {
-            const ims = collectImpressions(session.startIdx, session.endIdx);
+            const ims = collectImpressions(lines, session.startIdx, session.endIdx);
             const qs = collectQuestions(lines, session.startIdx, session.endIdx);
             if (ims.length || qs.length) {
                 session.talks.push({
@@ -91,6 +89,22 @@ const renderMinutesFromLines = async (rawLines) => {
             }
         }
     });
+};
+
+/* 議事録の行データをパースしてパネルに描画する */
+const renderMinutesFromLines = async (rawLines) => {
+    const enableOpenAI = await isOpenAIEnabled();
+    const lines = normalizeLines(rawLines, { withUid: true });
+
+    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
+    const { bodyNode } = setupPanelHeader(panelNode, rawLines);
+    const fragment = document.createDocumentFragment();
+
+    /* 1. session / title 抽出 */
+    const sessions = parseSessions(lines);
+
+    /* 2. 質問・感想 抽出 */
+    populateSessionData(sessions, lines);
 
     /* 3. 描画 */
     sessions.forEach(session => {

@@ -1,5 +1,6 @@
 /* ================= TODO パネル ================= */
 
+/* TODO行のDOM要素を生成する */
 const renderTodoRow = (todo) => {
     const itemNode = document.createElement('div');
     itemNode.className = 'sb-todo-row' + (todo.done ? ' sb-todo-row--done' : '');
@@ -8,6 +9,7 @@ const renderTodoRow = (todo) => {
     return itemNode;
 };
 
+/* 行データからTODO/完了アイテムを抽出する */
 const extractTodos = (settings, lines) => {
     const todos = [];
     let currentDate = null;
@@ -28,6 +30,7 @@ const extractTodos = (settings, lines) => {
     return todos;
 };
 
+/* TODOパネルの位置をカレンダーパネルに合わせて配置する */
 const positionTodoPanel = (panelNode, settings) => {
     const cal = document.getElementById(CALENDAR_PANEL_ID);
     if (!cal) return;
@@ -72,6 +75,7 @@ const positionTodoPanel = (panelNode, settings) => {
     }
 };
 
+/* TODOパネルを生成・更新して表示する */
 const renderTodoPanel = async (lines) => {
     const settings = await loadSettings(currentProjectName);
     const todos = extractTodos(settings, lines);

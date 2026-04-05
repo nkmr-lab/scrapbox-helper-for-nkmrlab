@@ -1,5 +1,6 @@
 /* ================= トップページ ================= */
 
+/* 自分の今月の研究ノートへのリンクをパネルに追加する */
 const renderMyResearchNote = (panelNode, settings) => {
     if (!settings.userName) return;
     const pageName = `${formatYm(new Date())}_研究ノート_${settings.userName}`;
@@ -11,6 +12,7 @@ const renderMyResearchNote = (panelNode, settings) => {
     );
 };
 
+/* プロジェクトトップページのパネルを描画する */
 const renderProjectTop = async () => {
     const projectName = currentProjectName;
 

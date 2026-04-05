@@ -5,6 +5,7 @@ const isExtensionAlive = () =>
     !!window.__SB_EXTENSION_RUNNING__;
 
 /* --- パネル管理 --- */
+/* 指定IDのパネルを取得し、なければ生成して返す */
 const getOrCreatePanel = (id, create) => {
     if (closedPanels.has(id)) return null;
     let el = document.getElementById(id);
@@ -16,6 +17,7 @@ const getOrCreatePanel = (id, create) => {
     return el;
 };
 
+/* タイトル・ボディ付きの標準パネルを生成する */
 const renderStandardPanel = (panelType = 'other') => {
     const panelNode = document.createElement('div');
     panelNode.className = 'sb-panel';
@@ -34,6 +36,7 @@ const renderStandardPanel = (panelType = 'other') => {
 };
 
 /* --- パネルヘッダー設定（議事録・論文紹介・発表練習で共通） --- */
+/* パネルのヘッダーにページタイトルを設定する */
 const setupPanelHeader = (panelNode, rawLines, icon = '📌') => {
     const headerNode = panelNode.querySelector('#' + MAIN_TITLE_ID);
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
@@ -48,6 +51,7 @@ const setupPanelHeader = (panelNode, rawLines, icon = '📌') => {
 };
 
 /* --- テキスト要素生成 --- */
+/* ページタイトルをパネルに追加する */
 const renderPageTitle = (parentNode, rawLines) => {
     if (!rawLines || !rawLines.length) return null;
     const text = (rawLines[0].text || '').trim();
@@ -55,10 +59,12 @@ const renderPageTitle = (parentNode, rawLines) => {
     return appendPanelTitle(parentNode, text, () => jumpToLineId(rawLines[0].id));
 };
 
+/* パネルタイトル要素を追加する */
 const appendPanelTitle = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-title', onClick);
 };
 
+/* セクションヘッダー要素を追加する */
 const appendSectionHeader = (parentNode, text, onClick) => {
     const cls = onClick ? 'sb-section sb-section--clickable' : 'sb-section sb-section--static';
     return appendEl(parentNode, text, cls, onClick);
@@ -66,18 +72,22 @@ const appendSectionHeader = (parentNode, text, onClick) => {
 
 
 
+/* クリック可能な通常アイテム要素を追加する */
 const appendItem = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-item', onClick);
 };
 
+/* 薄い色のアイテム要素を追加する */
 const appendItemMuted = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-item sb-item--muted', onClick);
 };
 
+/* サブタイトル背景のアイテム要素を追加する */
 const appendItemSub = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-item sb-item--sub', onClick);
 };
 
+/* テキスト付きDOM要素を生成して親に追加する */
 const appendEl = (parentNode, text, className, onClick) => {
     const node = document.createElement('div');
     node.textContent = text;
@@ -88,6 +98,7 @@ const appendEl = (parentNode, text, className, onClick) => {
 };
 
 /* --- 質問リスト描画 --- */
+/* 質問一覧をリスト形式で描画する */
 const appendQuestionList = (parentNode, questions) => {
     questions.forEach(q => {
         appendItem(
@@ -99,6 +110,7 @@ const appendQuestionList = (parentNode, questions) => {
 };
 
 /* --- AI要約（キャッシュ付き） --- */
+/* AI要約ボタンをタイトルノードに付与する */
 const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
     const cached = getCachedAiResult(cacheKey);
 
@@ -129,6 +141,7 @@ const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
 };
 
 /* --- ボタン・コントロール --- */
+/* パネルに閉じるボタンを追加する */
 const attachCloseButton = (panelNode, panelId) => {
     const btn = document.createElement('div');
     btn.textContent = '✕';
@@ -140,6 +153,7 @@ const attachCloseButton = (panelNode, panelId) => {
     panelNode.appendChild(btn);
 };
 
+/* パネルに設定ボタンを追加する */
 const attachSettingsButton = (panelNode) => {
     const btn = document.createElement('div');
     btn.textContent = '⚙';
@@ -148,6 +162,7 @@ const attachSettingsButton = (panelNode) => {
     panelNode.appendChild(btn);
 };
 
+/* 指定行IDの位置にスクロールジャンプする */
 const jumpToLineId = id => {
     const a = document.createElement('a');
     a.href = '#' + id;
@@ -156,6 +171,7 @@ const jumpToLineId = id => {
     a.remove();
 };
 
+/* ラベル付きクリックボタン要素を生成する */
 const renderButton = (label, fn) => {
     const s = document.createElement('span');
     s.textContent = label;

@@ -1,5 +1,6 @@
 /* ================= エントリポイント ================= */
 
+/* 拡張機能を初期化してルーティングを開始する */
 const start = () => {
     if (window.__SB_EXTENSION_RUNNING__) return;
     window.__SB_EXTENSION_RUNNING__ = true;

@@ -1,5 +1,6 @@
 
   /* ================== PageWatcher Class =================== */
+  /* ページの変更をETagベースでポーリング監視する */
   class PageWatcher {
     constructor({
       interval = 10000,

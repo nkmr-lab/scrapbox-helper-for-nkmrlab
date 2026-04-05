@@ -2,6 +2,7 @@
 
 const PRESENTATION_SLOT_COUNT = 3;
 
+/* 発表練習ページのテンプレート本文を生成する */
 const generatePresentationBody = (conferenceName) => {
     const slot = [
         '[(' + '* タイトル]', '# 名前', '発表時間：XX.XX', '',
@@ -14,6 +15,7 @@ const generatePresentationBody = (conferenceName) => {
 };
 
 /* --- モーダル --- */
+/* ページ生成モーダルを開いて各種テンプレートを選択可能にする */
 const openPageCreateModal = async () => {
     document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
 

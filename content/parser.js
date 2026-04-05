@@ -1,5 +1,6 @@
 /* ================= テキスト解析ユーティリティ ================= */
 
+/* 生のScrapbox行データを正規化する */
 const normalizeLines = (rawLines, { withUid = false } = {}) => {
     return rawLines.map(l => {
         const line = {
@@ -30,6 +31,7 @@ const PAGE_TYPES = {
     'minutes':         /議事録/,
 };
 
+/* ページ名からページ種別を判定する */
 const classifyPageByName = (pageName) => {
     if (!pageName) return 'project-top';
     for (const [type, pattern] of Object.entries(PAGE_TYPES)) {
@@ -48,11 +50,13 @@ const isContextBoundary = (text) => {
     return false;
 };
 
+/* テキストからアイコン記法のユーザー名を抽出する */
 const extractIconName = (text) => {
     const m = text.match(/^\[([^\]\/]+)\.icon\]/);
     return m ? m[1] : null;
 };
 
+/* 指定行より上方にある直近のアイコン名を探す */
 const findAuthorAbove = (lines, fromIndex) => {
     for (let i = fromIndex - 1; i >= 0; i--) {
         const text = lines[i].text;
@@ -63,6 +67,7 @@ const findAuthorAbove = (lines, fromIndex) => {
     return null;
 };
 
+/* ブラケット記法の装飾付きタイトルをパースする */
 const parseBracketTitle = (text) => {
     if (!text.startsWith('[')) return null;
 
@@ -79,6 +84,7 @@ const parseBracketTitle = (text) => {
 const isTitleLine = (t) =>
     !!parseBracketTitle(t) || /^タイトル\s*[:：『「]/.test(t);
 
+/* タイトル行からタイトル文字列を抽出・整形する */
 const cleanTitle = (t) => {
     const parsed = parseBracketTitle(t);
     if (parsed) return parsed;
@@ -89,19 +95,21 @@ const cleanTitle = (t) => {
         .trim();
 };
 
+/* セッション開始行かどうかを判定する */
 const isSessionStart = (t) => {
     const title = parseBracketTitle(t);
     return title && t.includes('(');
 };
 
 /* --- カレンダーデータ抽出 --- */
+/* 研究ノートの行データからカレンダー用の日付・スニペットを抽出する */
 const parseCalendarData = (rawLines) => {
     const days = {}, snippets = {};
     let cur = null, year = null, month = null;
 
     for (const line of rawLines) {
         let text = (line.text || '').trim();
-        const mm = text.match(/^\[[\*\(]+\s*(20\d{2})\.(\d{2})\.(\d{2})/);
+        const mm = text.match(/^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/);
         if (mm) {
             cur = `${mm[1]}.${mm[2]}.${mm[3]}`;
             days[cur] = line.id;
@@ -120,6 +128,7 @@ const parseCalendarData = (rawLines) => {
 };
 
 /* --- 質問抽出（議事録・論文紹介・発表練習で共通） --- */
+/* 指定行範囲から質問行を抽出する */
 const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
     const qs = [];
 

@@ -1,5 +1,6 @@
 /* ================= Watcher 管理 ================= */
 
+/* ページ種別ごとのPageWatcherインスタンスを一括管理する */
 class WatcherManager {
     constructor() {
         this.projectName = null;

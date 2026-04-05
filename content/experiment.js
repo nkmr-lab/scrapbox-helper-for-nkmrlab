@@ -14,6 +14,7 @@ const EXPERIMENT_REVIEW_PROMPT = `
 問題がなければ「特に問題は見当たりません」と答えてください。
 `;
 
+/* 実験計画書ページをフェッチしてパネルに描画する */
 const renderExperimentPlan = async (pageName) => {
     const json = await fetchPage(currentProjectName, pageName);
     if (!json) return;
@@ -64,6 +65,7 @@ const renderExperimentPlan = async (pageName) => {
     document.body.appendChild(panelNode);
 };
 
+/* 複数セクションを順番にGPTレビューする */
 const runBatchGPTReview = async (sections, statusNode) => {
     let index = 0;
     for (const section of sections) {
@@ -75,6 +77,7 @@ const runBatchGPTReview = async (sections, statusNode) => {
     }
 };
 
+/* 単一セクションをGPTでレビューして結果を表示する */
 const runSingleSectionReview = async (section) => {
     const cacheKey = `review:${section.id}`;
     const cached = getCachedAiResult(cacheKey);
@@ -119,6 +122,7 @@ const runSingleSectionReview = async (section) => {
     }
 };
 
+/* GPT一括レビューのUIボタンを生成する */
 const renderGPTBatchReviewUI = (sections) => {
     const box = document.createElement('div');
     box.className = 'sb-batch-ui';

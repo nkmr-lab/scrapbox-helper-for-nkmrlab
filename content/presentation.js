@@ -1,5 +1,6 @@
 /* ================= 発表練習パネル =============== */
 
+/* 発表練習ページの質問一覧と統計をパネルに描画する */
 const renderPresentationFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines);
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);

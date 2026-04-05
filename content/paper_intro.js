@@ -1,6 +1,7 @@
 /* ================= 論文紹介 =============== */
 
 /* --- ページ生成テンプレート --- */
+/* 論文紹介ページのテンプレート本文を生成する */
 const generatePaperIntroBody = (title, userName) => {
     const today = formatYmd(new Date());
     const year = new Date().getFullYear();
@@ -60,6 +61,7 @@ const generatePaperIntroBody = (title, userName) => {
 
 /* --- パネル描画 --- */
 
+/* 論文紹介ページの質問一覧と統計をパネルに描画する */
 const renderPaperIntroFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines);
     if (!isPaperIntroPage(lines)) return;

@@ -33,6 +33,7 @@ const POSITION_OPTIONS = [
     ['bottom-right', '右下'], ['bottom-left', '左下'],
 ];
 
+/* パネル種別に応じたレイアウト設定を返す */
 const getPanelLayout = (settings, panelType) => {
     switch (panelType) {
         case 'calendar': return { width: settings.calendarWidth, height: settings.calendarHeight, position: settings.calendarPosition };
@@ -45,6 +46,7 @@ const getPanelLayout = (settings, panelType) => {
 let _settingsCache = null;
 let _settingsCacheProject = null;
 
+/* プロジェクトの設定をストレージから読み込む */
 const loadSettings = (projectName) => {
     if (_settingsCache && _settingsCacheProject === projectName) {
         return Promise.resolve(_settingsCache);
@@ -62,18 +64,21 @@ const loadSettings = (projectName) => {
     });
 };
 
+/* プロジェクトの設定をストレージに保存する */
 const saveSettings = (projectName, settings) => {
     if (!projectName) return;
     _settingsCache = null;
     chrome.storage.local.set({ [settingsKey(projectName)]: settings });
 };
 
+/* テーマとスタイルシートを初期化する */
 const initTheme = async (projectName) => {
     const settings = await loadSettings(projectName);
     applyTheme(settings);
     injectStyleSheet();
 };
 
+/* パネルの表示位置をポジション文字列に基づいて設定する */
 const applyPosition = (panelNode, pos) => {
     panelNode.style.top = '';
     panelNode.style.bottom = '';
@@ -86,6 +91,7 @@ const applyPosition = (panelNode, pos) => {
     else                        { panelNode.style.top = '10px'; panelNode.style.right = '10px'; }
 };
 
+/* パネルにサイズ・位置・フェードアニメーションを適用する */
 const applyPanelSettings = async (panelNode, panelType = 'main') => {
     const settings = await loadSettings(currentProjectName);
     const layout = getPanelLayout(settings, panelType);
@@ -159,6 +165,7 @@ const _select = (value, options) => {
 };
 
 /* --- タブ切替ヘルパー --- */
+/* タブバーとタブパネルを生成して返す */
 const renderTabs = (tabs) => {
     const bar = document.createElement('div');
     bar.className = 'sb-tab-bar';
@@ -187,40 +194,9 @@ const renderTabs = (tabs) => {
     return { bar, panels };
 };
 
-/* --- メイン --- */
-const openSettingsModal = async () => {
-    /* 既に開いていたら閉じる */
-    document.getElementById(SETTINGS_MODAL_ID)?.remove();
-
-    const settings = await loadSettings(currentProjectName);
-
-    /* オーバーレイ */
-    const overlay = document.createElement('div');
-    overlay.id = SETTINGS_MODAL_ID;
-    overlay.className = 'sb-modal-overlay';
-    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-
-    /* モーダル本体 */
-    const modal = document.createElement('div');
-    modal.className = 'sb-modal';
-    modal.onclick = (e) => e.stopPropagation();
-
-    /* 閉じるボタン */
-    const closeBtn = document.createElement('div');
-    closeBtn.textContent = '✕';
-    closeBtn.className = 'sb-modal-close';
-    closeBtn.onclick = () => overlay.remove();
-    modal.appendChild(closeBtn);
-
-    /* タイトル */
-    const title = document.createElement('div');
-    title.textContent = '⚙ 設定';
-    title.className = 'sb-modal-title';
-    modal.appendChild(title);
-
-    const panelNode = modal;
-
-    /* ===== 入力要素 ===== */
+/* --- タブビルダー --- */
+/* 基本設定タブ（名前・透明度・APIキー・テーマ・カスタムカラー）を構築する */
+const _buildBasicTab = (settings) => {
     const nameI = _input(settings.userName);
     const oI = _input(settings.idleOpacity, 'number');
     const apiKeyI = _input(settings.openaiApiKey, 'password');
@@ -232,33 +208,6 @@ const openSettingsModal = async () => {
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
 
-    const calPosI = _select(settings.calendarPosition, POSITION_OPTIONS);
-    const calWI = _input(settings.calendarWidth, 'number');
-    const calHI = _input(settings.calendarHeight, 'number');
-    const calFI = _input(settings.calendarFontSize, 'number');
-    const calFEI = _input(settings.calendarFontSizeExpanded, 'number');
-    const calHeatI = _select(settings.calendarHeatmap ? 'on' : 'off', [
-        ['on', 'ON'], ['off', 'OFF'],
-    ]);
-
-    const todoI = _input(settings.todoMark);
-    const doneI = _input(settings.doneMark);
-    const todoPosI = _select(settings.todoPosition, [
-        ['side', '横（カレンダーの隣）'], ['below', '下（カレンダーの下）'],
-    ]);
-    const todoWI = _input(settings.todoWidth, 'number');
-    const todoHI = _input(settings.todoHeight, 'number');
-    const todoShowI = _input(settings.todoShowCount, 'number');
-
-    const mainPosI = _select(settings.mainPosition, POSITION_OPTIONS);
-    const mainWI = _input(settings.mainWidth, 'number');
-    const mainHI = _input(settings.mainHeight, 'number');
-
-    const otherPosI = _select(settings.otherPosition, POSITION_OPTIONS);
-    const otherWI = _input(settings.otherWidth, 'number');
-    const otherHI = _input(settings.otherHeight, 'number');
-
-    /* ===== 基本タブ ===== */
     const basicContent = document.createElement('div');
     basicContent.append(
         _field('名前', nameI),
@@ -270,7 +219,14 @@ const openSettingsModal = async () => {
         _field('テーマ', themeI),
     );
 
-    /* カスタムカラー（基本タブ内に折りたたみ） */
+    const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
+    basicContent.append(colorToggle, colorSection);
+
+    return { basicContent, nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
+};
+
+/* カスタムカラー設定UI（折りたたみ）を構築する */
+const _buildColorCustomizer = (settings, themeI) => {
     const customColors = { ...(settings.customColors || {}) };
     const colorInputs = {};
     const colorSection = document.createElement('div');
@@ -324,9 +280,20 @@ const openSettingsModal = async () => {
         });
     };
 
-    basicContent.append(colorToggle, colorSection);
+    return { colorToggle, colorSection, colorInputs };
+};
 
-    /* ===== カレンダータブ ===== */
+/* カレンダー設定タブを構築する */
+const _buildCalendarTab = (settings) => {
+    const calPosI = _select(settings.calendarPosition, POSITION_OPTIONS);
+    const calWI = _input(settings.calendarWidth, 'number');
+    const calHI = _input(settings.calendarHeight, 'number');
+    const calFI = _input(settings.calendarFontSize, 'number');
+    const calFEI = _input(settings.calendarFontSizeExpanded, 'number');
+    const calHeatI = _select(settings.calendarHeatmap ? 'on' : 'off', [
+        ['on', 'ON'], ['off', 'OFF'],
+    ]);
+
     const calContent = document.createElement('div');
     calContent.append(
         _field('位置', calPosI),
@@ -335,7 +302,20 @@ const openSettingsModal = async () => {
         _field('ヒートマップ', calHeatI),
     );
 
-    /* ===== TODOタブ ===== */
+    return { calContent, calPosI, calWI, calHI, calFI, calFEI, calHeatI };
+};
+
+/* TODO設定タブを構築する */
+const _buildTodoTab = (settings) => {
+    const todoI = _input(settings.todoMark);
+    const doneI = _input(settings.doneMark);
+    const todoPosI = _select(settings.todoPosition, [
+        ['side', '横（カレンダーの隣）'], ['below', '下（カレンダーの下）'],
+    ]);
+    const todoWI = _input(settings.todoWidth, 'number');
+    const todoHI = _input(settings.todoHeight, 'number');
+    const todoShowI = _input(settings.todoShowCount, 'number');
+
     const todoContent = document.createElement('div');
     todoContent.append(
         _field('TODO マーク', todoI), _field('完了マーク', doneI),
@@ -344,27 +324,121 @@ const openSettingsModal = async () => {
         _field('カレンダーとの位置', todoPosI),
     );
 
-    /* ===== メインタブ（トップページ） ===== */
+    return { todoContent, todoI, doneI, todoPosI, todoWI, todoHI, todoShowI };
+};
+
+/* メインパネル設定タブを構築する */
+const _buildMainTab = (settings) => {
+    const mainPosI = _select(settings.mainPosition, POSITION_OPTIONS);
+    const mainWI = _input(settings.mainWidth, 'number');
+    const mainHI = _input(settings.mainHeight, 'number');
+
     const mainContent = document.createElement('div');
     mainContent.append(
         _field('位置', mainPosI),
         _field('横幅', mainWI), _field('縦幅', mainHI),
     );
 
-    /* ===== その他ページタブ（議事録・論文紹介・実験計画書等） ===== */
+    return { mainContent, mainPosI, mainWI, mainHI };
+};
+
+/* その他パネル設定タブを構築する */
+const _buildOtherTab = (settings) => {
+    const otherPosI = _select(settings.otherPosition, POSITION_OPTIONS);
+    const otherWI = _input(settings.otherWidth, 'number');
+    const otherHI = _input(settings.otherHeight, 'number');
+
     const otherContent = document.createElement('div');
     otherContent.append(
         _field('位置', otherPosI),
         _field('横幅', otherWI), _field('縦幅', otherHI),
     );
 
+    return { otherContent, otherPosI, otherWI, otherHI };
+};
+
+/* 全入力要素から設定値オブジェクトを収集する */
+const _collectSettingsValues = ({
+    nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
+    calPosI, calWI, calHI, calFI, calFEI, calHeatI,
+    todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
+    mainPosI, mainWI, mainHI,
+    otherPosI, otherWI, otherHI,
+}) => {
+    const newCustom = {};
+    Object.entries(colorInputs).forEach(([key, textI]) => {
+        const v = textI.value.trim();
+        if (v) newCustom[key] = v;
+    });
+    return {
+        userName: nameI.value.trim(), idleOpacity: +oI.value,
+        todoMark: todoI.value, doneMark: doneI.value,
+        todoPosition: todoPosI.value, openaiApiKey: apiKeyI.value.trim(),
+        calendarPosition: calPosI.value,
+        calendarWidth: +calWI.value, calendarHeight: +calHI.value,
+        calendarFontSize: +calFI.value, calendarFontSizeExpanded: +calFEI.value,
+        calendarHeatmap: calHeatI.value === 'on',
+        todoWidth: +todoWI.value, todoHeight: +todoHI.value,
+        todoShowCount: +todoShowI.value,
+        mainPosition: mainPosI.value,
+        mainWidth: +mainWI.value, mainHeight: +mainHI.value,
+        otherPosition: otherPosI.value,
+        otherWidth: +otherWI.value, otherHeight: +otherHI.value,
+        theme: themeI.value, customColors: newCustom,
+        floatMenuPosition: floatPosI.value,
+        floatMenuWidth: +floatWI.value,
+        showPageCreate: pageCreateI.value,
+    };
+};
+
+/* --- メイン --- */
+/* 設定モーダルを開いてタブ式UIを表示する */
+const openSettingsModal = async () => {
+    /* 既に開いていたら閉じる */
+    document.getElementById(SETTINGS_MODAL_ID)?.remove();
+
+    const settings = await loadSettings(currentProjectName);
+
+    /* オーバーレイ */
+    const overlay = document.createElement('div');
+    overlay.id = SETTINGS_MODAL_ID;
+    overlay.className = 'sb-modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    /* モーダル本体 */
+    const modal = document.createElement('div');
+    modal.className = 'sb-modal';
+    modal.onclick = (e) => e.stopPropagation();
+
+    /* 閉じるボタン */
+    const closeBtn = document.createElement('div');
+    closeBtn.textContent = '✕';
+    closeBtn.className = 'sb-modal-close';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+
+    /* タイトル */
+    const title = document.createElement('div');
+    title.textContent = '⚙ 設定';
+    title.className = 'sb-modal-title';
+    modal.appendChild(title);
+
+    const panelNode = modal;
+
+    /* ===== タブ構築 ===== */
+    const basic = _buildBasicTab(settings);
+    const cal = _buildCalendarTab(settings);
+    const todo = _buildTodoTab(settings);
+    const main = _buildMainTab(settings);
+    const other = _buildOtherTab(settings);
+
     /* ===== タブ組み立て ===== */
     const { bar, panels } = renderTabs([
-        { label: '基本', content: basicContent },
-        { label: 'メイン', content: mainContent },
-        { label: 'カレンダー', content: calContent },
-        { label: 'TODO', content: todoContent },
-        { label: 'その他', content: otherContent },
+        { label: '基本', content: basic.basicContent },
+        { label: 'メイン', content: main.mainContent },
+        { label: 'カレンダー', content: cal.calContent },
+        { label: 'TODO', content: todo.todoContent },
+        { label: 'その他', content: other.otherContent },
     ]);
 
     panelNode.append(bar, ...panels);
@@ -374,30 +448,10 @@ const openSettingsModal = async () => {
     saveBtn.textContent = '保存';
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = () => {
-        const newCustom = {};
-        Object.entries(colorInputs).forEach(([key, textI]) => {
-            const v = textI.value.trim();
-            if (v) newCustom[key] = v;
+        const newSettings = _collectSettingsValues({
+            ...basic, ...cal, ...todo, ...main, ...other,
         });
-        saveSettings(currentProjectName, {
-            userName: nameI.value.trim(), idleOpacity: +oI.value,
-            todoMark: todoI.value, doneMark: doneI.value,
-            todoPosition: todoPosI.value, openaiApiKey: apiKeyI.value.trim(),
-            calendarPosition: calPosI.value,
-            calendarWidth: +calWI.value, calendarHeight: +calHI.value,
-            calendarFontSize: +calFI.value, calendarFontSizeExpanded: +calFEI.value,
-            calendarHeatmap: calHeatI.value === 'on',
-            todoWidth: +todoWI.value, todoHeight: +todoHI.value,
-            todoShowCount: +todoShowI.value,
-            mainPosition: mainPosI.value,
-            mainWidth: +mainWI.value, mainHeight: +mainHI.value,
-            otherPosition: otherPosI.value,
-            otherWidth: +otherWI.value, otherHeight: +otherHI.value,
-            theme: themeI.value, customColors: newCustom,
-            floatMenuPosition: floatPosI.value,
-            floatMenuWidth: +floatWI.value,
-            showPageCreate: pageCreateI.value,
-        });
+        saveSettings(currentProjectName, newSettings);
         location.reload();
     };
     panelNode.appendChild(saveBtn);
@@ -405,4 +459,3 @@ const openSettingsModal = async () => {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 };
-

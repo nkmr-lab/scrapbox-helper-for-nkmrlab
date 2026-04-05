@@ -1,5 +1,6 @@
 /* ================= ピン留め ================= */
 
+/* ピン留めページ一覧をストレージから読み込む */
 const loadPinnedPages = (projectName) => {
     return new Promise(resolve => {
         chrome.storage.local.get(
@@ -9,10 +10,12 @@ const loadPinnedPages = (projectName) => {
     });
 };
 
+/* ピン留めページ一覧をストレージに保存する */
 const savePinnedPages = (projectName, pinned) => {
     chrome.storage.local.set({ [pinnedKey(projectName)]: pinned });
 };
 
+/* 指定ページをピン留めに追加する */
 const pinPage = async (projectName, pageName) => {
     const pinned = await loadPinnedPages(projectName);
     if (pinned.includes(pageName)) return;
@@ -20,17 +23,20 @@ const pinPage = async (projectName, pageName) => {
     savePinnedPages(projectName, pinned);
 };
 
+/* 指定ページのピン留めを解除する */
 const unpinPage = async (projectName, pageName) => {
     const pinned = await loadPinnedPages(projectName);
     const filtered = pinned.filter(p => p !== pageName);
     savePinnedPages(projectName, filtered);
 };
 
+/* 指定ページがピン留めされているか判定する */
 const isPagePinned = async (projectName, pageName) => {
     const pinned = await loadPinnedPages(projectName);
     return pinned.includes(pageName);
 };
 
+/* ピン留めページ一覧をパネルに描画する */
 const renderPinnedPages = (panelNode, pinned) => {
     if (!pinned.length) return;
 
@@ -60,6 +66,7 @@ const renderPinnedPages = (panelNode, pinned) => {
 
 /* ================= 履歴管理 ================= */
 
+/* 閲覧履歴をストレージに追記する */
 const saveHistory = (projectName, pageName) => {
     if (!projectName || !pageName) return;
     chrome.storage.local.get(
@@ -73,6 +80,7 @@ const saveHistory = (projectName, pageName) => {
     );
 };
 
+/* 履歴エントリを正規化・フィルタリングする */
 const normalizeHistoryEntries = (history) => {
     if (!Array.isArray(history)) return [];
     return history
@@ -80,6 +88,7 @@ const normalizeHistoryEntries = (history) => {
         .map(entry => ({ pageName: entry.pageName, ts: typeof entry.ts === 'number' ? entry.ts : 0 }));
 };
 
+/* 重複を除いた最近のページ一覧を返す */
 const getRecentPages = (history, limit = RECENT_PAGES_LIMIT) => {
     const seen = new Set();
     const result = [];
@@ -93,6 +102,7 @@ const getRecentPages = (history, limit = RECENT_PAGES_LIMIT) => {
     return result;
 };
 
+/* 最近見たページ一覧をパネルに描画する */
 const renderHistory = (panelNode, history) => {
     const items = getRecentPages(history);
     if (!items.length) return;
@@ -104,6 +114,7 @@ const renderHistory = (panelNode, history) => {
     });
 };
 
+/* よく見ているページ一覧をパネルに描画する */
 const renderFrequentPages = (panelNode, history) => {
     const freq = {};
     history.forEach(item => { freq[item.pageName] = (freq[item.pageName] || 0) + 1; });
