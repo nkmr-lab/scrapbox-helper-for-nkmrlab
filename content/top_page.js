@@ -11,7 +11,8 @@ const renderMyResearchNote = (panelNode, settings) => {
     );
 };
 
-/* --- 発表練習ページ生成 --- */
+/* ================= ページ生成メニュー ================= */
+
 const PRESENTATION_SLOT_COUNT = 3;
 
 const generatePresentationBody = (conferenceName) => {
@@ -25,34 +26,93 @@ const generatePresentationBody = (conferenceName) => {
     return body;
 };
 
-const renderPresentationCreateUI = (panelNode) => {
-    appendSectionHeader(panelNode, '🎤 発表練習ページを作成');
+const renderPageCreateMenu = (panelNode, settings) => {
+    const container = document.createElement('div');
+    container.className = 'sb-settings-field';
 
-    const row = document.createElement('div');
-    row.className = 'sb-form-row';
+    appendSectionHeader(panelNode, '📝 ページ生成', () => {
+        const visible = container.style.display !== 'none';
+        container.style.display = visible ? 'none' : '';
+    });
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = '学会名';
-    input.className = 'sb-form-input';
+    container.style.display = 'none';
 
-    const btn = document.createElement('button');
-    btn.textContent = '生成';
-    btn.className = 'sb-small-btn';
+    /* --- 研究ノート作成 --- */
+    if (settings.userName) {
+        const noteLabel = document.createElement('div');
+        noteLabel.textContent = '研究ノート（年月指定）';
+        noteLabel.className = 'sb-settings-label';
 
-    btn.onclick = () => {
-        const name = input.value.trim();
+        const noteRow = document.createElement('div');
+        noteRow.className = 'sb-form-row';
+
+        const yearInput = document.createElement('input');
+        yearInput.type = 'number';
+        yearInput.value = new Date().getFullYear();
+        yearInput.className = 'sb-form-input';
+        yearInput.placeholder = '年';
+
+        const monthInput = document.createElement('input');
+        monthInput.type = 'number';
+        monthInput.value = new Date().getMonth() + 1;
+        monthInput.min = '1';
+        monthInput.max = '12';
+        monthInput.className = 'sb-form-input';
+        monthInput.placeholder = '月';
+
+        const noteBtn = document.createElement('button');
+        noteBtn.textContent = '作成';
+        noteBtn.className = 'sb-small-btn';
+
+        noteBtn.onclick = () => {
+            const y = +yearInput.value;
+            const m = +monthInput.value;
+            if (!y || m < 1 || m > 12) return;
+
+            const date = new Date(y, m - 1, 1);
+            const ym = formatYm(date);
+            const pageName = `${ym}_研究ノート_${settings.userName}`;
+            const body = generateResearchNoteBody(date, settings.userName);
+            location.assign(buildCreateNoteUrl(currentProjectName, pageName, body));
+        };
+
+        noteRow.append(yearInput, monthInput, noteBtn);
+        container.append(noteLabel, noteRow);
+    }
+
+    /* --- 発表練習ページ作成 --- */
+    const presLabel = document.createElement('div');
+    presLabel.textContent = '発表練習ページ';
+    presLabel.className = 'sb-settings-label';
+
+    const presRow = document.createElement('div');
+    presRow.className = 'sb-form-row';
+
+    const presInput = document.createElement('input');
+    presInput.type = 'text';
+    presInput.placeholder = '学会名';
+    presInput.className = 'sb-form-input';
+
+    const presBtn = document.createElement('button');
+    presBtn.textContent = '作成';
+    presBtn.className = 'sb-small-btn';
+
+    presBtn.onclick = () => {
+        const name = presInput.value.trim();
         if (!name) return;
         const pageName = `発表練習 ${name}（${formatYmd(new Date())}）`;
         const body = generatePresentationBody(name);
         location.assign(buildCreateNoteUrl(currentProjectName, pageName, body));
     };
 
-    row.append(input, btn);
-    panelNode.appendChild(row);
+    presRow.append(presInput, presBtn);
+    container.append(presLabel, presRow);
+
+    panelNode.appendChild(container);
 };
 
-/* --- トップページ描画 --- */
+/* ================= トップページ描画 ================= */
+
 const renderProjectTop = async () => {
     const projectName = currentProjectName;
 
@@ -80,7 +140,7 @@ const renderProjectTop = async () => {
     });
 
     renderMyResearchNote(panelNode, settings);
-    renderPresentationCreateUI(panelNode);
+    renderPageCreateMenu(panelNode, settings);
     renderFrequentPages(panelNode, history);
     renderHistory(panelNode, history);
     renderSettingsEntry(panelNode);
