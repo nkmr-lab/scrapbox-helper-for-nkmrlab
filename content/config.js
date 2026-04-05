@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
     doneMark: '[x]',
     todoPosition: 'below',
     openaiApiKey: '',
+    calendarPosition: 'top-right',
     calendarWidth: 480,
     calendarHeight: 560,
     calendarFontSize: 11,
@@ -14,8 +15,10 @@ const DEFAULT_SETTINGS = {
     todoWidth: 320,
     todoHeight: 400,
     todoShowCount: 5,
+    mainPosition: 'top-right',
     mainWidth: 480,
     mainHeight: 560,
+    otherPosition: 'top-right',
     otherWidth: 480,
     otherHeight: 560,
     theme: 'normal',
@@ -23,12 +26,17 @@ const DEFAULT_SETTINGS = {
     showPageCreate: 'auto',
 };
 
-const getPanelSize = (settings, panelType) => {
+const POSITION_OPTIONS = [
+    ['top-right', '右上'], ['top-left', '左上'],
+    ['bottom-right', '右下'], ['bottom-left', '左下'],
+];
+
+const getPanelLayout = (settings, panelType) => {
     switch (panelType) {
-        case 'calendar': return { width: settings.calendarWidth, height: settings.calendarHeight };
-        case 'todo':     return { width: settings.todoWidth, height: settings.todoHeight };
-        case 'other':    return { width: settings.otherWidth, height: settings.otherHeight };
-        default:         return { width: settings.mainWidth, height: settings.mainHeight };
+        case 'calendar': return { width: settings.calendarWidth, height: settings.calendarHeight, position: settings.calendarPosition };
+        case 'todo':     return { width: settings.todoWidth, height: settings.todoHeight, position: settings.calendarPosition };
+        case 'other':    return { width: settings.otherWidth, height: settings.otherHeight, position: settings.otherPosition };
+        default:         return { width: settings.mainWidth, height: settings.mainHeight, position: settings.mainPosition };
     }
 };
 
@@ -64,17 +72,30 @@ const initTheme = async (projectName) => {
     injectStyleSheet();
 };
 
+const applyPosition = (panelNode, pos) => {
+    panelNode.style.top = '';
+    panelNode.style.bottom = '';
+    panelNode.style.left = '';
+    panelNode.style.right = '';
+
+    if (pos === 'top-left')     { panelNode.style.top = '10px'; panelNode.style.left = '10px'; }
+    else if (pos === 'bottom-right') { panelNode.style.bottom = '10px'; panelNode.style.right = '10px'; }
+    else if (pos === 'bottom-left')  { panelNode.style.bottom = '10px'; panelNode.style.left = '10px'; }
+    else                        { panelNode.style.top = '10px'; panelNode.style.right = '10px'; }
+};
+
 const applyPanelSettings = async (panelNode, panelType = 'main') => {
     const settings = await loadSettings(currentProjectName);
-    const size = getPanelSize(settings, panelType);
+    const layout = getPanelLayout(settings, panelType);
     let fadeTimer = null;
 
-    panelNode.style.width = size.width + 'px';
+    panelNode.style.width = layout.width + 'px';
     if (panelType === 'calendar') {
-        panelNode.style.height = size.height + 'px';
+        panelNode.style.height = layout.height + 'px';
     } else {
-        panelNode.style.maxHeight = size.height + 'px';
+        panelNode.style.maxHeight = layout.height + 'px';
     }
+    applyPosition(panelNode, layout.position);
     panelNode.style.opacity = '1';
 
     panelNode.onmouseenter = () => {
@@ -204,6 +225,7 @@ const openSettingsModal = async () => {
     ]);
     const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
 
+    const calPosI = _select(settings.calendarPosition, POSITION_OPTIONS);
     const calWI = _input(settings.calendarWidth, 'number');
     const calHI = _input(settings.calendarHeight, 'number');
     const calFI = _input(settings.calendarFontSize, 'number');
@@ -221,8 +243,13 @@ const openSettingsModal = async () => {
     const todoHI = _input(settings.todoHeight, 'number');
     const todoShowI = _input(settings.todoShowCount, 'number');
 
+    const mainPosI = _select(settings.mainPosition, POSITION_OPTIONS);
     const mainWI = _input(settings.mainWidth, 'number');
     const mainHI = _input(settings.mainHeight, 'number');
+
+    const otherPosI = _select(settings.otherPosition, POSITION_OPTIONS);
+    const otherWI = _input(settings.otherWidth, 'number');
+    const otherHI = _input(settings.otherHeight, 'number');
 
     const otherWI = _input(settings.otherWidth, 'number');
     const otherHI = _input(settings.otherHeight, 'number');
@@ -296,6 +323,7 @@ const openSettingsModal = async () => {
     /* ===== カレンダータブ ===== */
     const calContent = document.createElement('div');
     calContent.append(
+        _field('位置', calPosI),
         _field('横幅', calWI), _field('縦幅', calHI),
         _field('文字サイズ(px)', calFI), _field('拡大時文字サイズ(px)', calFEI),
         _field('ヒートマップ', calHeatI),
@@ -306,18 +334,21 @@ const openSettingsModal = async () => {
     todoContent.append(
         _field('TODO マーク', todoI), _field('完了マーク', doneI),
         _field('表示件数', todoShowI),
-        _field('横幅', todoWI), _field('縦幅', todoHI), _field('位置', todoPosI),
+        _field('横幅', todoWI), _field('縦幅', todoHI),
+        _field('カレンダーとの位置', todoPosI),
     );
 
     /* ===== メインタブ（トップページ） ===== */
     const mainContent = document.createElement('div');
     mainContent.append(
+        _field('位置', mainPosI),
         _field('横幅', mainWI), _field('縦幅', mainHI),
     );
 
     /* ===== その他ページタブ（議事録・論文紹介・実験計画書等） ===== */
     const otherContent = document.createElement('div');
     otherContent.append(
+        _field('位置', otherPosI),
         _field('横幅', otherWI), _field('縦幅', otherHI),
     );
 
@@ -346,12 +377,15 @@ const openSettingsModal = async () => {
             userName: nameI.value.trim(), idleOpacity: +oI.value,
             todoMark: todoI.value, doneMark: doneI.value,
             todoPosition: todoPosI.value, openaiApiKey: apiKeyI.value.trim(),
+            calendarPosition: calPosI.value,
             calendarWidth: +calWI.value, calendarHeight: +calHI.value,
             calendarFontSize: +calFI.value, calendarFontSizeExpanded: +calFEI.value,
             calendarHeatmap: calHeatI.value === 'on',
             todoWidth: +todoWI.value, todoHeight: +todoHI.value,
             todoShowCount: +todoShowI.value,
+            mainPosition: mainPosI.value,
             mainWidth: +mainWI.value, mainHeight: +mainHI.value,
+            otherPosition: otherPosI.value,
             otherWidth: +otherWI.value, otherHeight: +otherHI.value,
             theme: themeI.value, customColors: newCustom,
             showPageCreate: pageCreateI.value,

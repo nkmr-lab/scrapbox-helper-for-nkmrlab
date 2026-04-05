@@ -66,7 +66,7 @@ const injectStyleSheet = () => {
     style.textContent = `
 /* ===== Panel ===== */
 .sb-panel {
-    position:fixed; top:10px; right:10px;
+    position:fixed;
     background:var(--sb-panelBg); color:var(--sb-text);
     border:1px solid var(--sb-panelBorder);
     box-shadow:0 2px 10px var(--sb-panelShadow);

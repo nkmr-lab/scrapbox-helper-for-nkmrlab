@@ -32,12 +32,19 @@ const positionTodoPanel = (panelNode, settings) => {
     const calendarPanel = document.getElementById(CALENDAR_ID);
     if (!calendarPanel) return;
 
+    const rect = calendarPanel.getBoundingClientRect();
+
     if (settings.todoPosition === 'below') {
-        const rect = calendarPanel.getBoundingClientRect();
         panelNode.style.top = (rect.bottom + 10) + 'px';
-        panelNode.style.right = '10px';
+        panelNode.style.left = rect.left + 'px';
     } else {
-        panelNode.style.right = (calendarPanel.offsetWidth + 20) + 'px';
+        panelNode.style.top = rect.top + 'px';
+        /* カレンダーが左寄りなら右に、右寄りなら左に配置 */
+        if (rect.left < window.innerWidth / 2) {
+            panelNode.style.left = (rect.right + 10) + 'px';
+        } else {
+            panelNode.style.right = (window.innerWidth - rect.left + 10) + 'px';
+        }
     }
 };
 
