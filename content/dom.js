@@ -80,7 +80,7 @@ const appendTextNode = (parentNode, text, style, onClick) => {
 const attachCloseButton = (panelNode, panelId) => {
     const btn = document.createElement('div');
     btn.textContent = '\u2715';
-    btn.style = 'font-weight:bold;position:absolute;top:4px;right:6px;cursor:pointer;font-size:14px;color:#eee;';
+    btn.style = `font-weight:bold;position:absolute;top:4px;right:6px;cursor:pointer;font-size:14px;color:${Theme.titleText};`;
 
     btn.onclick = () => {
         closedPanels.add(panelId);
@@ -94,7 +94,7 @@ const attachCloseButton = (panelNode, panelId) => {
 const attachSettingsButton = (panelNode) => {
     const btn = document.createElement('div');
     btn.textContent = '\u2699';
-    btn.style = 'position:absolute;top:4px;right:24px;cursor:pointer;font-size:14px;color:#eee;';
+    btn.style = `position:absolute;top:4px;right:24px;cursor:pointer;font-size:14px;color:${Theme.titleText};`;
     btn.onclick = () => renderSettingsPanel(panelNode);
     panelNode.appendChild(btn);
 };

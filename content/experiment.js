@@ -114,7 +114,7 @@ const runSingleSectionReview = async (section) => {
         resultBox = document.createElement('div');
         resultBox.style =
             'margin:4px 12px 8px 12px;padding:6px;' +
-            'border-left:3px solid #ccc;font-size:12px;white-space:pre-wrap;';
+            `border-left:3px solid ${Theme.aiSummaryBorder};font-size:12px;white-space:pre-wrap;`;
         section.node.after(resultBox);
         section._resultBox = resultBox;
     }
@@ -131,28 +131,28 @@ const runSingleSectionReview = async (section) => {
 
         if (!res || /\u554f\u984c\u306f\u898b\u5f53\u305f\u308a\u307e\u305b\u3093/.test(res)) {
             resultBox.textContent = '\u2705 \u7279\u306b\u554f\u984c\u306f\u898b\u5f53\u305f\u308a\u307e\u305b\u3093';
-            resultBox.style.borderLeftColor = '#4caf50';
+            resultBox.style.borderLeftColor = Theme.reviewOk;
         } else {
             resultBox.textContent = res;
-            resultBox.style.borderLeftColor = '#f44336';
+            resultBox.style.borderLeftColor = Theme.reviewNg;
         }
     } catch (e) {
         resultBox.textContent = '\u274c GPT\u30ec\u30d3\u30e5\u30fc\u3067\u30a8\u30e9\u30fc\u304c\u767a\u751f\u3057\u307e\u3057\u305f';
-        resultBox.style.borderLeftColor = '#f44336';
+        resultBox.style.borderLeftColor = Theme.reviewNg;
         console.error(e);
     }
 };
 
 const createGPTBatchReviewUI = (sections) => {
     const box = document.createElement('div');
-    box.style = 'margin:4px 0 8px 0;padding:6px 0;border-bottom:1px solid #ddd;';
+    box.style = `margin:4px 0 8px 0;padding:6px 0;border-bottom:1px solid ${Theme.border};`;
 
     const btn = document.createElement('button');
     btn.textContent = '\ud83e\udde0 GPT\u3067\u5168\u90e8\u30c1\u30a7\u30c3\u30af';
     btn.style = 'font-size:12px;cursor:pointer;';
 
     const status = document.createElement('span');
-    status.style = 'margin-left:10px;font-size:11px;color:#666';
+    status.style = `margin-left:10px;font-size:11px;color:${Theme.textFaint}`;
 
     box.append(btn, status);
 

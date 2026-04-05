@@ -77,11 +77,11 @@ const renderTalkStats = (parentNode, stats, idToName) => {
                 'flex:1;display:flex;align-items:center;gap:6px;overflow:hidden';
 
             const barWrap = document.createElement('div');
-            barWrap.style = 'flex:1;background:#fff;height:6px;overflow:hidden';
+            barWrap.style = `flex:1;background:${Theme.statsBarBg};height:6px;overflow:hidden`;
 
             const bar = document.createElement('div');
             bar.style =
-                `background:#4caf50;height:100%;width:${(count / max) * 100}%`;
+                `background:${Theme.statsBar};height:100%;width:${(count / max) * 100}%`;
 
             barWrap.appendChild(bar);
 

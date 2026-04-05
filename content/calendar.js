@@ -2,14 +2,14 @@
 let calendarExpanded = false;
 
 const applyTodayStyle = (cellNode) => {
-    cellNode.style.boxShadow = 'inset 0 0 0 2px rgba(255,0,0,1)';
+    cellNode.style.boxShadow = `inset 0 0 0 2px ${Theme.calToday}`;
 };
 
 const applyWeekdayStyle = (cellNode) => {
     if (cellNode.dataset.weekday === 'sun') {
-        cellNode.style.color = '#c00';
+        cellNode.style.color = Theme.calSunday;
     } else if (cellNode.dataset.weekday === 'sat') {
-        cellNode.style.color = '#06c';
+        cellNode.style.color = Theme.calSaturday;
     } else {
         cellNode.style.color = '';
     }
@@ -18,18 +18,18 @@ const applyWeekdayStyle = (cellNode) => {
 const renderWeekdayRow = (gridNode) => {
     ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(w => {
         const node = appendTextNode(gridNode, w, 'font-weight:bold;text-align:center;');
-        if (w === 'Sun') node.style.color = '#f00';
-        if (w === 'Sat') node.style.color = '#00f';
+        if (w === 'Sun') node.style.color = Theme.calSundayHeader;
+        if (w === 'Sat') node.style.color = Theme.calSaturdayHeader;
     });
 };
 
 /* ========== Heatmap ========== */
-const HEATMAP_COLORS = [
+const getHeatmapColors = () => [
     'transparent',
-    'rgba(0,150,0,0.10)',
-    'rgba(0,150,0,0.20)',
-    'rgba(0,150,0,0.35)',
-    'rgba(0,150,0,0.55)',
+    Theme.heatmap1,
+    Theme.heatmap2,
+    Theme.heatmap3,
+    Theme.heatmap4,
 ];
 
 const applyHeatmap = (cellNode, count) => {
@@ -39,7 +39,7 @@ const applyHeatmap = (cellNode, count) => {
         count <= 5 ? 2 :
         count <= 10 ? 3 : 4;
 
-    cellNode.style.background = HEATMAP_COLORS[level];
+    cellNode.style.background = getHeatmapColors()[level];
     applyWeekdayStyle(cellNode);
 };
 
@@ -212,7 +212,7 @@ const renderCalendarFromLines = (pageName, json) => {
 
     ds.forEach(d => {
         const c = document.createElement('div');
-        c.style = 'border:1px solid #ddd;padding:2px;cursor:pointer;display:flex;flex-direction:column;gap:2px;overflow:hidden;min-height:0';
+        c.style = `border:1px solid ${Theme.calCellBorder};padding:2px;cursor:pointer;display:flex;flex-direction:column;gap:2px;overflow:hidden;min-height:0`;
 
         const dd = document.createElement('div');
         dd.textContent = d.split('.').pop();
@@ -223,7 +223,7 @@ const renderCalendarFromLines = (pageName, json) => {
         (snip[d] || []).forEach(t => {
             const p = document.createElement('div');
             p.textContent = t;
-            p.style = 'font-size:0.9em;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;';
+            p.style = `font-size:0.9em;color:${Theme.calSnippet};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;`;
             c.appendChild(p);
         });
 

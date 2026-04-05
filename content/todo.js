@@ -3,12 +3,12 @@
 const createTodoRow = (todo) => {
     const itemNode = document.createElement('div');
     itemNode.style =
-        'cursor:pointer;padding:4px 6px;border-bottom:1px solid #eee;' +
+        `cursor:pointer;padding:4px 6px;border-bottom:1px solid ${Theme.todoBorder};` +
         'white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
     itemNode.textContent = '\u25a1 ' + todo.text + (todo.date ? ` (${todo.date})` : '');
 
     if (todo.done) {
-        itemNode.style.color = '#999';
+        itemNode.style.color = Theme.textDone;
         itemNode.style.textDecoration = 'line-through';
     }
 

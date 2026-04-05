@@ -80,7 +80,7 @@ const renderResearchNoteCreateUI = ({ userName, pageName, rawLines }) => {
     const ym = formatYm(baseDate);
     const msg = document.createElement('div');
     msg.textContent = `⚠ ${ym} の研究ノートがまだ作成されていません`;
-    msg.style = 'margin-bottom:6px;color:#555;';
+    msg.style = `margin-bottom:6px;color:${Theme.textMuted};`;
     box.appendChild(msg);
 
     const btn = document.createElement('button');

@@ -161,7 +161,7 @@ const renderMinutesFromLines = async (rawLines) => {
             if (enableOpenAI && talk.impressions.length >= 2) {
                 const btn = document.createElement('span');
                 btn.textContent = ' 🧠';
-                btn.style = 'cursor:pointer;color:#888;margin-left:4px';
+                btn.style = `cursor:pointer;color:${Theme.btnText};margin-left:4px`;
 
                 btn.onclick = async () => {
                     btn.textContent = ' ⏳';
@@ -173,9 +173,9 @@ const renderMinutesFromLines = async (rawLines) => {
                     box.style = `
                         margin:4px 0 6px 1.5em;
                         padding:4px 6px;
-                        background:#f7f7f7;
+                        background:${Theme.aiSummaryBg};
                         font-size:11px;
-                        border-left:3px solid #ccc;
+                        border-left:3px solid ${Theme.aiSummaryBorder};
                         white-space:pre-line;
                     `;
                     box.textContent = '🧠 AI要約\n' + summary;

@@ -4,7 +4,7 @@ const DEFAULT_SETTINGS = {
     idleOpacity: 0.35,
     todoMark: '[_]',
     doneMark: '[x]',
-    todoPosition: 'side',       // 'side'（カレンダーの横）| 'below'（カレンダーの下）
+    todoPosition: 'side',
     openaiApiKey: '',
     calendarWidth: 480,
     calendarHeight: 560,
@@ -13,6 +13,8 @@ const DEFAULT_SETTINGS = {
     todoHeight: 400,
     mainWidth: 480,
     mainHeight: 560,
+    theme: 'normal',
+    customColors: {},
 };
 
 const getPanelSize = (settings, panelType) => {
@@ -46,6 +48,12 @@ const saveSettings = (projectName, settings) => {
     });
 };
 
+/* --- テーマ初期化（main.js の tick から呼ばれる） --- */
+const initTheme = async (projectName) => {
+    const settings = await loadSettings(projectName);
+    applyTheme(settings);
+};
+
 /* --- パネルにサイズ + フェードを適用 --- */
 const applyPanelSettings = async (panelNode, panelType = 'main') => {
     const settings = await loadSettings(currentProjectName);
@@ -76,7 +84,36 @@ const applyPanelSettings = async (panelNode, panelType = 'main') => {
     };
 };
 
-/* --- 設定画面 --- */
+/* ================= 設定画面 ================= */
+
+/* --- カラーテーマ名の表示ラベル --- */
+const THEME_LABELS = {
+    normal: 'ノーマル',
+    dark: 'ダーク',
+};
+
+/* --- カスタムカラーの表示ラベル --- */
+const COLOR_KEY_LABELS = {
+    panelBg:        'パネル背景',
+    panelBorder:    'パネル枠線',
+    titleBg:        'タイトル背景',
+    titleText:      'タイトル文字',
+    headerBg:       'ヘッダー背景',
+    headerText:     'ヘッダー文字',
+    sectionBg:      'セクション背景',
+    sectionBorder:  'セクション枠線',
+    subTitleBg:     'サブタイトル背景',
+    text:           '本文',
+    textMuted:      '薄い文字',
+    border:         '枠線',
+    calSunday:      'カレンダー日曜',
+    calSaturday:    'カレンダー土曜',
+    calToday:       'カレンダー今日',
+    statsBar:       '統計バー',
+    reviewOk:       'レビューOK',
+    reviewNg:       'レビューNG',
+};
+
 const renderSettingsPanel = async (panelNode) => {
     panelNode.innerHTML = '';
 
@@ -85,7 +122,7 @@ const renderSettingsPanel = async (panelNode) => {
     const sectionLabel = (text) => {
         const node = document.createElement('div');
         node.textContent = text;
-        node.style = 'font-weight:bold;margin-top:10px;margin-bottom:4px;border-bottom:1px solid #ddd;padding-bottom:2px;font-size:12px';
+        node.style = `font-weight:bold;margin-top:10px;margin-bottom:4px;border-bottom:1px solid ${Theme.border};padding-bottom:2px;font-size:12px`;
         return node;
     };
 
@@ -94,7 +131,7 @@ const renderSettingsPanel = async (panelNode) => {
         itemNode.style = 'margin-bottom:6px';
         const labelNode = document.createElement('div');
         labelNode.textContent = label;
-        labelNode.style = 'font-size:11px;color:#555';
+        labelNode.style = `font-size:11px;color:${Theme.inputLabel}`;
         itemNode.append(labelNode, el);
         return itemNode;
     };
@@ -132,18 +169,17 @@ const renderSettingsPanel = async (panelNode) => {
         ['below', '下（カレンダーの下）'],
     ]);
 
-    /* カレンダー */
+    /* パネルサイズ */
     const calWI = input(settings.calendarWidth, 'number');
     const calHI = input(settings.calendarHeight, 'number');
     const calFI = input(settings.calendarFontSize, 'number');
-
-    /* TODO */
     const todoWI = input(settings.todoWidth, 'number');
     const todoHI = input(settings.todoHeight, 'number');
-
-    /* メイン */
     const mainWI = input(settings.mainWidth, 'number');
     const mainHI = input(settings.mainHeight, 'number');
+
+    /* テーマ */
+    const themeI = select(settings.theme, Object.entries(THEME_LABELS));
 
     panelNode.append(
         sectionLabel('基本設定'),
@@ -166,12 +202,85 @@ const renderSettingsPanel = async (panelNode) => {
         sectionLabel('メインパネル（議事録・論文紹介等）'),
         field('横幅', mainWI),
         field('縦幅', mainHI),
+
+        sectionLabel('カラーテーマ'),
+        field('テーマ', themeI),
     );
 
+    /* カスタムカラー */
+    const customColors = { ...(settings.customColors || {}) };
+    const colorInputs = {};
+
+    const colorSection = document.createElement('div');
+    colorSection.style = 'display:none';
+
+    Object.entries(COLOR_KEY_LABELS).forEach(([key, label]) => {
+        const baseTheme = THEMES[themeI.value] || THEMES.normal;
+        const currentVal = customColors[key] || '';
+
+        const row = document.createElement('div');
+        row.style = 'display:flex;align-items:center;gap:4px;margin-bottom:3px';
+
+        const colorI = document.createElement('input');
+        colorI.type = 'color';
+        colorI.value = currentVal || baseTheme[key] || '#000000';
+        colorI.style = 'width:28px;height:20px;padding:0;border:1px solid #ccc;cursor:pointer';
+
+        const textI = document.createElement('input');
+        textI.type = 'text';
+        textI.value = currentVal;
+        textI.placeholder = baseTheme[key] || '';
+        textI.style = 'flex:1;font-size:11px;font-family:monospace';
+
+        const labelNode = document.createElement('div');
+        labelNode.textContent = label;
+        labelNode.style = `font-size:10px;color:${Theme.inputLabel};width:7em;flex-shrink:0`;
+
+        colorI.oninput = () => { textI.value = colorI.value; };
+        textI.oninput = () => {
+            if (/^#[0-9a-fA-F]{3,8}$/.test(textI.value)) {
+                colorI.value = textI.value;
+            }
+        };
+
+        colorInputs[key] = textI;
+        row.append(labelNode, colorI, textI);
+        colorSection.appendChild(row);
+    });
+
+    const toggleBtn = document.createElement('div');
+    toggleBtn.textContent = '▶ カスタムカラー（詳細）';
+    toggleBtn.style = `cursor:pointer;font-size:11px;color:${Theme.textMuted};margin:4px 0`;
+    toggleBtn.onclick = () => {
+        const open = colorSection.style.display !== 'none';
+        colorSection.style.display = open ? 'none' : '';
+        toggleBtn.textContent = (open ? '▶' : '▼') + ' カスタムカラー（詳細）';
+    };
+
+    /* テーマ変更時にプレースホルダー更新 */
+    themeI.onchange = () => {
+        const base = THEMES[themeI.value] || THEMES.normal;
+        Object.entries(colorInputs).forEach(([key, textI]) => {
+            textI.placeholder = base[key] || '';
+            if (!textI.value) {
+                textI.previousElementSibling.value = base[key] || '#000000';
+            }
+        });
+    };
+
+    panelNode.append(toggleBtn, colorSection);
+
+    /* 保存ボタン */
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '保存';
     saveBtn.style = 'margin-top:8px';
     saveBtn.onclick = () => {
+        const newCustom = {};
+        Object.entries(colorInputs).forEach(([key, textI]) => {
+            const v = textI.value.trim();
+            if (v) newCustom[key] = v;
+        });
+
         saveSettings(currentProjectName, {
             userName: nameI.value.trim(),
             idleOpacity: +oI.value,
@@ -186,6 +295,8 @@ const renderSettingsPanel = async (panelNode) => {
             todoHeight: +todoHI.value,
             mainWidth: +mainWI.value,
             mainHeight: +mainHI.value,
+            theme: themeI.value,
+            customColors: newCustom,
         });
         location.reload();
     };
@@ -194,5 +305,5 @@ const renderSettingsPanel = async (panelNode) => {
 };
 
 const renderSettingsEntry = (panelNode) => {
-    appendSectionHeader(panelNode, '\u3000\u2699 設定', () => renderSettingsPanel(panelNode));
+    appendSectionHeader(panelNode, '\u3000⚙ 設定', () => renderSettingsPanel(panelNode));
 };

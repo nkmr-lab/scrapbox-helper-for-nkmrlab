@@ -50,6 +50,7 @@ const start = () => {
         currentProjectName = match[1];
         const pageName = match[2] ? decodeURIComponent(match[2]) : null;
 
+        await initTheme(currentProjectName);
         await loadUserNameCache(currentProjectName);
         saveHistory(currentProjectName, pageName);
 
