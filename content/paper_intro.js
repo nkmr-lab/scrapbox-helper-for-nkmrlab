@@ -11,7 +11,7 @@ const generatePaperIntroBody = (title, userName) => {
         `#${today}`,
         '',
         '発表者',
-        userName ? `# ${userName}` : '# 発表者名',
+        userName ? `#${userName}` : '# 発表者名',
         '',
         '指定質問者',
         '# 指定質問者名',
