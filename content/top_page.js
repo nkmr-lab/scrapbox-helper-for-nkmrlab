@@ -11,6 +11,62 @@ const renderMyResearchNote = (panelNode, settings) => {
     );
 };
 
+/* --- 発表練習ページ生成 --- */
+const PRESENTATION_SLOT_COUNT = 3;
+
+const generatePresentationBody = (conferenceName) => {
+    const slot = [
+        '[(' + '* タイトル]',
+        '# 名前',
+        '発表時間：XX.XX',
+        '',
+        '[** コメント]',
+        '',
+        '',
+        '[** 質問] ',
+        ' ',
+        '',
+        '',
+    ].join('\n');
+
+    let body = `# ${conferenceName}\n\n`;
+    for (let i = 0; i < PRESENTATION_SLOT_COUNT; i++) {
+        body += slot + '\n';
+    }
+    return body;
+};
+
+const renderPresentationCreateUI = (panelNode) => {
+    appendSectionHeader(panelNode, '🎤 発表練習ページを作成');
+
+    const row = document.createElement('div');
+    row.style = 'display:flex;gap:4px;align-items:center;padding:0 6px;margin-bottom:6px';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '学会名';
+    input.style = 'flex:1;font-size:12px;padding:2px 4px';
+
+    const btn = document.createElement('button');
+    btn.textContent = '生成';
+    btn.style = 'font-size:12px;cursor:pointer';
+
+    btn.onclick = () => {
+        const name = input.value.trim();
+        if (!name) return;
+
+        const today = formatYmd(new Date());
+        const pageName = `発表練習 ${name}（${today}）`;
+        const body = generatePresentationBody(name);
+        const url = buildCreateNoteUrl(currentProjectName, pageName, body);
+        location.assign(url);
+    };
+
+    row.append(input, btn);
+    panelNode.appendChild(row);
+};
+
+/* --- トップページ描画 --- */
 const renderProjectTop = async () => {
     const projectName = currentProjectName;
 
@@ -43,6 +99,7 @@ const renderProjectTop = async () => {
     );
 
     renderMyResearchNote(panelNode, settings);
+    renderPresentationCreateUI(panelNode);
     renderFrequentPages(panelNode, history);
     renderHistory(panelNode, history);
     renderSettingsEntry(panelNode);
