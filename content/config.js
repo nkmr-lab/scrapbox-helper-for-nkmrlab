@@ -238,6 +238,21 @@ const _buildAiTab = (settings) => {
 
     const { promptToggle, promptSection, promptSummaryI, promptExperimentI, promptProgramI } =
         _buildPromptEditor(settings);
+
+    const hasKey = !!settings.openaiApiKey;
+
+    /* Keyがあれば展開、なければ無効化 */
+    if (hasKey) {
+        promptSection.style.display = '';
+        promptToggle.textContent = '▼ AIプロンプト（詳細）';
+    } else {
+        promptToggle.textContent = '▶ AIプロンプト（API Key設定後に編集可能）';
+        promptToggle.onclick = null;
+        promptSummaryI.disabled = true;
+        promptExperimentI.disabled = true;
+        promptProgramI.disabled = true;
+    }
+
     aiContent.append(promptToggle, promptSection);
 
     return { aiContent, apiKeyI, promptSummaryI, promptExperimentI, promptProgramI };
