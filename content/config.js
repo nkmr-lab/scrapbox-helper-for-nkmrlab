@@ -155,6 +155,13 @@ const _input = (v, type = 'text') => {
     return i;
 };
 
+const _desc = (text) => {
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.className = 'sb-tab-desc';
+    return el;
+};
+
 const _select = (value, options) => {
     const s = document.createElement('select');
     s.className = 'sb-select';
@@ -211,6 +218,7 @@ const _buildBasicTab = (settings) => {
 
     const basicContent = document.createElement('div');
     basicContent.append(
+        _desc('拡張機能の全般的な設定です。'),
         _field('名前', nameI),
         _field('非アクティブ透明度', oI),
         _field('ページ生成メニュー', pageCreateI),
@@ -233,6 +241,7 @@ const _buildAiTab = (settings) => {
 
     const aiContent = document.createElement('div');
     aiContent.append(
+        _desc('AI要約・レビュー・プログラム変換に使用するOpenAI APIの設定です。'),
         _field('OpenAI API Key', apiKeyI),
     );
 
@@ -366,6 +375,7 @@ const _buildCalendarTab = (settings) => {
 
     const calContent = document.createElement('div');
     calContent.append(
+        _desc('研究ノートのカレンダーパネルの設定です。'),
         _field('位置', calPosI),
         _field('横幅', calWI), _field('縦幅', calHI),
         _field('文字サイズ(px)', calFI), _field('拡大時文字サイズ(px)', calFEI),
@@ -388,6 +398,7 @@ const _buildTodoTab = (settings) => {
 
     const todoContent = document.createElement('div');
     todoContent.append(
+        _desc('研究ノートのTODOパネルの設定です。'),
         _field('TODO マーク', todoI), _field('完了マーク', doneI),
         _field('表示件数', todoShowI),
         _field('横幅', todoWI), _field('縦幅', todoHI),
@@ -405,6 +416,7 @@ const _buildMainTab = (settings) => {
 
     const mainContent = document.createElement('div');
     mainContent.append(
+        _desc('プロジェクトのトップページに表示されるパネルの設定です。'),
         _field('位置', mainPosI),
         _field('横幅', mainWI), _field('縦幅', mainHI),
     );
@@ -420,6 +432,7 @@ const _buildOtherTab = (settings) => {
 
     const otherContent = document.createElement('div');
     otherContent.append(
+        _desc('議事録・論文紹介・発表練習・実験計画書など、個別ページに表示されるパネルの設定です。'),
         _field('位置', otherPosI),
         _field('横幅', otherWI), _field('縦幅', otherHI),
     );

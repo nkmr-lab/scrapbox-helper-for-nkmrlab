@@ -293,6 +293,11 @@ const injectStyleSheet = () => {
 }
 .sb-tab-content { display:none; }
 .sb-tab-content--active { display:block; }
+.sb-tab-desc {
+    font-size:11px; color:var(--sb-textMuted);
+    margin-bottom:8px; padding-bottom:6px;
+    border-bottom:1px dashed var(--sb-border);
+}
 
 /* ===== Pin ===== */
 .sb-pin-row {
