@@ -72,10 +72,9 @@ const openFloatMenu = async () => {
         toggleBtn.textContent = open ? '✕ 閉じる' : '☰ メニュー';
     };
 
-    toggleBtn.onclick = () => {
-        const open = panel.style.display === 'none';
-        setOpen(open);
-    };
+    /* ホバーで開く、クリックで閉じる */
+    toggleBtn.onmouseenter = () => setOpen(true);
+    toggleBtn.onclick = () => setOpen(false);
 
     setOpen(false);
 
