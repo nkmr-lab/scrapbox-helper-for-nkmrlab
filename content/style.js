@@ -6,7 +6,7 @@ const THEMES = {
         panelBg:'#fff', panelBorder:'#111', panelShadow:'rgba(0,0,0,.25)',
         headerBg:'#555', headerText:'#eee',
         titleBg:'#111', titleText:'#eee',
-        sectionBg:'#fcc', sectionBorder:'#000',
+        sectionBg:'#fcc', sectionStaticBg:'#def', sectionBorder:'#000',
         subTitleBg:'#ddf',
         text:'#333', textMuted:'#555', textFaint:'#666', textDone:'#999',
         border:'#ddd',
@@ -27,7 +27,7 @@ const THEMES = {
         panelBg:'#1e1e1e', panelBorder:'#555', panelShadow:'rgba(0,0,0,.5)',
         headerBg:'#333', headerText:'#ddd',
         titleBg:'#2a2a2a', titleText:'#ddd',
-        sectionBg:'#3a2020', sectionBorder:'#666',
+        sectionBg:'#3a2020', sectionStaticBg:'#1a2a3a', sectionBorder:'#666',
         subTitleBg:'#1e2a3a',
         text:'#ccc', textMuted:'#999', textFaint:'#888', textDone:'#666',
         border:'#444',
@@ -102,6 +102,7 @@ const injectStyleSheet = () => {
 .sb-section--clickable:hover { opacity:0.8; }
 .sb-section--static {
     cursor:default;
+    background:var(--sb-sectionStaticBg);
 }
 .sb-subtitle {
     margin-bottom:4px; padding-bottom:3px;
