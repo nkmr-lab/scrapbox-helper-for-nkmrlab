@@ -198,12 +198,10 @@ const renderTabs = (tabs) => {
 };
 
 /* --- タブビルダー --- */
-/* 基本設定タブ（名前・透明度・APIキー・テーマ・カスタムカラー）を構築する */
+/* 基本設定タブ（名前・透明度・テーマ・カスタムカラー）を構築する */
 const _buildBasicTab = (settings) => {
     const nameI = _input(settings.userName);
     const oI = _input(settings.idleOpacity, 'number');
-    const apiKeyI = _input(settings.openaiApiKey, 'password');
-    apiKeyI.placeholder = 'sk-...';
     const pageCreateI = _select(settings.showPageCreate, [
         ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
     ]);
@@ -215,7 +213,6 @@ const _buildBasicTab = (settings) => {
     basicContent.append(
         _field('名前', nameI),
         _field('非アクティブ透明度', oI),
-        _field('OpenAI API Key', apiKeyI),
         _field('ページ生成メニュー', pageCreateI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
@@ -225,13 +222,25 @@ const _buildBasicTab = (settings) => {
     const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
     basicContent.append(colorToggle, colorSection);
 
-    /* プロンプト編集（折りたたみ） */
+    return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
+
+};
+
+/* AIサポートタブ（APIキー・プロンプト）を構築する */
+const _buildAiTab = (settings) => {
+    const apiKeyI = _input(settings.openaiApiKey, 'password');
+    apiKeyI.placeholder = 'sk-...';
+
+    const aiContent = document.createElement('div');
+    aiContent.append(
+        _field('OpenAI API Key', apiKeyI),
+    );
+
     const { promptToggle, promptSection, promptSummaryI, promptExperimentI, promptProgramI } =
         _buildPromptEditor(settings);
-    basicContent.append(promptToggle, promptSection);
+    aiContent.append(promptToggle, promptSection);
 
-    return { basicContent, nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
-        promptSummaryI, promptExperimentI, promptProgramI };
+    return { aiContent, apiKeyI, promptSummaryI, promptExperimentI, promptProgramI };
 };
 
 /* カスタムカラー設定UI（折りたたみ）を構築する */
@@ -405,12 +414,12 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
-    promptSummaryI, promptExperimentI, promptProgramI,
+    nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
     mainPosI, mainWI, mainHI,
     otherPosI, otherWI, otherHI,
+    apiKeyI, promptSummaryI, promptExperimentI, promptProgramI,
 }) => {
     const newCustom = {};
     Object.entries(colorInputs).forEach(([key, textI]) => {
@@ -481,6 +490,7 @@ const openSettingsModal = async () => {
     const todo = _buildTodoTab(settings);
     const main = _buildMainTab(settings);
     const other = _buildOtherTab(settings);
+    const ai = _buildAiTab(settings);
 
     /* ===== タブ組み立て ===== */
     const { bar, panels } = renderTabs([
@@ -489,6 +499,7 @@ const openSettingsModal = async () => {
         { label: 'カレンダー', content: cal.calContent },
         { label: 'TODO', content: todo.todoContent },
         { label: 'その他', content: other.otherContent },
+        { label: 'AIサポート', content: ai.aiContent },
     ]);
 
     panelNode.append(bar, ...panels);
@@ -499,7 +510,7 @@ const openSettingsModal = async () => {
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = () => {
         const newSettings = _collectSettingsValues({
-            ...basic, ...cal, ...todo, ...main, ...other,
+            ...basic, ...cal, ...todo, ...main, ...other, ...ai,
         });
         saveSettings(currentProjectName, newSettings);
         location.reload();
