@@ -9,6 +9,8 @@ const createRouter = (watcherManager) => {
         closeFloatMenu();
         document.getElementById(SETTINGS_MODAL_ID)?.remove();
         document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
+        calendarExpanded = false;
+        window.__jumpedToTodayInNote = false;
     };
 
     const routeByContent = async (projectName, pageName) => {

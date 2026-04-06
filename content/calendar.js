@@ -185,5 +185,5 @@ const renderCalendarFromLines = (pageName, json) => {
                 requestAnimationFrame(() => jumpToLineId(todayLine.id));
             }
         }
-    });
+    }).catch(() => {});
 };

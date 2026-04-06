@@ -119,6 +119,7 @@ const renderTodoPanel = async (lines) => {
     const showAll = () => { items.forEach(x => { x.dom.style.display = ''; }); };
     showCollapsed();
 
-    panelNode.addEventListener('mouseenter', showAll);
-    panelNode.addEventListener('mouseleave', showCollapsed);
+    /* プロパティ代入で上書き（addEventListener だと蓄積するため） */
+    panelNode.onmouseenter = showAll;
+    panelNode.onmouseleave = showCollapsed;
 };

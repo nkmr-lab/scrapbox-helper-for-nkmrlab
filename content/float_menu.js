@@ -76,11 +76,16 @@ const openFloatMenu = async () => {
     toggleBtn.onmouseenter = () => setOpen(true);
     toggleBtn.onclick = () => setOpen(false);
 
-    document.addEventListener('click', (e) => {
+    /* パネル外クリックで閉じる（前回のリスナーをクリーンアップ） */
+    if (window._sbFloatMenuClickHandler) {
+        document.removeEventListener('click', window._sbFloatMenuClickHandler);
+    }
+    window._sbFloatMenuClickHandler = (e) => {
         if (panel.style.display === 'none') return;
         if (wrapper.contains(e.target)) return;
         setOpen(false);
-    });
+    };
+    document.addEventListener('click', window._sbFloatMenuClickHandler);
 
     setOpen(false);
 
@@ -100,4 +105,8 @@ const openFloatMenu = async () => {
 /* フロートメニューを閉じる */
 const closeFloatMenu = () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
+    if (window._sbFloatMenuClickHandler) {
+        document.removeEventListener('click', window._sbFloatMenuClickHandler);
+        window._sbFloatMenuClickHandler = null;
+    }
 };
