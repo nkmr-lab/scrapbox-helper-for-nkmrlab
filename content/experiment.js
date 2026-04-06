@@ -45,7 +45,9 @@ const runSingleSectionReview = async (section) => {
         `【内容】\n` + section.contents.map(t => `- ${t}`).join('\n');
 
     try {
-        const res = await callOpenAI(EXPERIMENT_REVIEW_PROMPT, content);
+        const settings = await loadSettings(currentProjectName);
+        const prompt = settings.promptExperimentReview || EXPERIMENT_REVIEW_PROMPT;
+        const res = await callOpenAI(prompt, content);
         if (!res || /問題は見当たりません/.test(res)) {
             resultBox.textContent = '✅ 特に問題は見当たりません';
             resultBox.className = 'sb-review-box sb-review-box--ok';

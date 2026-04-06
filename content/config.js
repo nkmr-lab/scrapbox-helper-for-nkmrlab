@@ -26,6 +26,9 @@ const DEFAULT_SETTINGS = {
     floatMenuPosition: 'bottom-right',
     floatMenuWidth: 320,
     showPageCreate: 'auto',
+    promptSummary: '',
+    promptExperimentReview: '',
+    promptProgramParse: '',
 };
 
 const POSITION_OPTIONS = [
@@ -222,7 +225,13 @@ const _buildBasicTab = (settings) => {
     const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
     basicContent.append(colorToggle, colorSection);
 
-    return { basicContent, nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
+    /* プロンプト編集（折りたたみ） */
+    const { promptToggle, promptSection, promptSummaryI, promptExperimentI, promptProgramI } =
+        _buildPromptEditor(settings);
+    basicContent.append(promptToggle, promptSection);
+
+    return { basicContent, nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
+        promptSummaryI, promptExperimentI, promptProgramI };
 };
 
 /* カスタムカラー設定UI（折りたたみ）を構築する */
@@ -281,6 +290,43 @@ const _buildColorCustomizer = (settings, themeI) => {
     };
 
     return { colorToggle, colorSection, colorInputs };
+};
+
+/* AIプロンプト編集UI（折りたたみ）を構築する */
+const _buildPromptEditor = (settings) => {
+    const promptSection = document.createElement('div');
+    promptSection.style.display = 'none';
+
+    const _promptField = (label, value, placeholder) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'sb-settings-field';
+        const lbl = document.createElement('div');
+        lbl.textContent = label;
+        lbl.className = 'sb-settings-label';
+        const ta = document.createElement('textarea');
+        ta.className = 'sb-textarea';
+        ta.value = value || '';
+        ta.placeholder = placeholder;
+        wrap.append(lbl, ta);
+        return { wrap, ta };
+    };
+
+    const s = _promptField('感想要約プロンプト', settings.promptSummary, SUMMARY_PROMPT.trim());
+    const e = _promptField('実験計画レビュープロンプト', settings.promptExperimentReview, EXPERIMENT_REVIEW_PROMPT.trim());
+    const p = _promptField('プログラム変換プロンプト', settings.promptProgramParse, PROGRAM_PARSE_PROMPT.trim());
+
+    promptSection.append(s.wrap, e.wrap, p.wrap);
+
+    const promptToggle = document.createElement('div');
+    promptToggle.textContent = '▶ AIプロンプト（詳細）';
+    promptToggle.className = 'sb-toggle-btn';
+    promptToggle.onclick = () => {
+        const open = promptSection.style.display !== 'none';
+        promptSection.style.display = open ? 'none' : '';
+        promptToggle.textContent = (open ? '▶' : '▼') + ' AIプロンプト（詳細）';
+    };
+
+    return { promptToggle, promptSection, promptSummaryI: s.ta, promptExperimentI: e.ta, promptProgramI: p.ta };
 };
 
 /* カレンダー設定タブを構築する */
@@ -360,6 +406,7 @@ const _buildOtherTab = (settings) => {
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
     nameI, oI, apiKeyI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
+    promptSummaryI, promptExperimentI, promptProgramI,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
     mainPosI, mainWI, mainHI,
@@ -388,6 +435,9 @@ const _collectSettingsValues = ({
         floatMenuPosition: floatPosI.value,
         floatMenuWidth: +floatWI.value,
         showPageCreate: pageCreateI.value,
+        promptSummary: promptSummaryI.value.trim(),
+        promptExperimentReview: promptExperimentI.value.trim(),
+        promptProgramParse: promptProgramI.value.trim(),
     };
 };
 

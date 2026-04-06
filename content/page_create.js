@@ -135,7 +135,9 @@ const PROGRAM_PARSE_PROMPT = `
 
 /* 学会プログラムテキストからScrapbox議事録テンプレートを生成する */
 const generateFromProgram = async (programText) => {
-    return await callOpenAI(PROGRAM_PARSE_PROMPT, programText);
+    const settings = await loadSettings(currentProjectName);
+    const prompt = settings.promptProgramParse || PROGRAM_PARSE_PROMPT;
+    return await callOpenAI(prompt, programText);
 };
 
 /* --- モーダル --- */

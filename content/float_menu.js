@@ -1,7 +1,5 @@
 /* ================= フロートメニュー ================= */
 
-const FLOAT_MENU_SEEN_KEY = '__sb_float_menu_seen__';
-
 /* ページ生成メニューを表示すべきか判定する */
 const shouldShowPageCreate = (settings) => {
     const v = settings.showPageCreate || 'auto';
@@ -44,7 +42,6 @@ const openFloatMenu = async () => {
     document.getElementById(FLOAT_MENU_ID)?.remove();
 
     const settings = await loadSettings(currentProjectName);
-    const firstTime = !sessionStorage.getItem(FLOAT_MENU_SEEN_KEY);
 
     document.documentElement.style.setProperty('--sb-floatMenuWidth', settings.floatMenuWidth + 'px');
 
@@ -78,19 +75,9 @@ const openFloatMenu = async () => {
     toggleBtn.onclick = () => {
         const open = panel.style.display === 'none';
         setOpen(open);
-        if (!firstTime || open) sessionStorage.setItem(FLOAT_MENU_SEEN_KEY, '1');
     };
 
-    setOpen(firstTime);
-
-    if (firstTime) {
-        setTimeout(() => {
-            if (panel.style.display !== 'none') {
-                setOpen(false);
-                sessionStorage.setItem(FLOAT_MENU_SEEN_KEY, '1');
-            }
-        }, 4000);
-    }
+    setOpen(false);
 
     /* コンテンツ */
     await _renderPinSection(panel, getCurrentPageName());

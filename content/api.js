@@ -79,7 +79,9 @@ const summarizeImpressionsByAuthor = async (impressions) => {
         .map(([author, texts]) => `${author}:\n` + texts.map(t => `- ${t}`).join('\n'))
         .join('\n\n');
 
-    return await callOpenAI(SUMMARY_PROMPT, input);
+    const settings = await loadSettings(currentProjectName);
+    const prompt = settings.promptSummary || SUMMARY_PROMPT;
+    return await callOpenAI(prompt, input);
 };
 
 /* --- ユーティリティ --- */
