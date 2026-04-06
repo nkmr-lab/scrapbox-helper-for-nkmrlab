@@ -128,7 +128,7 @@ const parseCalendarData = (rawLines) => {
 };
 
 /* --- 質問抽出（議事録・論文紹介・発表練習で共通） --- */
-/* 指定行範囲から質問行を抽出する */
+/* 指定行範囲から質問行を抽出する（アイコン→userId→不明の順で著者推定） */
 const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
     const qs = [];
 
@@ -141,11 +141,13 @@ const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        qs.push({
-            id: lines[i].id,
-            text: q,
-            author: findAuthorAbove(lines, i)
-        });
+        /* 著者推定: アイコン記法 → 行のuserId(userNameCache経由) → null */
+        let author = findAuthorAbove(lines, i);
+        if (!author && lines[i].uid && lines[i].uid !== 'unknown') {
+            author = userNameCache[lines[i].uid] || null;
+        }
+
+        qs.push({ id: lines[i].id, text: q, author });
     }
     return qs;
 };

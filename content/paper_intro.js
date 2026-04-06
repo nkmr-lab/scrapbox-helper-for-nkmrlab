@@ -3,7 +3,7 @@
 
 /* 論文紹介ページの質問一覧と統計をパネルに描画する */
 const renderPaperIntroFromLines = (pageName, rawLines) => {
-    const lines = normalizeLines(rawLines);
+    const lines = normalizeLines(rawLines, { withUid: true });
     if (!isPaperIntroPage(lines)) return;
 
     let inQnA = false;
@@ -18,7 +18,10 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
 
         if (inQnA && /^\?\s/.test(t)) {
             const text = normalize(t.replace(/^\?\s*/, ''));
-            const author = findAuthorAbove(lines, idx);
+            let author = findAuthorAbove(lines, idx);
+            if (!author && line.uid && line.uid !== 'unknown') {
+                author = userNameCache[line.uid] || null;
+            }
             const existing = questionMap.get(text);
             if (!existing || (!existing.author && author)) {
                 questionMap.set(text, { id: line.id, text, author });
