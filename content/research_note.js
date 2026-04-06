@@ -9,7 +9,7 @@ const isMyResearchNotePage = (pageName, userName) => {
     return pageName.includes(`研究ノート_${userName}`);
 };
 
-/* ペー���が自分の今月の研究ノートかどう���判定する */
+/* ページが自分の今月の研究ノートかどうか判定する */
 const isMyThisMonthResearchNote = (pageName, userName) => {
     if (!isMyResearchNotePage(pageName, userName)) return false;
     const m = pageName.match(/(20\d{2})\.(\d{2})/);

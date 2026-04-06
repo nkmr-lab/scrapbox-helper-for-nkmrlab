@@ -23,6 +23,7 @@ const pinnedKey = projectName => `sb:${projectName}:pinned`;
 
 /* --- Timing (ms) --- */
 const TICK_INTERVAL = 600;
+const WATCHER_INTERVAL = 10000;
 const FADE_TIMEOUT = 5000;
 
 /* --- Display --- */
@@ -35,3 +36,6 @@ const CALENDAR_SNIPPET_LIMIT = 10;
 /* --- Global State --- */
 const closedPanels = new Set();
 let currentProjectName = null;
+
+/* 拡張機能が実行中かどうかを判定する */
+const isExtensionAlive = () => !!window.__SB_EXTENSION_RUNNING__;

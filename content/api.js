@@ -1,4 +1,11 @@
 /* ================= API ================= */
+/*
+ * Scrapbox API と OpenAI API のラッパー。
+ * AI結果のメモリキャッシュもここで管理する。
+ * 依存: config.js (loadSettings), constants.js (currentProjectName)
+ */
+
+const OPENAI_MODEL = 'gpt-4.1-mini';
 
 /* --- Scrapbox API --- */
 /* Scrapboxページをフェッチして返す */
@@ -7,7 +14,7 @@ const fetchPage = async (projectName, pageName) => {
     const r = await fetch(
         `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}`
     );
-    if (!r.ok) return null;
+    if (!r.ok) { console.warn(`[SB Helper] fetchPage failed: ${r.status} ${projectName}/${pageName}`); return null; }
     return r.json();
 };
 
@@ -32,10 +39,12 @@ const isOpenAIEnabled = async () => {
     return !!settings.openaiApiKey;
 };
 
-/* OpenAI APIにプロンプトを送信して応答テキストを返す */
-const callOpenAI = async (prompt, content) => {
-    const settings = await loadSettings(currentProjectName);
-    const apiKey = settings.openaiApiKey || null;
+/* OpenAI APIにプロンプトを送信して応答テキストを返す（apiKeyは省略時に設定から取得） */
+const callOpenAI = async (prompt, content, apiKey = null) => {
+    if (!apiKey) {
+        const settings = await loadSettings(currentProjectName);
+        apiKey = settings.openaiApiKey;
+    }
     if (!apiKey) throw new Error('OpenAI API Key is not set');
 
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -45,7 +54,7 @@ const callOpenAI = async (prompt, content) => {
             'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-            model: 'gpt-4.1-mini',
+            model: OPENAI_MODEL,
             messages: [
                 { role: 'system', content: prompt },
                 { role: 'user', content }
@@ -81,7 +90,7 @@ const summarizeImpressionsByAuthor = async (impressions) => {
 
     const settings = await loadSettings(currentProjectName);
     const prompt = settings.promptSummary || SUMMARY_PROMPT;
-    return await callOpenAI(prompt, input);
+    return await callOpenAI(prompt, input, settings.openaiApiKey);
 };
 
 /* --- ユーティリティ --- */

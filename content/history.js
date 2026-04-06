@@ -1,6 +1,6 @@
 /* ================= 履歴管理 ================= */
 
-/* 正規化済みの閲覧履歴をス��レージから読み込む */
+/* 正規化済みの閲覧履歴をストレージから読み込む */
 const loadHistory = (projectName) => {
     return new Promise(resolve => {
         chrome.storage.local.get(

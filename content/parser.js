@@ -106,7 +106,7 @@ const isSessionStart = (t) => {
 /* 研究ノートの行データからカレンダー用の日付・スニペットを抽出する */
 const parseCalendarData = (rawLines) => {
     const days = {}, snippets = {};
-    let cur = null, year = null, month = null;
+    let cur = null;
 
     for (const line of rawLines) {
         let text = (line.text || '').trim();
@@ -115,7 +115,6 @@ const parseCalendarData = (rawLines) => {
             cur = `${mm[1]}.${mm[2]}.${mm[3]}`;
             days[cur] = line.id;
             snippets[cur] = [];
-            year = mm[1]; month = mm[2];
             continue;
         }
         text = text.replace(/\[[^\]]+\.icon\]/g, '').trim();

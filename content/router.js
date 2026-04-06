@@ -43,7 +43,7 @@ const createRouter = (watcherManager) => {
         watcherManager.stopAll();
         closedPanels.clear();
         clearAiCache();
-        _settingsCache = null;
+        clearSettingsCache();
 
         const match = url.match(/^\/([^/]+)(?:\/(.*))?$/);
         if (!match) return;

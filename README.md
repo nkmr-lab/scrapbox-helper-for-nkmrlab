@@ -5,7 +5,7 @@
 ## 機能
 
 ### 研究ノート
-- 自分の研究ノートへの直リンク（行方不明になりがちなので）
+- 自分の研究ノートへの直リンク
 - 月カレンダー表示（ヒートマップ・拡大表示対応）
 - 前月/次月/今月へワンクリック移動
 - 当月ノートの今日の日付へ自動ジャンプ
@@ -16,7 +16,7 @@
 - セッション・発表タイトルへのジャンプ
 - 質問 `? ` の自動抽出（質問者の自動検出付き）
 - 感想の収集（複数行対応）
-- AI 要約（OpenAI API、感想が2件以上ある発表に対して）
+- AI 要約（OpenAI API）
 - 発言量の統計グラフ
 
 ### 論文紹介
@@ -33,17 +33,16 @@
 - セクション・項目のアウトライン表示
 - GPT によるセクション単位レビュー（一括 / 個別）
 
-### プロジェクトトップ
-- 自分の今月の研究ノートへのリンク
+### フロートメニュー（全ページ共通）
+- ピン留め（ページのブックマーク）
 - よく見ているページ / 最近見たページ
+- ページ生成（研究ノート / 発表練習 / 論文紹介 / 学会プログラムからAI変換）
+- 設定モーダル
 
-### 設定（パネルごと）
-- カレンダー / TODO / メインパネルそれぞれの横幅・縦幅を個別設定
-- TODO パネルの位置（カレンダーの横 or 下）
-- カレンダー文字サイズ
-- 非アクティブ時の透明度
-- TODO マーク / 完了マーク
-- OpenAI API Key
+### 設定（タブ式モーダル）
+- 基本: 名前、透明度、テーマ（ノーマル/ダーク）、カスタムカラー
+- メイン/カレンダー/TODO/その他: パネル位置（4隅）・サイズ個別設定
+- AIサポート: OpenAI API Key、プロンプトのカスタマイズ
 
 ## インストール
 
@@ -54,29 +53,120 @@
 
 ## 権限
 
-- `storage` のみ（設定・履歴の保存に使用）
+- `storage` のみ（設定・履歴・ピン留めの保存に使用）
+
+## アーキテクチャ
+
+### MVE分離
+- **Style** (`style.js`): `<style>`タグ注入。CSSクラス + CSS変数でテーマ管理
+- **View** (`view.js`): DOM生成関数。className付与のみ
+- **Logic** (parser.js, api.js, 各ページハンドラ): データ解析・API・描画オーケストレーション
+
+### グローバル状態
+すべてのファイルはcontent scriptとして同一スコープで実行されます。
+- `currentProjectName` — 現在のプロジェクト名（router.jsで設定）
+- `closedPanels` — ユーザーが閉じたパネルID（view.jsで参照）
+- `_settingsCache` — 設定のメモリキャッシュ（config.jsで管理）
+- `_aiCache` — AI結果キャッシュ（api.jsで管理、ページ遷移でクリア）
+
+### 読み込み順序（manifest.json）
+ファイルは以下の順で読み込まれます。**順序に意味があります**。
+```
+1. constants.js    ← 定数・グローバル状態（全ファイルが参照）
+2. style.js        ← CSSテーマ・スタイルシート注入
+3. config.js       ← 設定の読み書き・applyPanelSettings
+4. view.js         ← DOM生成ユーティリティ（config.jsのapplyPanelSettingsを使用）
+5. parser.js       ← テキスト解析（DOM非依存）
+6. api.js          ← API呼び出し（config.jsのloadSettingsを使用）
+7. pagewatcher.js  ← ページ変更検知クラス
+8. stats.js        ← 発言量統計
+9. pin.js          ← ピン留め機能
+10. history.js     ← 閲覧履歴
+11. top_page.js    ← トップページ描画
+12. research_note.js ← 研究ノートのページ判定・カレンダー上UI
+13. calendar.js    ← カレンダーパネル
+14. todo.js        ← TODOパネル
+15. experiment.js  ← 実験計画書パネル
+16. minutes.js     ← 議事録パネル
+17. paper_intro.js ← 論文紹介パネル
+18. presentation.js ← 発表練習パネル
+19. page_create.js ← テンプレート・ページ生成モーダル（12,17,18の関数を使用）
+20. float_menu.js  ← フロートメニュー
+21. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
+22. router.js      ← SPAルーティング
+23. main.js        ← エントリポイント
+```
 
 ## ファイル構成
 
 ```
 content/
-├── constants.js       定数・グローバル状態
-├── style.js           CSS スタイル定義
-├── config.js          設定の読み書き・設定画面
-├── dom.js             DOM ユーティリティ・共通パネル生成
-├── parser.js          テキスト解析（Scrapbox 記法パーサ）
-├── api.js             Scrapbox API / OpenAI API
-├── pagewatcher.js     ETag ベースのページ変更検知
-├── stats.js           発言量統計
-├── history.js         閲覧履歴
-├── top_page.js        プロジェクトトップページ
-├── research_note.js   研究ノート作成ヘルパー
-├── calendar.js        月カレンダー UI
-├── todo.js            TODO パネル
-├── experiment.js      実験計画書
-├── minutes.js         議事録
-├── paper_intro.js     論文紹介
-├── presentation.js    発表練習
-├── watcher_manager.js Watcher 管理
-└── main.js            エントリポイント（SPA ルーティング）
+├── constants.js       定数・ID・ストレージキー・グローバル状態
+├── style.js           CSSテーマ定義 + <style>タグ注入
+├── config.js          設定の読み書き + 設定モーダル（タブ式）
+├── view.js            DOM生成ユーティリティ（Viewレイヤー）
+├── parser.js          テキスト解析・ページ分類（Modelレイヤー）
+├── api.js             Scrapbox API / OpenAI API / AIキャッシュ
+├── pagewatcher.js     ETagベースのページ変更検知
+├── stats.js           発言量統計・ユーザー名キャッシュ
+├── pin.js             ピン留めのCRUD + 描画
+├── history.js         閲覧履歴のCRUD + 描画
+├── top_page.js        プロジェクトトップページ描画
+├── research_note.js   研究ノートのページ判定 + カレンダー上の作成UI
+├── calendar.js        月カレンダーパネル（ヒートマップ・拡大）
+├── todo.js            TODOパネル（折りたたみ・位置追従）
+├── experiment.js      実験計画書パネル + GPTレビュー
+├── minutes.js         議事録パネル（セッション・質問・感想・AI要約）
+├── paper_intro.js     論文紹介パネル（質問抽出・統計）
+├── presentation.js    発表練習パネル（質問抽出・統計）
+├── page_create.js     テンプレート集約 + ページ生成モーダル + AI変換
+├── float_menu.js      フロートメニュー（ピン留め・履歴・ボタン）
+├── watcher_manager.js Watcher管理（PageWatcherインスタンスの保持・起動・停止）
+├── router.js          SPAルーティング（URL変更検知・ページ種別振り分け）
+└── main.js            エントリポイント（初期化・ルーター起動）
 ```
+
+## 開発ガイド
+
+### 新しいページ種別を追加するには
+
+例: 「レポート」ページを追加する場合
+
+1. **parser.js**: `PAGE_TYPES` に正規表現を追加
+   ```js
+   'report': /レポート/,
+   ```
+
+2. **report.js**: ページハンドラを作成（`renderReportFromLines(pageName, rawLines)` 関数）
+
+3. **watcher_manager.js**: `watchers` オブジェクトにWatcher追加
+   ```js
+   report: new PageWatcher({ ... onInit/onUpdate で renderReportFromLines を呼ぶ })
+   ```
+
+4. **router.js**: `handlers` にルート追加
+   ```js
+   'report': (pj, pg) => watcherManager.start('report', pj, pg),
+   ```
+
+5. **manifest.json**: `report.js` をページハンドラ群の後（presentation.js の後）に追加
+
+### 新しい設定項目を追加するには
+
+1. **config.js** `DEFAULT_SETTINGS`: デフォルト値を追加
+2. **config.js** `_build*Tab()`: 対応するタブビルダーに入力要素を追加
+3. **config.js** `_collectSettingsValues()`: 引数リストと return に追加
+4. 設定を使用するファイルで `loadSettings()` から値を取得
+
+### 命名規則
+
+| パターン | 用途 | 例 |
+|---|---|---|
+| `render*` | DOM生成・描画 | `renderButton`, `renderStandardPanel` |
+| `open*/close*` | モーダル・メニュー開閉 | `openSettingsModal`, `closeFloatMenu` |
+| `generate*` | 文字列・URL生成 | `generateCreateNoteUrl` |
+| `is*` | boolean判定 | `isOpenAIEnabled`, `isPagePinned` |
+| `load*` | Chrome Storage読込 | `loadSettings`, `loadPinnedPages` |
+| `save*` | Chrome Storage書込 | `saveSettings` |
+| `fetch*` | 外部API | `fetchPage` |
+| `*_PANEL_ID` | パネルID定数 | `CALENDAR_PANEL_ID` |

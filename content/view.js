@@ -1,9 +1,6 @@
 /* ================= View レイヤー ================= */
 /* DOM 生成・操作は全てここに集約。className ベースでスタイル適用。 */
 
-const isExtensionAlive = () =>
-    !!window.__SB_EXTENSION_RUNNING__;
-
 /* --- パネル管理 --- */
 /* 指定IDのパネルを取得し、なければ生成して返す */
 const getOrCreatePanel = (id, create) => {

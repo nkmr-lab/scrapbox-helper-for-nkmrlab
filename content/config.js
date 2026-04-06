@@ -1,32 +1,39 @@
 /* ================= 設定 ================= */
 const DEFAULT_SETTINGS = {
+    /* --- 基本 --- */
     userName: '',
     idleOpacity: 0.35,
-    todoMark: '[_]',
-    doneMark: '[x]',
-    todoPosition: 'below',
-    openaiApiKey: '',
+    theme: 'normal',
+    customColors: {},
+    /* --- フロートメニュー --- */
+    floatMenuPosition: 'bottom-right',
+    floatMenuWidth: 320,
+    showPageCreate: 'auto',       // 'auto'(nkmr-labのみ) | 'show' | 'hide'
+    /* --- メインパネル（トップページ） --- */
+    mainPosition: 'top-right',
+    mainWidth: 480,
+    mainHeight: 560,
+    /* --- カレンダーパネル --- */
     calendarPosition: 'top-right',
     calendarWidth: 480,
     calendarHeight: 560,
     calendarFontSize: 11,
-    calendarHeatmap: true,
     calendarFontSizeExpanded: 14,
+    calendarHeatmap: true,
+    /* --- TODOパネル --- */
+    todoMark: '[_]',
+    doneMark: '[x]',
+    todoPosition: 'below',       // 'side' | 'below'
     todoWidth: 320,
     todoHeight: 400,
     todoShowCount: 5,
-    mainPosition: 'top-right',
-    mainWidth: 480,
-    mainHeight: 560,
+    /* --- その他パネル（議事録・論文紹介等） --- */
     otherPosition: 'top-right',
     otherWidth: 480,
     otherHeight: 560,
-    theme: 'normal',
-    customColors: {},
-    floatMenuPosition: 'bottom-right',
-    floatMenuWidth: 320,
-    showPageCreate: 'auto',
-    promptSummary: '',
+    /* --- AIサポート --- */
+    openaiApiKey: '',
+    promptSummary: '',            // 空欄ならデフォルトプロンプト
     promptExperimentReview: '',
     promptProgramParse: '',
 };
@@ -40,7 +47,7 @@ const POSITION_OPTIONS = [
 const getPanelLayout = (settings, panelType) => {
     switch (panelType) {
         case 'calendar': return { width: settings.calendarWidth, height: settings.calendarHeight, position: settings.calendarPosition };
-        case 'todo':     return { width: settings.todoWidth, height: settings.todoHeight, position: settings.calendarPosition };
+        case 'todo':     return { width: settings.todoWidth, height: settings.todoHeight, position: settings.calendarPosition }; /* カレンダーに追従 */
         case 'other':    return { width: settings.otherWidth, height: settings.otherHeight, position: settings.otherPosition };
         default:         return { width: settings.mainWidth, height: settings.mainHeight, position: settings.mainPosition };
     }
@@ -48,6 +55,9 @@ const getPanelLayout = (settings, panelType) => {
 
 let _settingsCache = null;
 let _settingsCacheProject = null;
+
+/* 設定キャッシュをクリアする（ページ遷移時にrouter.jsから呼ばれる） */
+const clearSettingsCache = () => { _settingsCache = null; };
 
 /* プロジェクトの設定をストレージから読み込む */
 const loadSettings = (projectName) => {
@@ -231,7 +241,6 @@ const _buildBasicTab = (settings) => {
     basicContent.append(colorToggle, colorSection);
 
     return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
-
 };
 
 /* AIサポートタブ（APIキー・プロンプト）を構築する */

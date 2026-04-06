@@ -11,7 +11,7 @@ const generateCreateNoteUrl = (project, pageName, body) =>
 
 const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
-/* 指定月の研究ノートテンプレート本文を��成する */
+/* 指定月の研究ノートテンプレート本文を生成する */
 const generateResearchNoteBody = (date, userName) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -42,7 +42,7 @@ const generatePresentationBody = (conferenceName) => {
     return body;
 };
 
-/* 論文紹介ページのテンプレート本文を生���する */
+/* 論文紹介ページのテンプレート本文を生成する */
 const generatePaperIntroBody = (title, userName) => {
     const today = formatYmd(new Date());
     const year = new Date().getFullYear();
@@ -142,7 +142,7 @@ const generateFromProgram = async (programText) => {
 
 /* --- モーダル --- */
 
-/* ページ���成モーダルを開いて各種テンプレートを選択可能にする */
+/* ページ生成モーダルを開いて各種テンプレートを選択可能にする */
 const openPageCreateModal = async () => {
     document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
 
