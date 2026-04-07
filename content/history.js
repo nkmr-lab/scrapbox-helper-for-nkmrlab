@@ -46,9 +46,13 @@ const getRecentPages = (history, limit = RECENT_PAGES_LIMIT) => {
     return result;
 };
 
-/* 最近見たページ一覧をパネルに描画する */
-const renderHistory = (panelNode, history) => {
-    const items = getRecentPages(history);
+/* 最近見たページ一覧をパネルに描画する（設定の表示数を参照、0なら非表示） */
+const renderHistory = async (panelNode, history) => {
+    const settings = await loadSettings(currentProjectName);
+    const limit = settings.recentPagesCount ?? RECENT_PAGES_LIMIT;
+    if (limit <= 0) return;
+
+    const items = getRecentPages(history, limit);
     if (!items.length) return;
 
     appendSectionHeader(panelNode, '🕒 最近見たページ');
@@ -58,12 +62,16 @@ const renderHistory = (panelNode, history) => {
     });
 };
 
-/* よく見ているページ一覧をパネルに描画する */
-const renderFrequentPages = (panelNode, history) => {
+/* よく見ているページ一覧をパネルに描画する（設定の表示数を参照、0なら非表示） */
+const renderFrequentPages = async (panelNode, history) => {
+    const settings = await loadSettings(currentProjectName);
+    const limit = settings.frequentPagesCount ?? FREQUENT_PAGES_LIMIT;
+    if (limit <= 0) return;
+
     const freq = {};
     history.forEach(item => { freq[item.pageName] = (freq[item.pageName] || 0) + 1; });
 
-    const items = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, FREQUENT_PAGES_LIMIT);
+    const items = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, limit);
     if (!items.length) return;
 
     appendSectionHeader(panelNode, '⭐ よく見ているページ');

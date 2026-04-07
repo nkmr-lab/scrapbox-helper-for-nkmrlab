@@ -93,8 +93,8 @@ const openFloatMenu = async () => {
     await _renderPinSection(panel, getCurrentPageName());
 
     const history = await loadHistory(currentProjectName);
-    renderFrequentPages(panel, history);
-    renderHistory(panel, history);
+    await renderFrequentPages(panel, history);
+    await renderHistory(panel, history);
 
     renderMenuButtons(panel, shouldShowPageCreate(settings));
 

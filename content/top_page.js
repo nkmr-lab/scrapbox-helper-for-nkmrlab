@@ -33,8 +33,8 @@ const renderProjectTop = async () => {
 
     renderMyResearchNote(panelNode, settings);
     renderPinnedPages(panelNode, pinnedPages);
-    renderFrequentPages(panelNode, history);
-    renderHistory(panelNode, history);
+    await renderFrequentPages(panelNode, history);
+    await renderHistory(panelNode, history);
     renderMenuButtons(panelNode, shouldShowPageCreate(settings));
 
     document.body.appendChild(panelNode);

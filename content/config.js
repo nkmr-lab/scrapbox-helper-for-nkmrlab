@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS = {
     floatMenuPosition: 'bottom-right',
     floatMenuWidth: 320,
     showPageCreate: 'auto',       // 'auto'(nkmr-labのみ) | 'show' | 'hide'
+    recentPagesCount: 10,
+    frequentPagesCount: 5,
     /* --- メインパネル（トップページ） --- */
     mainPosition: 'top-right',
     mainWidth: 480,
@@ -225,6 +227,8 @@ const _buildBasicTab = (settings) => {
     const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
+    const recentI = _input(settings.recentPagesCount, 'number');
+    const frequentI = _input(settings.frequentPagesCount, 'number');
 
     const basicContent = document.createElement('div');
     basicContent.append(
@@ -234,13 +238,15 @@ const _buildBasicTab = (settings) => {
         _field('ページ生成メニュー', pageCreateI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
+        _field('最近見たページ表示数（0で非表示）', recentI),
+        _field('よく見るページ表示数（0で非表示）', frequentI),
         _field('テーマ', themeI),
     );
 
     const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
     basicContent.append(colorToggle, colorSection);
 
-    return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
+    return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, recentI, frequentI, colorInputs };
 };
 
 /* AIサポートタブ（APIキー・プロンプト）を構築する */
@@ -451,7 +457,7 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
+    nameI, oI, pageCreateI, themeI, floatPosI, floatWI, recentI, frequentI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
     mainPosI, mainWI, mainHI,
@@ -480,6 +486,8 @@ const _collectSettingsValues = ({
         theme: themeI.value, customColors: newCustom,
         floatMenuPosition: floatPosI.value,
         floatMenuWidth: +floatWI.value,
+        recentPagesCount: +recentI.value,
+        frequentPagesCount: +frequentI.value,
         showPageCreate: pageCreateI.value,
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
