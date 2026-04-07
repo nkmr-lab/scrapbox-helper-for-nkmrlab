@@ -227,8 +227,6 @@ const _buildBasicTab = (settings) => {
     const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
-    const recentI = _input(settings.recentPagesCount, 'number');
-    const frequentI = _input(settings.frequentPagesCount, 'number');
 
     const basicContent = document.createElement('div');
     basicContent.append(
@@ -238,15 +236,13 @@ const _buildBasicTab = (settings) => {
         _field('ページ生成メニュー', pageCreateI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
-        _field('最近見たページ表示数（0で非表示）', recentI),
-        _field('よく見るページ表示数（0で非表示）', frequentI),
         _field('テーマ', themeI),
     );
 
     const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
     basicContent.append(colorToggle, colorSection);
 
-    return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, recentI, frequentI, colorInputs };
+    return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
 };
 
 /* AIサポートタブ（APIキー・プロンプト）を構築する */
@@ -428,15 +424,19 @@ const _buildMainTab = (settings) => {
     const mainPosI = _select(settings.mainPosition, POSITION_OPTIONS);
     const mainWI = _input(settings.mainWidth, 'number');
     const mainHI = _input(settings.mainHeight, 'number');
+    const recentI = _input(settings.recentPagesCount, 'number');
+    const frequentI = _input(settings.frequentPagesCount, 'number');
 
     const mainContent = document.createElement('div');
     mainContent.append(
         _desc('プロジェクトのトップページに表示されるパネルの設定です。'),
         _field('位置', mainPosI),
         _field('横幅', mainWI), _field('縦幅', mainHI),
+        _field('最近見たページ表示数（0で非表示）', recentI),
+        _field('よく見るページ表示数（0で非表示）', frequentI),
     );
 
-    return { mainContent, mainPosI, mainWI, mainHI };
+    return { mainContent, mainPosI, mainWI, mainHI, recentI, frequentI };
 };
 
 /* その他パネル設定タブを構築する */
@@ -457,10 +457,10 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, oI, pageCreateI, themeI, floatPosI, floatWI, recentI, frequentI, colorInputs,
+    nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
-    mainPosI, mainWI, mainHI,
+    mainPosI, mainWI, mainHI, recentI, frequentI,
     otherPosI, otherWI, otherHI,
     apiKeyI, promptSummaryI, promptExperimentI, promptProgramI,
 }) => {
