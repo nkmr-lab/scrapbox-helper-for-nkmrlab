@@ -217,14 +217,12 @@ const renderTabs = (tabs) => {
 };
 
 /* --- タブビルダー --- */
-/* 基本設定タブ（名前・透明度・テーマ・カスタムカラー）を構築する */
+/* 基本設定タブ（名前・メニュー設定）を構築する */
 const _buildBasicTab = (settings) => {
     const nameI = _input(settings.userName);
-    const oI = _input(settings.idleOpacity, 'number');
     const pageCreateI = _select(settings.showPageCreate, [
         ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
     ]);
-    const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
 
@@ -232,17 +230,30 @@ const _buildBasicTab = (settings) => {
     basicContent.append(
         _desc('拡張機能の全般的な設定です。'),
         _field('名前', nameI),
-        _field('非アクティブ透明度', oI),
         _field('ページ生成メニュー', pageCreateI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
+    );
+
+    return { basicContent, nameI, pageCreateI, floatPosI, floatWI };
+};
+
+/* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
+const _buildColorTab = (settings) => {
+    const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
+    const oI = _input(settings.idleOpacity, 'number');
+
+    const colorContent = document.createElement('div');
+    colorContent.append(
+        _desc('テーマの切替と、パネルの透明度・カスタムカラーの設定です。'),
         _field('テーマ', themeI),
+        _field('非アクティブ透明度', oI),
     );
 
     const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
-    basicContent.append(colorToggle, colorSection);
+    colorContent.append(colorToggle, colorSection);
 
-    return { basicContent, nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs };
+    return { colorContent, themeI, oI, colorInputs };
 };
 
 /* AIサポートタブ（APIキー・プロンプト）を構築する */
@@ -457,7 +468,8 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, oI, pageCreateI, themeI, floatPosI, floatWI, colorInputs,
+    nameI, pageCreateI, floatPosI, floatWI,
+    themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
     mainPosI, mainWI, mainHI, recentI, frequentI,
@@ -531,10 +543,11 @@ const openSettingsModal = async () => {
 
     /* ===== タブ構築 ===== */
     const basic = _buildBasicTab(settings);
+    const main = _buildMainTab(settings);
     const cal = _buildCalendarTab(settings);
     const todo = _buildTodoTab(settings);
-    const main = _buildMainTab(settings);
     const other = _buildOtherTab(settings);
+    const color = _buildColorTab(settings);
     const ai = _buildAiTab(settings);
 
     /* ===== タブ組み立て ===== */
@@ -544,7 +557,8 @@ const openSettingsModal = async () => {
         { label: 'カレンダー', content: cal.calContent },
         { label: 'TODO', content: todo.todoContent },
         { label: 'その他', content: other.otherContent },
-        { label: 'AIサポート', content: ai.aiContent },
+        { label: '色設定', content: color.colorContent },
+        { label: 'AI', content: ai.aiContent },
     ]);
 
     panelNode.append(bar, ...panels);
@@ -555,7 +569,7 @@ const openSettingsModal = async () => {
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = () => {
         const newSettings = _collectSettingsValues({
-            ...basic, ...cal, ...todo, ...main, ...other, ...ai,
+            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...ai,
         });
         saveSettings(currentProjectName, newSettings);
         location.reload();
