@@ -3,6 +3,10 @@
 /* 発表練習ページの質問一覧と統計をパネルに描画する */
 const renderPresentationFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines, { withUid: true });
+
+    /* 著者推定のため統計を先に計算 */
+    const statsResult = buildTalkStats(rawLines);
+
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
 
@@ -39,7 +43,10 @@ const renderPresentationFromLines = (pageName, rawLines) => {
         appendQuestionList(fragment, questions);
     });
 
-    const statsBlock = renderTalkStatsBlock(rawLines);
-    if (statsBlock) fragment.appendChild(statsBlock);
+    if (Object.keys(statsResult.stats).length) {
+        const statsBox = document.createElement('div');
+        renderTalkStats(statsBox, statsResult.stats, statsResult.idToName);
+        fragment.appendChild(statsBox);
+    }
     bodyNode.replaceChildren(fragment);
 };

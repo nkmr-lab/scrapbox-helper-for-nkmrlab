@@ -6,6 +6,9 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines, { withUid: true });
     if (!isPaperIntroPage(lines)) return;
 
+    /* 著者推定のため統計を先に計算 */
+    const statsResult = buildTalkStats(rawLines);
+
     let inQnA = false;
     const questionMap = new Map();
     const normalize = (s) => s.replace(/\s+/g, ' ').trim();
@@ -19,7 +22,7 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
         if (inQnA && /^\?\s/.test(t)) {
             const text = normalize(t.replace(/^\?\s*/, ''));
             let author = findAuthorAbove(lines, idx);
-            if (!author && line.uid && line.uid !== 'unknown') {
+            if (!author && line.uid && line.uid !== 'unknown' && isLikelyAuthor(line.uid)) {
                 author = userNameCache[line.uid] || null;
             }
             const existing = questionMap.get(text);
@@ -38,7 +41,10 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
     const fragment = document.createDocumentFragment();
     appendQuestionList(fragment, questions);
 
-    const statsBlock = renderTalkStatsBlock(rawLines);
-    if (statsBlock) fragment.appendChild(statsBlock);
+    if (Object.keys(statsResult.stats).length) {
+        const statsBox = document.createElement('div');
+        renderTalkStats(statsBox, statsResult.stats, statsResult.idToName);
+        fragment.appendChild(statsBox);
+    }
     bodyNode.replaceChildren(fragment);
 };

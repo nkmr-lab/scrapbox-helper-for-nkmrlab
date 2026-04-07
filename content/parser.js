@@ -141,9 +141,9 @@ const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        /* 著者推定: アイコン記法 → 行のuserId(userNameCache経由) → null */
+        /* 著者推定: アイコン記法 → 行のuserId(十分な文字数がある場合のみ) → null */
         let author = findAuthorAbove(lines, i);
-        if (!author && lines[i].uid && lines[i].uid !== 'unknown') {
+        if (!author && lines[i].uid && lines[i].uid !== 'unknown' && isLikelyAuthor(lines[i].uid)) {
             author = userNameCache[lines[i].uid] || null;
         }
 
