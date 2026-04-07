@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS = {
     floatMenuPosition: 'bottom-right',
     floatMenuWidth: 320,
     showPageCreate: 'auto',       // 'auto'(nkmr-labのみ) | 'show' | 'hide'
-    recentPagesCount: 10,
+    recentPagesCount: 5,
     frequentPagesCount: 5,
     /* --- メインパネル（トップページ） --- */
     mainPosition: 'top-right',
