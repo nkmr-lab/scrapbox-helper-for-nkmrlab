@@ -140,14 +140,29 @@ const applyPanelSettings = async (panelNode, panelType = 'main') => {
 const THEME_LABELS = { normal: 'ノーマル', dark: 'ダーク' };
 
 const COLOR_KEY_LABELS = {
+    /* パネル全般 */
     panelBg:'パネル背景', panelBorder:'パネル枠線',
     titleBg:'タイトル背景', titleText:'タイトル文字',
     headerBg:'ヘッダー背景', headerText:'ヘッダー文字',
-    sectionBg:'セクション背景', sectionBorder:'セクション枠線',
+    sectionBg:'セクション背景（クリック可）', sectionStaticBg:'セクション背景（情報）',
+    sectionBorder:'セクション枠線',
     subTitleBg:'サブタイトル背景',
-    text:'本文', textMuted:'薄い文字', border:'枠線',
-    calSunday:'カレンダー日曜', calSaturday:'カレンダー土曜', calToday:'カレンダー今日',
-    statsBar:'統計バー', reviewOk:'レビューOK', reviewNg:'レビューNG',
+    /* テキスト */
+    text:'本文', textMuted:'薄い文字', textFaint:'最も薄い文字', textDone:'完了済み文字',
+    border:'枠線',
+    /* カレンダー */
+    calCellBorder:'セル枠線', calSnippet:'スニペット文字',
+    calSunday:'日曜', calSaturday:'土曜',
+    calSundayHeader:'日曜ヘッダー', calSaturdayHeader:'土曜ヘッダー',
+    calToday:'今日の枠',
+    heatmap1:'ヒートマップ Lv1', heatmap2:'Lv2', heatmap3:'Lv3', heatmap4:'Lv4',
+    /* TODO */
+    todoBorder:'TODO行の区切り線',
+    /* AI・レビュー */
+    aiSummaryBg:'AI要約背景', aiSummaryBorder:'AI要約枠線',
+    reviewOk:'レビューOK', reviewNg:'レビューNG',
+    /* 統計 */
+    statsBar:'統計バー', statsBarBg:'統計バー背景',
 };
 
 /* --- UI部品 --- */
@@ -246,8 +261,8 @@ const _buildColorTab = (settings) => {
     const colorContent = document.createElement('div');
     colorContent.append(
         _desc('テーマの切替と、パネルの透明度・カスタムカラーの設定です。'),
-        _field('テーマ', themeI),
         _field('非アクティブ透明度', oI),
+        _field('テーマ', themeI),
     );
 
     const { colorToggle, colorSection, colorInputs } = _buildColorCustomizer(settings, themeI);
