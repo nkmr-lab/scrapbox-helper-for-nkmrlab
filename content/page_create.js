@@ -147,16 +147,9 @@ const openPageCreateModal = async () => {
     const settings = await loadSettings(currentProjectName);
     const { overlay, modal } = createModalDialog(PAGE_CREATE_MODAL_ID, '📝 ページ生成');
 
-    const _label = (text) => {
-        const el = document.createElement('div');
-        el.textContent = text;
-        el.className = 'sb-settings-label';
-        return el;
-    };
-
     /* 研究ノート */
     if (settings.userName) {
-        modal.appendChild(_label('研究ノート（年月指定）'));
+        modal.appendChild(renderLabel('研究ノート（年月指定）'));
 
         const noteRow = document.createElement('div');
         noteRow.className = 'sb-form-row';
@@ -190,7 +183,7 @@ const openPageCreateModal = async () => {
     }
 
     /* 発表練習 */
-    modal.appendChild(_label('発表練習ページ'));
+    modal.appendChild(renderLabel('発表練習ページ'));
 
     const presRow = document.createElement('div');
     presRow.className = 'sb-form-row';
@@ -213,7 +206,7 @@ const openPageCreateModal = async () => {
     modal.appendChild(presRow);
 
     /* 論文紹介 */
-    modal.appendChild(_label('論文紹介ページ'));
+    modal.appendChild(renderLabel('論文紹介ページ'));
 
     const paperRow = document.createElement('div');
     paperRow.className = 'sb-form-row';
@@ -235,7 +228,7 @@ const openPageCreateModal = async () => {
 
     /* 学会プログラムから生成（API Key設定時のみ） */
     if (settings.openaiApiKey) {
-        modal.appendChild(_label('学会プログラムから議事録テンプレート生成'));
+        modal.appendChild(renderLabel('学会プログラムから議事録テンプレート生成'));
 
         const progArea = document.createElement('textarea');
         progArea.className = 'sb-textarea';

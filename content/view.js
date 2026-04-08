@@ -48,14 +48,6 @@ const setupPanelHeader = (panelNode, rawLines, icon = '📌') => {
 };
 
 /* --- テキスト要素生成 --- */
-/* ページタイトルをパネルに追加する */
-const renderPageTitle = (parentNode, rawLines) => {
-    if (!rawLines || !rawLines.length) return null;
-    const text = (rawLines[0].text || '').trim();
-    if (!text) return null;
-    return appendPanelTitle(parentNode, text, () => jumpToLineId(rawLines[0].id));
-};
-
 /* パネルタイトル要素を追加する */
 const appendPanelTitle = (parentNode, text, onClick) => {
     return appendEl(parentNode, text, 'sb-title', onClick);
@@ -133,6 +125,15 @@ const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
         btn.remove();
     };
     titleNode.appendChild(btn);
+};
+
+/* --- ラベル --- */
+/* 設定ラベルを生成する */
+const renderLabel = (text) => {
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.className = 'sb-settings-label';
+    return el;
 };
 
 /* --- モーダル生成 --- */

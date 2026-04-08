@@ -110,16 +110,9 @@ const renderExperimentPlan = async (pageName) => {
     const json = await fetchPage(currentProjectName, pageName);
     if (!json) return;
 
-    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, () => {
-        const p = document.createElement('div');
-        p.className = 'sb-panel';
-        applyPanelSettings(p, 'other');
-        return p;
-    });
-    panelNode.innerHTML = '';
-
-    const titleNode = renderPageTitle(panelNode, json.lines);
-    attachCloseButton(panelNode, MAIN_PANEL_ID);
+    const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
+    const { bodyNode } = setupPanelHeader(panelNode, json.lines, '📋');
+    const fragment = document.createDocumentFragment();
 
     let currentSection = null;
     const sections = [];
@@ -130,7 +123,7 @@ const renderExperimentPlan = async (pageName) => {
 
         if (/^\[\*{3,}\(&/.test(text)) {
             const title = text.replace(/^\[\*+\(&\s*/, '').replace(/\]$/, '');
-            const sectionNode = appendSectionHeader(panelNode, '■ ' + title, () => jumpToLineId(line.id));
+            const sectionNode = appendSectionHeader(fragment, '■ ' + title, () => jumpToLineId(line.id));
             currentSection = { title, id: line.id, contents: [], node: sectionNode };
             sections.push(currentSection);
             return;
@@ -140,7 +133,7 @@ const renderExperimentPlan = async (pageName) => {
 
         if (/^\[\*&\s+/.test(text)) {
             const titleText = text.replace(/^\[\*&\s*/, '').replace(/\]$/, '');
-            appendItem(panelNode, '└ ' + titleText, () => jumpToLineId(line.id));
+            appendItem(fragment, '└ ' + titleText, () => jumpToLineId(line.id));
             currentSection.contents.push(`【項目】${titleText}`);
             return;
         }
@@ -148,10 +141,10 @@ const renderExperimentPlan = async (pageName) => {
         currentSection.contents.push(text);
     });
 
-    if (titleNode && await isOpenAIEnabled() && sections.length > 0) {
+    if (await isOpenAIEnabled() && sections.length > 0) {
         const batchUI = renderGPTBatchReviewUI(sections);
-        titleNode.after(batchUI);
+        fragment.prepend(batchUI);
     }
 
-    document.body.appendChild(panelNode);
+    bodyNode.replaceChildren(fragment);
 };
