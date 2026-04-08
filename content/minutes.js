@@ -107,10 +107,22 @@ const renderMinutesFromLines = async (rawLines) => {
     populateSessionData(sessions, lines);
 
     sessions.forEach(session => {
-        appendSectionHeader(fragment, session.title, () => jumpToLineId(session.id));
+        /* commentsセッションで中身が空なら表示しない */
+        if (session.title === 'comments') {
+            const hasContent = session.talks.some(t =>
+                t.questions.length > 0 || t.impressions.length > 0 || t.title !== 'comments');
+            if (!hasContent) return;
+        }
+
+        appendSectionHeader(fragment, session.title === 'comments' ? '' : session.title, () => jumpToLineId(session.id));
 
         session.talks.forEach(talk => {
-            const titleNode = appendItemSub(fragment, '└ ' + talk.title, () => jumpToLineId(talk.id));
+            /* commentsタイトルのtalkで中身が空なら表示しない */
+            if (talk.title === 'comments' && talk.questions.length === 0 && talk.impressions.length === 0) return;
+
+            const titleNode = appendItemSub(fragment,
+                '└ ' + (talk.title === 'comments' ? '' : talk.title),
+                () => jumpToLineId(talk.id));
 
             if (enableOpenAI && talk.impressions.length >= 2) {
                 attachAiSummaryButton(
