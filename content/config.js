@@ -252,7 +252,20 @@ const _buildBasicTab = (settings) => {
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
 
-    /* 同期チェックボックス */
+    const basicContent = document.createElement('div');
+    basicContent.append(
+        _desc('拡張機能の全般的な設定です。'),
+        _field('名前', nameI),
+        _field('ページ生成メニュー', pageCreateI),
+        _field('メニュー位置', floatPosI),
+        _field('メニュー横幅', floatWI),
+    );
+
+    return { basicContent, nameI, pageCreateI, floatPosI, floatWI };
+};
+
+/* 同期タブ（Chrome同期の対象選択）を構築する */
+const _buildSyncTab = (settings) => {
     const _checkbox = (label, checked) => {
         const wrap = document.createElement('label');
         wrap.className = 'sb-settings-field';
@@ -275,23 +288,14 @@ const _buildBasicTab = (settings) => {
     const syncHistoryI = _checkbox('閲覧履歴', settings.syncHistory);
     const syncUserMapI = _checkbox('ユーザー名マップ', settings.syncUserMap);
 
-    const syncSection = document.createElement('div');
-    syncSection.className = 'sb-settings-section';
-    syncSection.textContent = 'Chrome同期（Googleログイン時に他のPCと共有）';
-
-    const basicContent = document.createElement('div');
-    basicContent.append(
-        _desc('拡張機能の全般的な設定です。'),
-        _field('名前', nameI),
-        _field('ページ生成メニュー', pageCreateI),
-        _field('メニュー位置', floatPosI),
-        _field('メニュー横幅', floatWI),
-        syncSection,
+    const syncContent = document.createElement('div');
+    syncContent.append(
+        _desc('Googleアカウントでログインしている場合、チェックした項目が他のPCと同期されます。'),
         syncSystemI.wrap, syncDisplayI.wrap,
         syncPinnedI.wrap, syncHistoryI.wrap, syncUserMapI.wrap,
     );
 
-    return { basicContent, nameI, pageCreateI, floatPosI, floatWI,
+    return { syncContent,
         syncSystemCb: syncSystemI.cb, syncDisplayCb: syncDisplayI.cb,
         syncPinnedCb: syncPinnedI.cb, syncHistoryCb: syncHistoryI.cb,
         syncUserMapCb: syncUserMapI.cb };
@@ -613,6 +617,7 @@ const openSettingsModal = async () => {
     const todo = _buildTodoTab(settings);
     const other = _buildOtherTab(settings);
     const color = _buildColorTab(settings);
+    const sync = _buildSyncTab(settings);
     const ai = _buildAiTab(settings);
 
     /* ===== タブ組み立て ===== */
@@ -623,6 +628,7 @@ const openSettingsModal = async () => {
         { label: 'TODO', content: todo.todoContent },
         { label: 'その他', content: other.otherContent },
         { label: '色設定', content: color.colorContent },
+        { label: '同期', content: sync.syncContent },
         { label: 'AI', content: ai.aiContent },
     ]);
 
@@ -634,7 +640,7 @@ const openSettingsModal = async () => {
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = () => {
         const newSettings = _collectSettingsValues({
-            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...ai,
+            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...sync, ...ai,
         });
         saveSettings(currentProjectName, newSettings);
         location.reload();
