@@ -104,17 +104,12 @@ const injectStyleSheet = () => {
     cursor:default;
     background:var(--sb-sectionStaticBg);
 }
-.sb-subtitle {
-    margin-bottom:4px; padding-bottom:3px;
-    background:var(--sb-subTitleBg);
-}
 .sb-item {
     cursor:pointer; padding-left:6px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .sb-item--muted { color:var(--sb-textMuted); }
 .sb-item--sub { background:var(--sb-subTitleBg); margin-bottom:4px; padding-bottom:3px; }
-.sb-muted { color:var(--sb-textFaint); font-size:11px; }
 
 /* ===== Buttons ===== */
 .sb-close-btn {
@@ -199,10 +194,6 @@ const injectStyleSheet = () => {
 .sb-batch-status { margin-left:10px; font-size:11px; color:var(--sb-textFaint); }
 
 /* ===== Settings ===== */
-.sb-settings-section {
-    font-weight:bold; margin-top:10px; margin-bottom:4px;
-    border-bottom:1px solid var(--sb-border); padding-bottom:2px; font-size:12px;
-}
 .sb-settings-field { margin-bottom:6px; }
 .sb-settings-label { font-size:11px; color:var(--sb-inputLabel); }
 .sb-color-label { font-size:10px; color:var(--sb-inputLabel); width:7em; flex-shrink:0; }
@@ -320,7 +311,6 @@ const injectStyleSheet = () => {
 
 /* ===== Layout helpers ===== */
 .sb-flex-spacer { margin-left:auto; }
-.sb-row { display:flex; gap:4px; align-items:center; }
 .sb-color-row { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
 `;
     document.head.appendChild(style);
