@@ -39,10 +39,11 @@ const DEFAULT_SETTINGS = {
     promptExperimentReview: '',
     promptProgramParse: '',
     /* --- 同期設定（何をchrome.storage.syncで共有するか） --- */
-    syncSettings: false,
+    syncSystem: true,       // システム設定（名前・TODOマーク・プロンプト等）
+    syncDisplay: false,     // 表示設定（パネルサイズ・位置・テーマ・色等）
     syncPinned: true,
     syncHistory: true,
-    syncUserMap: false,
+    syncUserMap: true,
 };
 
 const POSITION_OPTIONS = [
@@ -90,8 +91,8 @@ const saveSettings = (projectName, settings) => {
     if (!projectName) return;
     _settingsCache = null;
     chrome.storage.local.set({ [settingsKey(projectName)]: settings });
-    /* sync有効ならsyncにも書く */
-    if (settings.syncSettings) {
+    /* システムまたは表示の同期が有効ならsyncにも書く */
+    if (settings.syncSystem || settings.syncDisplay) {
         getStorage(true).set({ [settingsKey(projectName)]: settings });
     }
 };
@@ -268,7 +269,8 @@ const _buildBasicTab = (settings) => {
         return { wrap, cb };
     };
 
-    const syncSettingsI = _checkbox('設定', settings.syncSettings);
+    const syncSystemI = _checkbox('システム設定（名前・マーク・プロンプト等）', settings.syncSystem);
+    const syncDisplayI = _checkbox('表示設定（パネルサイズ・位置・テーマ・色等）', settings.syncDisplay);
     const syncPinnedI = _checkbox('ピン留め', settings.syncPinned);
     const syncHistoryI = _checkbox('閲覧履歴', settings.syncHistory);
     const syncUserMapI = _checkbox('ユーザー名マップ', settings.syncUserMap);
@@ -285,12 +287,14 @@ const _buildBasicTab = (settings) => {
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
         syncSection,
-        syncSettingsI.wrap, syncPinnedI.wrap, syncHistoryI.wrap, syncUserMapI.wrap,
+        syncSystemI.wrap, syncDisplayI.wrap,
+        syncPinnedI.wrap, syncHistoryI.wrap, syncUserMapI.wrap,
     );
 
     return { basicContent, nameI, pageCreateI, floatPosI, floatWI,
-        syncSettingsCb: syncSettingsI.cb, syncPinnedCb: syncPinnedI.cb,
-        syncHistoryCb: syncHistoryI.cb, syncUserMapCb: syncUserMapI.cb };
+        syncSystemCb: syncSystemI.cb, syncDisplayCb: syncDisplayI.cb,
+        syncPinnedCb: syncPinnedI.cb, syncHistoryCb: syncHistoryI.cb,
+        syncUserMapCb: syncUserMapI.cb };
 };
 
 /* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
@@ -524,7 +528,7 @@ const _buildOtherTab = (settings) => {
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
     nameI, pageCreateI, floatPosI, floatWI,
-    syncSettingsCb, syncPinnedCb, syncHistoryCb, syncUserMapCb,
+    syncSystemCb, syncDisplayCb, syncPinnedCb, syncHistoryCb, syncUserMapCb,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
@@ -560,7 +564,8 @@ const _collectSettingsValues = ({
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),
-        syncSettings: syncSettingsCb.checked,
+        syncSystem: syncSystemCb.checked,
+        syncDisplay: syncDisplayCb.checked,
         syncPinned: syncPinnedCb.checked,
         syncHistory: syncHistoryCb.checked,
         syncUserMap: syncUserMapCb.checked,
