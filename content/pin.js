@@ -1,18 +1,21 @@
 /* ================= ピン留め ================= */
 
-/* ピン留めページ一覧をストレージから読み込む */
-const loadPinnedPages = (projectName) => {
+/* ピン留めページ一覧をストレージから読み込む（sync設定に従う） */
+const loadPinnedPages = async (projectName) => {
+    const settings = await loadSettings(projectName);
+    const storage = getStorage(settings.syncPinned);
     return new Promise(resolve => {
-        getSyncStorage().get(
+        storage.get(
             { [pinnedKey(projectName)]: [] },
             data => resolve(data[pinnedKey(projectName)] || [])
         );
     });
 };
 
-/* ピン留めページ一覧をストレージに保存する（sync優先） */
-const savePinnedPages = (projectName, pinned) => {
-    getSyncStorage().set({ [pinnedKey(projectName)]: pinned });
+/* ピン留めページ一覧をストレージに保存する（sync設定に従う） */
+const savePinnedPages = async (projectName, pinned) => {
+    const settings = await loadSettings(projectName);
+    getStorage(settings.syncPinned).set({ [pinnedKey(projectName)]: pinned });
 };
 
 /* 指定ページをピン留めに追加する */

@@ -38,8 +38,9 @@ const closedPanels = new Set();
 let currentProjectName = null;
 
 /* --- Storage ヘルパー --- */
-/* sync可能ならsync、そうでなければlocalを使う */
-const getSyncStorage = () => {
+/* sync設定に基づいてストレージを選択する（設定キャッシュから判定） */
+const getStorage = (syncEnabled) => {
+    if (!syncEnabled) return chrome.storage.local;
     try {
         return chrome.storage.sync || chrome.storage.local;
     } catch {

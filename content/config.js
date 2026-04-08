@@ -38,6 +38,11 @@ const DEFAULT_SETTINGS = {
     promptSummary: '',            // 空欄ならデフォルトプロンプト
     promptExperimentReview: '',
     promptProgramParse: '',
+    /* --- 同期設定（何をchrome.storage.syncで共有するか） --- */
+    syncSettings: false,
+    syncPinned: true,
+    syncHistory: true,
+    syncUserMap: false,
 };
 
 const POSITION_OPTIONS = [
@@ -61,14 +66,15 @@ let _settingsCacheProject = null;
 /* 設定キャッシュをクリアする（ページ遷移時にrouter.jsから呼ばれる） */
 const clearSettingsCache = () => { _settingsCache = null; };
 
-/* プロジェクトの設定をストレージから読み込む */
+/* プロジェクトの設定をストレージから読み込む（sync有効ならsync優先で試みる） */
 const loadSettings = (projectName) => {
     if (_settingsCache && _settingsCacheProject === projectName) {
         return Promise.resolve(_settingsCache);
     }
     return new Promise(resolve => {
         if (!projectName) { resolve({ ...DEFAULT_SETTINGS }); return; }
-        getSyncStorage().get(
+        /* まずlocalから読む（常に存在） */
+        chrome.storage.local.get(
             { [settingsKey(projectName)]: DEFAULT_SETTINGS },
             data => {
                 _settingsCache = { ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] };
@@ -79,11 +85,15 @@ const loadSettings = (projectName) => {
     });
 };
 
-/* プロジェクトの設定をストレージに保存する（sync優先） */
+/* プロジェクトの設定をストレージに保存する */
 const saveSettings = (projectName, settings) => {
     if (!projectName) return;
     _settingsCache = null;
-    getSyncStorage().set({ [settingsKey(projectName)]: settings });
+    chrome.storage.local.set({ [settingsKey(projectName)]: settings });
+    /* sync有効ならsyncにも書く */
+    if (settings.syncSettings) {
+        getStorage(true).set({ [settingsKey(projectName)]: settings });
+    }
 };
 
 /* テーマとスタイルシートを初期化する */
@@ -241,6 +251,32 @@ const _buildBasicTab = (settings) => {
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
 
+    /* 同期チェックボックス */
+    const _checkbox = (label, checked) => {
+        const wrap = document.createElement('label');
+        wrap.className = 'sb-settings-field';
+        wrap.style.display = 'flex';
+        wrap.style.alignItems = 'center';
+        wrap.style.gap = '4px';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = checked;
+        const lbl = document.createElement('span');
+        lbl.textContent = label;
+        lbl.className = 'sb-settings-label';
+        wrap.append(cb, lbl);
+        return { wrap, cb };
+    };
+
+    const syncSettingsI = _checkbox('設定', settings.syncSettings);
+    const syncPinnedI = _checkbox('ピン留め', settings.syncPinned);
+    const syncHistoryI = _checkbox('閲覧履歴', settings.syncHistory);
+    const syncUserMapI = _checkbox('ユーザー名マップ', settings.syncUserMap);
+
+    const syncSection = document.createElement('div');
+    syncSection.className = 'sb-settings-section';
+    syncSection.textContent = 'Chrome同期（Googleログイン時に他のPCと共有）';
+
     const basicContent = document.createElement('div');
     basicContent.append(
         _desc('拡張機能の全般的な設定です。'),
@@ -248,9 +284,13 @@ const _buildBasicTab = (settings) => {
         _field('ページ生成メニュー', pageCreateI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
+        syncSection,
+        syncSettingsI.wrap, syncPinnedI.wrap, syncHistoryI.wrap, syncUserMapI.wrap,
     );
 
-    return { basicContent, nameI, pageCreateI, floatPosI, floatWI };
+    return { basicContent, nameI, pageCreateI, floatPosI, floatWI,
+        syncSettingsCb: syncSettingsI.cb, syncPinnedCb: syncPinnedI.cb,
+        syncHistoryCb: syncHistoryI.cb, syncUserMapCb: syncUserMapI.cb };
 };
 
 /* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
@@ -484,6 +524,7 @@ const _buildOtherTab = (settings) => {
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
     nameI, pageCreateI, floatPosI, floatWI,
+    syncSettingsCb, syncPinnedCb, syncHistoryCb, syncUserMapCb,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
@@ -519,6 +560,10 @@ const _collectSettingsValues = ({
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),
+        syncSettings: syncSettingsCb.checked,
+        syncPinned: syncPinnedCb.checked,
+        syncHistory: syncHistoryCb.checked,
+        syncUserMap: syncUserMapCb.checked,
     };
 };
 

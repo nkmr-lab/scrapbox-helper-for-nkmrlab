@@ -1,25 +1,29 @@
 /* ================= 履歴管理 ================= */
 
-/* 正規化済みの閲覧履歴をストレージから読み込む */
-const loadHistory = (projectName) => {
+/* 正規化済みの閲覧履歴をストレージから読み込む（sync設定に従う） */
+const loadHistory = async (projectName) => {
+    const settings = await loadSettings(projectName);
+    const storage = getStorage(settings.syncHistory);
     return new Promise(resolve => {
-        chrome.storage.local.get(
+        storage.get(
             { [historyKey(projectName)]: [] },
             data => resolve(normalizeHistoryEntries(data[historyKey(projectName)]))
         );
     });
 };
 
-/* 閲覧履歴をストレージに追記する */
-const saveHistory = (projectName, pageName) => {
+/* 閲覧履歴をストレージに追記する（sync設定に従う） */
+const saveHistory = async (projectName, pageName) => {
     if (!projectName || !pageName) return;
-    chrome.storage.local.get(
+    const settings = await loadSettings(projectName);
+    const storage = getStorage(settings.syncHistory);
+    storage.get(
         { [historyKey(projectName)]: [] },
         data => {
             const list = data[historyKey(projectName)];
             if (list.length && list[list.length - 1].pageName === pageName) return;
             list.push({ pageName, ts: Date.now() });
-            chrome.storage.local.set({ [historyKey(projectName)]: list.slice(-HISTORY_LIMIT) });
+            storage.set({ [historyKey(projectName)]: list.slice(-HISTORY_LIMIT) });
         }
     );
 };

@@ -9,11 +9,13 @@
 let userNameCache = {};
 let userNameCacheLoaded = false;
 
-/* ユーザーID→名前マッピング（投票式）をストレージから読み込む */
-const loadUserNameCache = (projectName) => {
-    if (userNameCacheLoaded) return Promise.resolve(userNameCache);
+/* ユーザーID→名前マッピング（投票式）をストレージから読み込む（sync設定に従う） */
+const loadUserNameCache = async (projectName) => {
+    if (userNameCacheLoaded) return userNameCache;
+    const settings = await loadSettings(projectName);
+    const storage = getStorage(settings.syncUserMap);
     return new Promise(resolve => {
-        chrome.storage.local.get(
+        storage.get(
             { [userMapKey(projectName)]: {} },
             data => {
                 userNameCache = data[userMapKey(projectName)] || {};
@@ -29,7 +31,7 @@ const _votedThisPage = new Set();
 
 const resetPageVotes = () => _votedThisPage.clear();
 
-const voteUserName = (projectName, uid, name) => {
+const voteUserName = async (projectName, uid, name) => {
     if (!uid || !name) return;
 
     /* 同一ページで同じuid+nameの組み合わせは1票だけ */
@@ -40,7 +42,8 @@ const voteUserName = (projectName, uid, name) => {
     if (!userNameCache[uid]) userNameCache[uid] = {};
     userNameCache[uid][name] = (userNameCache[uid][name] || 0) + 1;
 
-    chrome.storage.local.set({ [userMapKey(projectName)]: userNameCache });
+    const settings = await loadSettings(projectName);
+    getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: userNameCache });
 };
 
 /* uidに対して最も投票数の多い名前を返す */
