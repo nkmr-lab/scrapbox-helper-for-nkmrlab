@@ -68,7 +68,7 @@ const loadSettings = (projectName) => {
     }
     return new Promise(resolve => {
         if (!projectName) { resolve({ ...DEFAULT_SETTINGS }); return; }
-        chrome.storage.local.get(
+        getSyncStorage().get(
             { [settingsKey(projectName)]: DEFAULT_SETTINGS },
             data => {
                 _settingsCache = { ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] };
@@ -79,11 +79,11 @@ const loadSettings = (projectName) => {
     });
 };
 
-/* プロジェクトの設定をストレージに保存する */
+/* プロジェクトの設定をストレージに保存する（sync優先） */
 const saveSettings = (projectName, settings) => {
     if (!projectName) return;
     _settingsCache = null;
-    chrome.storage.local.set({ [settingsKey(projectName)]: settings });
+    getSyncStorage().set({ [settingsKey(projectName)]: settings });
 };
 
 /* テーマとスタイルシートを初期化する */

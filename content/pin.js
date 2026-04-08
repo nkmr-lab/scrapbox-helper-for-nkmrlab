@@ -3,16 +3,16 @@
 /* ピン留めページ一覧をストレージから読み込む */
 const loadPinnedPages = (projectName) => {
     return new Promise(resolve => {
-        chrome.storage.local.get(
+        getSyncStorage().get(
             { [pinnedKey(projectName)]: [] },
             data => resolve(data[pinnedKey(projectName)] || [])
         );
     });
 };
 
-/* ピン留めページ一覧をストレージに保存する */
+/* ピン留めページ一覧をストレージに保存する（sync優先） */
 const savePinnedPages = (projectName, pinned) => {
-    chrome.storage.local.set({ [pinnedKey(projectName)]: pinned });
+    getSyncStorage().set({ [pinnedKey(projectName)]: pinned });
 };
 
 /* 指定ページをピン留めに追加する */

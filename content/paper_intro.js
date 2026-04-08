@@ -23,7 +23,7 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
             const text = normalize(t.replace(/^\?\s*/, ''));
             let author = findAuthorAbove(lines, idx);
             if (!author && line.uid && line.uid !== 'unknown' && isLikelyAuthor(line.uid)) {
-                author = userNameCache[line.uid] || null;
+                author = resolveUserName(line.uid);
             }
             const existing = questionMap.get(text);
             if (!existing || (!existing.author && author)) {

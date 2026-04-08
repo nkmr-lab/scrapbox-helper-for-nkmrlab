@@ -37,5 +37,15 @@ const CALENDAR_SNIPPET_LIMIT = 10;
 const closedPanels = new Set();
 let currentProjectName = null;
 
+/* --- Storage ヘルパー --- */
+/* sync可能ならsync、そうでなければlocalを使う */
+const getSyncStorage = () => {
+    try {
+        return chrome.storage.sync || chrome.storage.local;
+    } catch {
+        return chrome.storage.local;
+    }
+};
+
 /* 拡張機能が実行中かどうかを判定する */
 const isExtensionAlive = () => !!window.__SB_EXTENSION_RUNNING__;
