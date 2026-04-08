@@ -267,7 +267,7 @@ const injectStyleSheet = () => {
     border:1px solid var(--sb-panelBorder);
     box-shadow:0 4px 20px var(--sb-panelShadow);
     font:12px/1.5 sans-serif;
-    width:420px; max-height:80vh; overflow:auto;
+    width:520px; max-height:80vh; overflow:auto;
     padding:12px 16px; position:relative;
 }
 .sb-modal-close {
