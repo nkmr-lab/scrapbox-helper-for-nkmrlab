@@ -114,17 +114,20 @@ const renderMinutesFromLines = async (rawLines) => {
             if (!hasContent) return;
         }
 
-        appendSectionHeader(fragment, session.title === 'comments' ? '' : session.title, () => jumpToLineId(session.id));
+        if (session.title !== 'comments') {
+            appendSectionHeader(fragment, session.title, () => jumpToLineId(session.id));
+        }
 
         session.talks.forEach(talk => {
             /* commentsタイトルのtalkで中身が空なら表示しない */
             if (talk.title === 'comments' && talk.questions.length === 0 && talk.impressions.length === 0) return;
 
-            const titleNode = appendItemSub(fragment,
-                '└ ' + (talk.title === 'comments' ? '' : talk.title),
-                () => jumpToLineId(talk.id));
+            const showTitle = talk.title !== 'comments';
+            const titleNode = showTitle
+                ? appendItemSub(fragment, '└ ' + talk.title, () => jumpToLineId(talk.id))
+                : null;
 
-            if (enableOpenAI && talk.impressions.length >= 2) {
+            if (titleNode && enableOpenAI && talk.impressions.length >= 2) {
                 attachAiSummaryButton(
                     titleNode,
                     `summary:${talk.id}`,
