@@ -626,8 +626,8 @@ const openSettingsModal = async () => {
         { label: 'メイン', content: main.mainContent },
         { label: 'カレンダー', content: cal.calContent },
         { label: 'TODO', content: todo.todoContent },
-        { label: 'その他', content: other.otherContent },
-        { label: '色設定', content: color.colorContent },
+        { label: '他ページ', content: other.otherContent },
+        { label: '色', content: color.colorContent },
         { label: '同期', content: sync.syncContent },
         { label: 'AI', content: ai.aiContent },
     ]);
