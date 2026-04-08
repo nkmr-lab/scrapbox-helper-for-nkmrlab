@@ -100,6 +100,15 @@ const isLikelyAuthor = (uid) => {
     return _lastTalkStats[uid] / total >= 0.02;
 };
 
+/* 統計を計算してfragmentに追加する（ページハンドラ共通） */
+const appendStatsBlock = (fragment, rawLines) => {
+    const { stats, idToName } = buildTalkStats(rawLines);
+    if (!Object.keys(stats).length) return;
+    const box = document.createElement('div');
+    renderTalkStats(box, stats, idToName);
+    fragment.appendChild(box);
+};
+
 /* 発言量統計をバーチャートとして描画する */
 const renderTalkStats = (parentNode, stats, idToName) => {
     const entries = Object.entries(stats);

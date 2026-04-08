@@ -96,8 +96,8 @@ const renderMinutesFromLines = async (rawLines) => {
     const enableOpenAI = await isOpenAIEnabled();
     const lines = normalizeLines(rawLines, { withUid: true });
 
-    /* 著者推定のため、描画前に統計を計算しておく */
-    const statsResult = buildTalkStats(rawLines);
+    /* 著者推定のため、描画前に統計を計算しておく（_lastTalkStatsに格納される） */
+    buildTalkStats(rawLines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
@@ -144,11 +144,6 @@ const renderMinutesFromLines = async (rawLines) => {
         });
     });
 
-    /* 統計は既に計算済みなのでそのまま描画 */
-    if (Object.keys(statsResult.stats).length) {
-        const statsBox = document.createElement('div');
-        renderTalkStats(statsBox, statsResult.stats, statsResult.idToName);
-        fragment.appendChild(statsBox);
-    }
+    appendStatsBlock(fragment, rawLines);
     bodyNode.replaceChildren(fragment);
 };

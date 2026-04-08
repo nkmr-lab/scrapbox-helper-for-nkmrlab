@@ -4,8 +4,8 @@
 const renderPresentationFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines, { withUid: true });
 
-    /* 著者推定のため統計を先に計算 */
-    const statsResult = buildTalkStats(rawLines);
+    /* 著者推定のため統計を先に計算（_lastTalkStatsに格納される） */
+    buildTalkStats(rawLines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
@@ -43,10 +43,6 @@ const renderPresentationFromLines = (pageName, rawLines) => {
         appendQuestionList(fragment, questions);
     });
 
-    if (Object.keys(statsResult.stats).length) {
-        const statsBox = document.createElement('div');
-        renderTalkStats(statsBox, statsResult.stats, statsResult.idToName);
-        fragment.appendChild(statsBox);
-    }
+    appendStatsBlock(fragment, rawLines);
     bodyNode.replaceChildren(fragment);
 };

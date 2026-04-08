@@ -135,6 +135,36 @@ const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
     titleNode.appendChild(btn);
 };
 
+/* --- モーダル生成 --- */
+/* オーバーレイ+モーダル+閉じるボタン+タイトルを持つモーダルを生成する */
+const createModalDialog = (modalId, titleText) => {
+    document.getElementById(modalId)?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = modalId;
+    overlay.className = 'sb-modal-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    const modal = document.createElement('div');
+    modal.className = 'sb-modal';
+    modal.onclick = (e) => e.stopPropagation();
+
+    const closeBtn = document.createElement('div');
+    closeBtn.textContent = '✕';
+    closeBtn.className = 'sb-modal-close';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+
+    const title = document.createElement('div');
+    title.textContent = titleText;
+    title.className = 'sb-modal-title';
+    modal.appendChild(title);
+
+    overlay.appendChild(modal);
+
+    return { overlay, modal, close: () => overlay.remove() };
+};
+
 /* --- メニューボタン --- */
 /* ページ生成・設定ボタン行をパネルに追加する */
 const renderMenuButtons = (panelNode, showCreate) => {

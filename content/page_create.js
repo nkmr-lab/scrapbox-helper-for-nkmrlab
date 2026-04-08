@@ -144,29 +144,8 @@ const generateFromProgram = async (programText) => {
 
 /* ページ生成モーダルを開いて各種テンプレートを選択可能にする */
 const openPageCreateModal = async () => {
-    document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
-
     const settings = await loadSettings(currentProjectName);
-
-    const overlay = document.createElement('div');
-    overlay.id = PAGE_CREATE_MODAL_ID;
-    overlay.className = 'sb-modal-overlay';
-    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-
-    const modal = document.createElement('div');
-    modal.className = 'sb-modal';
-    modal.onclick = (e) => e.stopPropagation();
-
-    const closeBtn = document.createElement('div');
-    closeBtn.textContent = '✕';
-    closeBtn.className = 'sb-modal-close';
-    closeBtn.onclick = () => overlay.remove();
-    modal.appendChild(closeBtn);
-
-    const title = document.createElement('div');
-    title.textContent = '📝 ページ生成';
-    title.className = 'sb-modal-title';
-    modal.appendChild(title);
+    const { overlay, modal } = createModalDialog(PAGE_CREATE_MODAL_ID, '📝 ページ生成');
 
     const _label = (text) => {
         const el = document.createElement('div');
@@ -324,6 +303,5 @@ const openPageCreateModal = async () => {
         };
     }
 
-    overlay.appendChild(modal);
     document.body.appendChild(overlay);
 };
