@@ -10,7 +10,6 @@ const createRouter = (watcherManager) => {
         document.getElementById(SETTINGS_MODAL_ID)?.remove();
         document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
         calendarExpanded = false;
-        window.__jumpedToTodayInNote = false;
     };
 
     const routeByContent = async (projectName, pageName) => {
@@ -47,6 +46,7 @@ const createRouter = (watcherManager) => {
         clearAiCache();
         clearSettingsCache();
         resetPageVotes();
+        window.__jumpedToTodayInNote = false;
 
         const match = url.match(/^\/([^/]+)(?:\/(.*))?$/);
         if (!match) return;
@@ -80,8 +80,23 @@ const createRouter = (watcherManager) => {
         if (document.hidden) {
             watcherManager.stopAll();
         } else {
-            lastURL = null;
-            tick();
+            /* URL変更があった場合のみ全再描画、なければWatcher再起動のみ */
+            if (location.pathname !== lastURL) {
+                lastURL = null;
+                tick();
+            } else {
+                /* 同一ページ復帰 → Watcherを再開するだけ（UI再構築しない） */
+                const match = location.pathname.match(/^\/([^/]+)(?:\/(.*))?$/);
+                if (!match) return;
+                const pageName = match[2] ? decodeURIComponent(match[2]) : null;
+                if (pageName) {
+                    const type = classifyPageByName(pageName);
+                    const handler = handlers[type];
+                    if (handler) {
+                        handler(currentProjectName, pageName);
+                    }
+                }
+            }
         }
     };
 
