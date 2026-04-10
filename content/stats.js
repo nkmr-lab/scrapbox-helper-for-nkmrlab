@@ -26,6 +26,26 @@ const loadUserNameCache = async (projectName) => {
     });
 };
 
+/* APIレスポンスのcollaboratorsからuid→名前を一括登録する（最も正確） */
+const applyCollaborators = async (projectName, collaborators) => {
+    if (!Array.isArray(collaborators) || !collaborators.length) return;
+    let changed = false;
+    collaborators.forEach(c => {
+        if (!c.id) return;
+        const name = c.displayName || c.name;
+        if (!name) return;
+        /* collaboratorsは正式データなので、投票なしで直接上書き */
+        userNameCache[c.id] = name;
+        changed = true;
+    });
+    if (changed) {
+        const settings = await loadSettings(projectName);
+        getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: userNameCache });
+    }
+};
+
+/* resolveUserNameをcollaborators対応に（文字列ならそのまま返す） */
+
 /* 現在のページでの uid→name 投票を記録する（ページ単位で1票） */
 const _votedThisPage = new Set();
 
