@@ -115,10 +115,22 @@ const applyPageAlign = (align) => {
         styleEl.id = id;
         document.head.appendChild(styleEl);
     }
+
+    /* Scrapboxは .col-page / .page / .page-wrapper 等さまざまなバージョンのDOM構造がある */
+    const selectors = [
+        '.col-page',
+        '.col-page.col-md-9',
+        '.col-page.col-md-9.col-xs-12',
+        '.page-wrapper',
+        '.page',
+        '.editor',
+        '.page-column',
+    ].join(', ');
+
     if (align === 'left') {
-        styleEl.textContent = '.col-page.col-md-9.col-xs-12 { margin-left:0 !important; margin-right:auto !important; }';
+        styleEl.textContent = `${selectors} { margin-left:0 !important; margin-right:auto !important; }`;
     } else if (align === 'right') {
-        styleEl.textContent = '.col-page.col-md-9.col-xs-12 { margin-left:auto !important; margin-right:0 !important; }';
+        styleEl.textContent = `${selectors} { margin-left:auto !important; margin-right:0 !important; }`;
     } else {
         styleEl.textContent = '';
     }
