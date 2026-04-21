@@ -23,7 +23,8 @@ const pinnedKey = projectName => `sb:${projectName}:pinned`;
 
 /* --- Timing (ms) --- */
 const TICK_INTERVAL = 600;
-const WATCHER_INTERVAL = 60000;
+const WATCHER_INTERVAL = 10000;
+const COLLABORATORS_REFRESH_INTERVAL = 60000;
 const FADE_TIMEOUT = 5000;
 
 /* --- Display --- */

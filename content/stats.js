@@ -27,14 +27,22 @@ const loadUserNameCache = async (projectName) => {
 };
 
 /* APIレスポンスのcollaboratorsからuid→名前を一括登録する（最も正確） */
+let _lastCollaboratorsApply = 0;
+
 const applyCollaborators = async (projectName, collaborators) => {
     if (!Array.isArray(collaborators) || !collaborators.length) return;
+
+    /* 60秒に1回だけ適用（頻繁なWatcher更新での無駄を省く） */
+    const now = Date.now();
+    if (now - _lastCollaboratorsApply < COLLABORATORS_REFRESH_INTERVAL) return;
+    _lastCollaboratorsApply = now;
+
     let changed = false;
     collaborators.forEach(c => {
         if (!c.id) return;
         const name = c.displayName || c.name;
         if (!name) return;
-        /* collaboratorsは正式データなので、投票なしで直接上書き */
+        if (userNameCache[c.id] === name) return;
         userNameCache[c.id] = name;
         changed = true;
     });
@@ -49,7 +57,10 @@ const applyCollaborators = async (projectName, collaborators) => {
 /* 現在のページでの uid→name 投票を記録する（ページ単位で1票） */
 const _votedThisPage = new Set();
 
-const resetPageVotes = () => _votedThisPage.clear();
+const resetPageVotes = () => {
+    _votedThisPage.clear();
+    _lastCollaboratorsApply = 0;
+};
 
 const voteUserName = async (projectName, uid, name) => {
     if (!uid || !name) return;
