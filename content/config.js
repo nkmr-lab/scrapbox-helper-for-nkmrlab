@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS = {
     showPageCreate: 'auto',       // 'auto'(nkmr-labのみ) | 'show' | 'hide'
     recentPagesCount: 5,
     frequentPagesCount: 5,
+    pageAlign: 'center',          // 'center' | 'left' | 'right'
     /* --- メインパネル（トップページ） --- */
     mainPosition: 'top-right',
     mainWidth: 480,
@@ -102,6 +103,25 @@ const initTheme = async (projectName) => {
     const settings = await loadSettings(projectName);
     applyTheme(settings);
     injectStyleSheet();
+    applyPageAlign(settings.pageAlign);
+};
+
+/* Scrapboxのページコンテナを左/右/中央寄せにする */
+const applyPageAlign = (align) => {
+    const id = '__sb_page_align_style__';
+    let styleEl = document.getElementById(id);
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = id;
+        document.head.appendChild(styleEl);
+    }
+    if (align === 'left') {
+        styleEl.textContent = '.col-page.col-md-9.col-xs-12 { margin-left:0 !important; margin-right:auto !important; }';
+    } else if (align === 'right') {
+        styleEl.textContent = '.col-page.col-md-9.col-xs-12 { margin-left:auto !important; margin-right:0 !important; }';
+    } else {
+        styleEl.textContent = '';
+    }
 };
 
 /* パネルの表示位置をポジション文字列に基づいて設定する */

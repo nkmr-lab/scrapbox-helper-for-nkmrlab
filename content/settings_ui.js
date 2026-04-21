@@ -102,6 +102,9 @@ const _buildBasicTab = (settings) => {
     ]);
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
+    const pageAlignI = _select(settings.pageAlign, [
+        ['center', '中央（Scrapbox標準）'], ['left', '左寄せ'], ['right', '右寄せ'],
+    ]);
 
     const basicContent = document.createElement('div');
     basicContent.append(
@@ -110,9 +113,10 @@ const _buildBasicTab = (settings) => {
         _field('ページ生成メニュー', pageCreateI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
+        _field('Scrapboxページの配置', pageAlignI),
     );
 
-    return { basicContent, nameI, pageCreateI, floatPosI, floatWI };
+    return { basicContent, nameI, pageCreateI, floatPosI, floatWI, pageAlignI };
 };
 
 /* 同期タブ（Chrome同期の対象選択）を構築する */
@@ -382,7 +386,7 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, pageCreateI, floatPosI, floatWI,
+    nameI, pageCreateI, floatPosI, floatWI, pageAlignI,
     syncSystemCb, syncDisplayCb, syncPinnedCb, syncHistoryCb, syncUserMapCb,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
@@ -413,6 +417,7 @@ const _collectSettingsValues = ({
         theme: themeI.value, customColors: newCustom,
         floatMenuPosition: floatPosI.value,
         floatMenuWidth: +floatWI.value,
+        pageAlign: pageAlignI.value,
         recentPagesCount: +recentI.value,
         frequentPagesCount: +frequentI.value,
         showPageCreate: pageCreateI.value,
