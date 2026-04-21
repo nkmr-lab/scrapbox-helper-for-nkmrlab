@@ -108,6 +108,16 @@ const initTheme = async (projectName) => {
 
 /* Scrapboxのページコンテナを左/右/中央寄せにする */
 const applyPageAlign = (align) => {
+    /* 対象: #app-container > div > div:nth-child(2) > div > div:first-child
+       + 従来のクラスベースセレクタ（バージョン差吸収） */
+    const selectors = [
+        '#app-container > div > div:nth-child(2) > div > div:first-child',
+        '.col-page',
+        '.page-wrapper',
+        '.page',
+        '.editor',
+    ].join(', ');
+
     const id = '__sb_page_align_style__';
     let styleEl = document.getElementById(id);
     if (!styleEl) {
@@ -115,17 +125,6 @@ const applyPageAlign = (align) => {
         styleEl.id = id;
         document.head.appendChild(styleEl);
     }
-
-    /* Scrapboxは .col-page / .page / .page-wrapper 等さまざまなバージョンのDOM構造がある */
-    const selectors = [
-        '.col-page',
-        '.col-page.col-md-9',
-        '.col-page.col-md-9.col-xs-12',
-        '.page-wrapper',
-        '.page',
-        '.editor',
-        '.page-column',
-    ].join(', ');
 
     if (align === 'left') {
         styleEl.textContent = `${selectors} { margin-left:0 !important; margin-right:auto !important; }`;
