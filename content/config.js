@@ -118,9 +118,15 @@ const applyPageAlign = (align) => {
     }
 
     if (align === 'left') {
-        styleEl.textContent = '.page-column { justify-content:start !important; }';
+        styleEl.textContent = `
+            #app-container > .container { margin-left:0 !important; margin-right:auto !important; max-width:none !important; }
+            .page-column { justify-content:start !important; }
+        `;
     } else if (align === 'right') {
-        styleEl.textContent = '.page-column { justify-content:end !important; }';
+        styleEl.textContent = `
+            #app-container > .container { margin-left:auto !important; margin-right:0 !important; max-width:none !important; }
+            .page-column { justify-content:end !important; }
+        `;
     } else {
         styleEl.textContent = '';
     }
