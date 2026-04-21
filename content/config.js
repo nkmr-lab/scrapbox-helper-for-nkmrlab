@@ -107,17 +107,8 @@ const initTheme = async (projectName) => {
 };
 
 /* Scrapboxのページコンテナを左/右/中央寄せにする */
+/* Scrapboxは .page-column が display:grid で justify-content:center によってページを中央配置している */
 const applyPageAlign = (align) => {
-    /* 対象: #app-container > div > div:nth-child(2) > div > div:first-child
-       + 従来のクラスベースセレクタ（バージョン差吸収） */
-    const selectors = [
-        '#app-container > div > div:nth-child(2) > div > div:first-child',
-        '.col-page',
-        '.page-wrapper',
-        '.page',
-        '.editor',
-    ].join(', ');
-
     const id = '__sb_page_align_style__';
     let styleEl = document.getElementById(id);
     if (!styleEl) {
@@ -127,9 +118,9 @@ const applyPageAlign = (align) => {
     }
 
     if (align === 'left') {
-        styleEl.textContent = `${selectors} { margin-left:0 !important; margin-right:auto !important; }`;
+        styleEl.textContent = '.page-column { justify-content:start !important; }';
     } else if (align === 'right') {
-        styleEl.textContent = `${selectors} { margin-left:auto !important; margin-right:0 !important; }`;
+        styleEl.textContent = '.page-column { justify-content:end !important; }';
     } else {
         styleEl.textContent = '';
     }
