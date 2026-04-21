@@ -18,13 +18,11 @@
       this.lastETag = null;
       this.warmedUp = false;
       this.inflight = false;
-      this._tickCount = 0;  /* 強制リフレッシュのカウンタ */
     }
 
     async _run(projectName, pageName) {
       if (this.inflight) return;
       this.inflight = true;
-      this._tickCount++;
 
       try {
         /* ========= 初回：必ず GET ========= */
@@ -50,10 +48,8 @@
           return;
         }
 
-        /* 6回に1回（約60秒ごと）は強制GETでcollaborators等を更新 */
-        const forceRefresh = (this._tickCount % 6 === 0);
-
-        if (etag === this.lastETag && !forceRefresh) return;
+        // 変更なし
+        if (etag === this.lastETag) return;
 
         this.lastETag = etag;
         const json = await this.fetchPage(projectName, pageName);
