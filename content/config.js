@@ -98,17 +98,16 @@ const saveSettings = (projectName, settings) => {
     }
 };
 
-/* テーマとスタイルシートを初期化する */
+/* テーマとスタイルシートを初期化する（pageAlignはページ種別確定後にapplyPageAlignで別途設定） */
 const initTheme = async (projectName) => {
     const settings = await loadSettings(projectName);
     applyTheme(settings);
     injectStyleSheet();
-    applyPageAlign(settings.pageAlign);
 };
 
-/* Scrapboxのページコンテナを左/右/中央寄せにする */
-/* Scrapboxは .page-column が display:grid で justify-content:center によってページを中央配置している */
-const applyPageAlign = (align) => {
+/* Scrapboxのページコンテナを左/右/中央寄せにする + page-menuの回避配置 */
+/* Scrapboxは .container 内の .page-column が display:grid で中央配置している */
+const applyPageAlign = (align, calendarPosition) => {
     const id = '__sb_page_align_style__';
     let styleEl = document.getElementById(id);
     if (!styleEl) {
@@ -117,19 +116,30 @@ const applyPageAlign = (align) => {
         document.head.appendChild(styleEl);
     }
 
+    const parts = [];
+
     if (align === 'left') {
-        styleEl.textContent = `
-            #app-container .container { margin-left:0 !important; margin-right:auto !important; max-width:none !important; width:auto !important; }
-            .page-column { justify-content:start !important; }
-        `;
+        parts.push(
+            '#app-container .container { margin-left:0 !important; margin-right:auto !important; max-width:none !important; width:auto !important; }',
+            '.page-column { justify-content:start !important; }'
+        );
     } else if (align === 'right') {
-        styleEl.textContent = `
-            #app-container .container { margin-left:auto !important; margin-right:0 !important; max-width:none !important; width:auto !important; }
-            .page-column { justify-content:end !important; }
-        `;
-    } else {
-        styleEl.textContent = '';
+        parts.push(
+            '#app-container .container { margin-left:auto !important; margin-right:0 !important; max-width:none !important; width:auto !important; }',
+            '.page-column { justify-content:end !important; }'
+        );
     }
+
+    /* カレンダーが右側にある場合、page-menu（右上の縦メニュー）がカレンダーと被るので避ける */
+    if (calendarPosition === 'top-right') {
+        /* カレンダーが右上 → page-menuを画面下部に */
+        parts.push('.page-menu { position:fixed !important; bottom:16px !important; right:16px !important; top:auto !important; z-index:99998 !important; }');
+    } else if (calendarPosition === 'bottom-right') {
+        /* カレンダーが右下 → page-menuを画面上部に */
+        parts.push('.page-menu { position:fixed !important; top:16px !important; right:16px !important; bottom:auto !important; z-index:99998 !important; }');
+    }
+
+    styleEl.textContent = parts.join('\n');
 };
 
 /* パネルの表示位置をポジション文字列に基づいて設定する */

@@ -62,10 +62,16 @@ const createRouter = (watcherManager) => {
         openFloatMenu();
 
         if (!pageName) {
+            /* トップページではページ配置調整をリセット */
+            applyPageAlign('center', null);
             if (!isExtensionAlive()) return;
             renderProjectTop();
             return;
         }
+
+        /* 個別ページではユーザー設定のページ配置を適用 */
+        const settings = await loadSettings(currentProjectName);
+        applyPageAlign(settings.pageAlign, settings.calendarPosition);
 
         const type = classifyPageByName(pageName);
         const handler = handlers[type];
