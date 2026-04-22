@@ -39,10 +39,20 @@
 - ページ生成（研究ノート / 発表練習 / 論文紹介 / 学会プログラムからAI変換）
 - 設定モーダル
 
+### ページレイアウト
+- ページ本文の整列（中央 / 左寄せ / 右寄せ）— 個別ページのみ適用、トップページは中央固定
+- カレンダー/フロートメニュー位置に応じて Scrapbox 純正 `.page-menu` を自動退避（衝突回避）
+
+### 発言者解決
+- Scrapbox API の `collaborators` から uid→表示名を一括解決（60秒スロットル）
+- アイコン記法からの投票方式フォールバック（ページ単位で1票、最多得票を正式名に採用）
+
 ### 設定（タブ式モーダル）
 - 基本: 名前、透明度、テーマ（ノーマル/ダーク）、カスタムカラー
+- 表示: フロートメニュー位置・幅、ページ整列、最近/よく見るページ表示件数
 - メイン/カレンダー/TODO/その他: パネル位置（4隅）・サイズ個別設定
 - AIサポート: OpenAI API Key、プロンプトのカスタマイズ
+- 同期: 項目カテゴリごとに chrome.storage.sync と local を切り替え
 
 ## インストール
 
@@ -72,43 +82,44 @@
 ### 読み込み順序（manifest.json）
 ファイルは以下の順で読み込まれます。**順序に意味があります**。
 ```
-1. constants.js    ← 定数・グローバル状態（全ファイルが参照）
-2. style.js        ← CSSテーマ・スタイルシート注入
-3. config.js       ← 設定の読み書き・applyPanelSettings
-4. view.js         ← DOM生成ユーティリティ（config.jsのapplyPanelSettingsを使用）
-5. parser.js       ← テキスト解析（DOM非依存）
-6. api.js          ← API呼び出し（config.jsのloadSettingsを使用）
-7. pagewatcher.js  ← ページ変更検知クラス
-8. stats.js        ← 発言量統計
-9. pin.js          ← ピン留め機能
-10. history.js     ← 閲覧履歴
-11. top_page.js    ← トップページ描画
-12. research_note.js ← 研究ノートのページ判定・カレンダー上UI
-13. calendar.js    ← カレンダーパネル
-14. todo.js        ← TODOパネル
-15. experiment.js  ← 実験計画書パネル
-16. minutes.js     ← 議事録パネル
-17. paper_intro.js ← 論文紹介パネル
-18. presentation.js ← 発表練習パネル
-19. page_create.js ← テンプレート・ページ生成モーダル（12,17,18の関数を使用）
-20. float_menu.js  ← フロートメニュー
-21. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
-22. router.js      ← SPAルーティング
-23. main.js        ← エントリポイント
+ 1. constants.js       ← 定数・グローバル状態（全ファイルが参照）
+ 2. style.js           ← CSSテーマ・スタイルシート注入
+ 3. config.js          ← 設定の読み書き・applyPanelSettings・applyPageAlign
+ 4. view.js            ← DOM生成ユーティリティ（config.jsのapplyPanelSettingsを使用）
+ 5. parser.js          ← テキスト解析（DOM非依存）
+ 6. api.js             ← API呼び出し（config.jsのloadSettingsを使用）
+ 7. pagewatcher.js     ← ページ変更検知クラス
+ 8. stats.js           ← 発言量統計 + collaborators/投票による発言者解決
+ 9. pin.js             ← ピン留め機能
+10. history.js         ← 閲覧履歴
+11. top_page.js        ← トップページ描画
+12. research_note.js   ← 研究ノートのページ判定・カレンダー上UI
+13. calendar.js        ← カレンダーパネル
+14. todo.js            ← TODOパネル
+15. experiment.js      ← 実験計画書パネル
+16. minutes.js         ← 議事録パネル
+17. paper_intro.js     ← 論文紹介パネル
+18. presentation.js    ← 発表練習パネル
+19. settings_ui.js     ← 設定モーダル（タブ式UIビルダー）
+20. page_create.js     ← テンプレート・ページ生成モーダル（12,17,18の関数を使用）
+21. float_menu.js      ← フロートメニュー
+22. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
+23. router.js          ← SPAルーティング
+24. main.js            ← エントリポイント
 ```
 
 ## ファイル構成
 
 ```
 content/
-├── constants.js       定数・ID・ストレージキー・グローバル状態
+├── constants.js       定数・ID・ストレージキー・グローバル状態・レイアウト定数
 ├── style.js           CSSテーマ定義 + <style>タグ注入
-├── config.js          設定の読み書き + 設定モーダル（タブ式）
+├── config.js          設定の読み書き + パネル/ページ整列の適用
 ├── view.js            DOM生成ユーティリティ（Viewレイヤー）
 ├── parser.js          テキスト解析・ページ分類（Modelレイヤー）
 ├── api.js             Scrapbox API / OpenAI API / AIキャッシュ
 ├── pagewatcher.js     ETagベースのページ変更検知
-├── stats.js           発言量統計・ユーザー名キャッシュ
+├── stats.js           発言量統計・collaborators/投票によるユーザー名解決
 ├── pin.js             ピン留めのCRUD + 描画
 ├── history.js         閲覧履歴のCRUD + 描画
 ├── top_page.js        プロジェクトトップページ描画
@@ -119,6 +130,7 @@ content/
 ├── minutes.js         議事録パネル（セッション・質問・感想・AI要約）
 ├── paper_intro.js     論文紹介パネル（質問抽出・統計）
 ├── presentation.js    発表練習パネル（質問抽出・統計）
+├── settings_ui.js     設定モーダル（タブ式UIビルダー）
 ├── page_create.js     テンプレート集約 + ページ生成モーダル + AI変換
 ├── float_menu.js      フロートメニュー（ピン留め・履歴・ボタン）
 ├── watcher_manager.js Watcher管理（PageWatcherインスタンスの保持・起動・停止）
@@ -149,13 +161,13 @@ content/
    'report': (pj, pg) => watcherManager.start('report', pj, pg),
    ```
 
-5. **manifest.json**: `report.js` をページハンドラ群の後（presentation.js の後）に追加
+5. **manifest.json**: `report.js` をページハンドラ群の後（presentation.js の後、settings_ui.js の前）に追加
 
 ### 新しい設定項目を追加するには
 
 1. **config.js** `DEFAULT_SETTINGS`: デフォルト値を追加
-2. **config.js** `_build*Tab()`: 対応するタブビルダーに入力要素を追加
-3. **config.js** `_collectSettingsValues()`: 引数リストと return に追加
+2. **settings_ui.js** `_build*Tab()`: 対応するタブビルダーに入力要素を追加
+3. **settings_ui.js** `_collectSettingsValues()`: 引数リストと return に追加
 4. 設定を使用するファイルで `loadSettings()` から値を取得
 
 ### 命名規則
