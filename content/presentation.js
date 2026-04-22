@@ -8,7 +8,7 @@ const renderPresentationFromLines = (pageName, rawLines) => {
     buildTalkStats(lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
-    const { bodyNode } = setupPanelHeader(panelNode, rawLines);
+    const { bodyNode } = renderPanelHeader(panelNode, rawLines);
 
     const isPresentationTitleLine = (lineText) =>
         /^タイトル[:：]/.test(lineText) || /^タイトル[「『].+[」』]$/.test(lineText);

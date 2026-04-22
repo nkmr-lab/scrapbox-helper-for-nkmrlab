@@ -100,7 +100,7 @@ const renderMinutesFromLines = async (rawLines) => {
     buildTalkStats(lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
-    const { bodyNode } = setupPanelHeader(panelNode, rawLines);
+    const { bodyNode } = renderPanelHeader(panelNode, rawLines);
     const fragment = document.createDocumentFragment();
 
     const sessions = parseSessions(lines);
@@ -128,7 +128,7 @@ const renderMinutesFromLines = async (rawLines) => {
                 : null;
 
             if (titleNode && enableOpenAI && talk.impressions.length >= 2) {
-                attachAiSummaryButton(
+                appendAiSummaryButton(
                     titleNode,
                     `summary:${talk.id}`,
                     () => summarizeImpressionsByAuthor(talk.impressions)

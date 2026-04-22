@@ -1,5 +1,5 @@
 /* ================= 研究ノート：月カレンダー ================= */
-let calendarExpanded = false;
+let _calendarExpanded = false;
 
 const heatLevel = (count) =>
     count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 10 ? 3 : 4;
@@ -15,7 +15,7 @@ const applyHeatmapToCell = (cell) => {
 const applyCalendarLayout = async (panelNode, gridNode) => {
     const settings = await loadSettings(currentProjectName);
 
-    if (calendarExpanded) {
+    if (_calendarExpanded) {
         panelNode.className = 'sb-panel sb-panel-calendar sb-panel-calendar-expanded';
         panelNode.style.width = '';
         panelNode.style.height = '';
@@ -81,9 +81,9 @@ const renderCalendarPanel = (pageName) => {
     applyCalendarLayout(panelNode, gridNode);
 
     const toggleBtn = renderButton('[拡大]', () => {
-        calendarExpanded = !calendarExpanded;
+        _calendarExpanded = !_calendarExpanded;
         applyCalendarLayout(panelNode, gridNode);
-        toggleBtn.textContent = calendarExpanded ? '[縮小]' : '[拡大]';
+        toggleBtn.textContent = _calendarExpanded ? '[縮小]' : '[拡大]';
     });
 
     headerNode.append(
@@ -103,7 +103,7 @@ const renderCalendarPanel = (pageName) => {
         }),
         toggleBtn,
         renderButton('✕', () => {
-            closedPanels.add(CALENDAR_PANEL_ID);
+            _closedPanels.add(CALENDAR_PANEL_ID);
             panelNode.remove();
             document.getElementById(TODO_PANEL_ID)?.style.removeProperty('display');
         })

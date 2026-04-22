@@ -9,7 +9,7 @@ const createRouter = (watcherManager) => {
         closeFloatMenu();
         document.getElementById(SETTINGS_MODAL_ID)?.remove();
         document.getElementById(PAGE_CREATE_MODAL_ID)?.remove();
-        calendarExpanded = false;
+        _calendarExpanded = false;
     };
 
     const routeByContent = async (projectName, pageName) => {
@@ -42,7 +42,7 @@ const createRouter = (watcherManager) => {
 
         clearUI();
         watcherManager.stopAll();
-        closedPanels.clear();
+        _closedPanels.clear();
         clearAiCache();
         clearSettingsCache();
         resetPageVotes();

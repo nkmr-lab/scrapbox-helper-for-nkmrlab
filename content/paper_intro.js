@@ -35,7 +35,7 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
     const questions = Array.from(questionMap.values());
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
-    setupPanelHeader(panelNode, rawLines, '📄');
+    renderPanelHeader(panelNode, rawLines, '📄');
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
 
     const fragment = document.createDocumentFragment();

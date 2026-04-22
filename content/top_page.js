@@ -26,7 +26,7 @@ const renderProjectTop = async () => {
         const parent = document.createElement('div');
         parent.className = 'sb-panel';
         applyPanelSettings(parent, 'main');
-        attachCloseButton(parent, MAIN_PANEL_ID);
+        appendCloseButton(parent, MAIN_PANEL_ID);
         appendPanelTitle(parent, 'Project: ' + currentProjectName);
         return parent;
     });

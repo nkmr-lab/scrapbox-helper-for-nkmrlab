@@ -39,7 +39,7 @@ const PAGE_MENU_OFFSET = 16;          /* 画面端からの基本マージン (p
 const FLOAT_TOGGLE_CLEARANCE = 40;    /* フロートメニュー☰ボタンの高さ+余白 (px) */
 
 /* --- Global State --- */
-const closedPanels = new Set();
+const _closedPanels = new Set();
 let currentProjectName = null;
 
 /* --- Storage ヘルパー --- */

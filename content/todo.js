@@ -96,7 +96,7 @@ const renderTodoPanel = async (lines) => {
     const doneTodos = todos.filter(t => t.done);
 
     appendPanelTitle(panelNode, `📝 TODO LIST（${activeTodos.length} / ${todos.length}）`);
-    attachCloseButton(panelNode, TODO_PANEL_ID);
+    appendCloseButton(panelNode, TODO_PANEL_ID);
 
     const list = document.createElement('div');
     panelNode.appendChild(list);

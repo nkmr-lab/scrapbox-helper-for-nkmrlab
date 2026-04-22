@@ -112,7 +112,7 @@ const renderExperimentPlan = async (pageName) => {
     applyCollaborators(currentProjectName, json.collaborators);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
-    const { bodyNode } = setupPanelHeader(panelNode, json.lines, '📋');
+    const { bodyNode } = renderPanelHeader(panelNode, json.lines, '📋');
     const fragment = document.createDocumentFragment();
 
     let currentSection = null;

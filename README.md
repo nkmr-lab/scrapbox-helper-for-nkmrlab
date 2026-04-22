@@ -174,11 +174,16 @@ content/
 
 | パターン | 用途 | 例 |
 |---|---|---|
-| `render*` | DOM生成・描画 | `renderButton`, `renderStandardPanel` |
+| `render*` | DOM要素/パネル/セクションを生成して返す（または定位置に描画） | `renderButton`, `renderStandardPanel`, `renderPanelHeader` |
+| `append*(parent, ...)` | 要素を生成して第一引数の親ノードに追加する | `appendItem`, `appendCloseButton`, `appendStatsBlock` |
+| `build*` | 内部用データ構造/CSS片を生成する（DOM非依存） | `buildTalkStats`, `buildPageAlignCss` |
+| `generate*` | 文字列・URL・ページ本文テキストを生成する | `generateCreateNoteUrl`, `generateResearchNoteBody` |
+| `apply*` | 既存DOMにスタイル/設定を適用する | `applyPanelSettings`, `applyPageAlign`, `applyTheme` |
+| `parse*` / `collect*` / `extract*` | テキスト解析 | `parseSessions`, `collectQuestions`, `extractIconName` |
 | `open*/close*` | モーダル・メニュー開閉 | `openSettingsModal`, `closeFloatMenu` |
-| `generate*` | 文字列・URL生成 | `generateCreateNoteUrl` |
 | `is*` | boolean判定 | `isOpenAIEnabled`, `isPagePinned` |
-| `load*` | Chrome Storage読込 | `loadSettings`, `loadPinnedPages` |
-| `save*` | Chrome Storage書込 | `saveSettings` |
+| `load*` | chrome.storage 読込 | `loadSettings`, `loadPinnedPages` |
+| `save*` | chrome.storage 書込 | `saveSettings` |
 | `fetch*` | 外部API | `fetchPage` |
-| `*_PANEL_ID` | パネルID定数 | `CALENDAR_PANEL_ID` |
+| `*_PANEL_ID` / 定数 | UPPER_SNAKE_CASE | `CALENDAR_PANEL_ID`, `TICK_INTERVAL` |
+| `_xxx` | モジュール内プライベート状態/ヘルパー | `_closedPanels`, `_settingsCache`, `_buildBasicTab` |

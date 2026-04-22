@@ -1,21 +1,21 @@
 /* ================= 統計処理 ==================== */
 
 /*
- * userNameCache の構造（ページ数ベース投票方式）:
+ * _userNameCache の構造（ページ数ベース投票方式）:
  *   { uid: { "名前A": 5, "名前B": 1 }, ... }
  * 最も多くのページで使われた名前を正式名とする。
  * 1ページで1回の誤認識では覆らない。
  */
-let userNameCache = {};
-let userNameCacheLoaded = false;
+let _userNameCache = {};
+let _userNameCacheLoaded = false;
 
 /* ユーザーID→名前マッピング（投票式）をストレージから読み込む（sync設定に従う） */
 const loadUserNameCache = async (projectName) => {
-    if (userNameCacheLoaded) return userNameCache;
+    if (_userNameCacheLoaded) return _userNameCache;
     const settings = await loadSettings(projectName);
-    userNameCache = await loadFromStorage(getStorage(settings.syncUserMap), userMapKey(projectName), {});
-    userNameCacheLoaded = true;
-    return userNameCache;
+    _userNameCache = await loadFromStorage(getStorage(settings.syncUserMap), userMapKey(projectName), {});
+    _userNameCacheLoaded = true;
+    return _userNameCache;
 };
 
 /* APIレスポンスのcollaboratorsからuid→名前を一括登録する（最も正確） */
@@ -34,13 +34,13 @@ const applyCollaborators = async (projectName, collaborators) => {
         if (!c.id) return;
         const name = c.displayName || c.name;
         if (!name) return;
-        if (userNameCache[c.id] === name) return;
-        userNameCache[c.id] = name;
+        if (_userNameCache[c.id] === name) return;
+        _userNameCache[c.id] = name;
         changed = true;
     });
     if (changed) {
         const settings = await loadSettings(projectName);
-        getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: userNameCache });
+        getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: _userNameCache });
     }
 };
 
@@ -62,16 +62,16 @@ const voteUserName = async (projectName, uid, name) => {
     if (_votedThisPage.has(voteKey)) return;
     _votedThisPage.add(voteKey);
 
-    if (!userNameCache[uid]) userNameCache[uid] = {};
-    userNameCache[uid][name] = (userNameCache[uid][name] || 0) + 1;
+    if (!_userNameCache[uid]) _userNameCache[uid] = {};
+    _userNameCache[uid][name] = (_userNameCache[uid][name] || 0) + 1;
 
     const settings = await loadSettings(projectName);
-    getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: userNameCache });
+    getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: _userNameCache });
 };
 
 /* uidに対して最も投票数の多い名前を返す */
 const resolveUserName = (uid) => {
-    const votes = userNameCache[uid];
+    const votes = _userNameCache[uid];
     if (!votes || typeof votes === 'string') {
         /* 旧形式（文字列）との互換性 */
         return typeof votes === 'string' ? votes : null;
@@ -92,7 +92,7 @@ const buildTalkStats = (lines) => {
     const idToName = {};
 
     /* まず既知のuid→名前を引く */
-    Object.keys(userNameCache).forEach(uid => {
+    Object.keys(_userNameCache).forEach(uid => {
         const name = resolveUserName(uid);
         if (name) idToName[uid] = name;
     });

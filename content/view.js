@@ -4,7 +4,7 @@
 /* --- パネル管理 --- */
 /* 指定IDのパネルを取得し、なければ生成して返す */
 const getOrCreatePanel = (id, create) => {
-    if (closedPanels.has(id)) return null;
+    if (_closedPanels.has(id)) return null;
     let el = document.getElementById(id);
     if (el) return el;
 
@@ -19,7 +19,7 @@ const renderStandardPanel = (panelType = 'other') => {
     const panelNode = document.createElement('div');
     panelNode.className = 'sb-panel';
     applyPanelSettings(panelNode, panelType);
-    attachCloseButton(panelNode, MAIN_PANEL_ID);
+    appendCloseButton(panelNode, MAIN_PANEL_ID);
 
     const titleNode = document.createElement('div');
     titleNode.id = MAIN_TITLE_ID;
@@ -34,7 +34,7 @@ const renderStandardPanel = (panelType = 'other') => {
 
 /* --- パネルヘッダー設定（議事録・論文紹介・発表練習で共通） --- */
 /* パネルのヘッダーにページタイトルを設定する */
-const setupPanelHeader = (panelNode, rawLines, icon = '📌') => {
+const renderPanelHeader = (panelNode, rawLines, icon = '📌') => {
     const headerNode = panelNode.querySelector('#' + MAIN_TITLE_ID);
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
     const title = rawLines[0]?.text || '';
@@ -98,7 +98,7 @@ const appendQuestionList = (parentNode, questions) => {
 
 /* --- AI要約（キャッシュ付き） --- */
 /* AI要約ボタンをタイトルノードに付与する */
-const attachAiSummaryButton = (titleNode, cacheKey, generateFn) => {
+const appendAiSummaryButton = (titleNode, cacheKey, generateFn) => {
     const cached = getCachedAiResult(cacheKey);
 
     if (cached) {
@@ -191,12 +191,12 @@ const renderMenuButtons = (panelNode, showCreate) => {
 
 /* --- ボタン・コントロール --- */
 /* パネルに閉じるボタンを追加する */
-const attachCloseButton = (panelNode, panelId) => {
+const appendCloseButton = (panelNode, panelId) => {
     const btn = document.createElement('div');
     btn.textContent = '✕';
     btn.className = 'sb-close-btn';
     btn.onclick = () => {
-        closedPanels.add(panelId);
+        _closedPanels.add(panelId);
         panelNode.remove();
     };
     panelNode.appendChild(btn);
