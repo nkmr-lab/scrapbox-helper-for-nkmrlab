@@ -74,9 +74,11 @@
 
 ### グローバル状態
 すべてのファイルはcontent scriptとして同一スコープで実行されます。
-- `currentProjectName` — 現在のプロジェクト名（router.jsで設定）
-- `closedPanels` — ユーザーが閉じたパネルID（view.jsで参照）
+- `currentProjectName` — 現在のプロジェクト名（複数ファイルから参照、router.jsで設定）
+- `_closedPanels` — ユーザーが閉じたパネルID（view.jsで管理）
+- `_calendarExpanded` — カレンダーの拡大/縮小状態（calendar.jsで管理）
 - `_settingsCache` — 設定のメモリキャッシュ（config.jsで管理）
+- `_userNameCache` / `_userNameCacheLoaded` — uid→名前の投票キャッシュ（stats.jsで管理）
 - `_aiCache` — AI結果キャッシュ（api.jsで管理、ページ遷移でクリア）
 
 ### 読み込み順序（manifest.json）
