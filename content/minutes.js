@@ -97,7 +97,7 @@ const renderMinutesFromLines = async (rawLines) => {
     const lines = normalizeLines(rawLines, { withUid: true });
 
     /* 著者推定のため、描画前に統計を計算しておく（_lastTalkStatsに格納される） */
-    buildTalkStats(rawLines);
+    buildTalkStats(lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
@@ -144,6 +144,6 @@ const renderMinutesFromLines = async (rawLines) => {
         });
     });
 
-    appendStatsBlock(fragment, rawLines);
+    appendStatsBlock(fragment, lines);
     bodyNode.replaceChildren(fragment);
 };

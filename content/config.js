@@ -69,22 +69,18 @@ let _settingsCacheProject = null;
 const clearSettingsCache = () => { _settingsCache = null; };
 
 /* プロジェクトの設定をストレージから読み込む（sync有効ならsync優先で試みる） */
-const loadSettings = (projectName) => {
-    if (_settingsCache && _settingsCacheProject === projectName) {
-        return Promise.resolve(_settingsCache);
-    }
-    return new Promise(resolve => {
-        if (!projectName) { resolve({ ...DEFAULT_SETTINGS }); return; }
-        /* まずlocalから読む（常に存在） */
-        chrome.storage.local.get(
-            { [settingsKey(projectName)]: DEFAULT_SETTINGS },
-            data => {
-                _settingsCache = { ...DEFAULT_SETTINGS, ...data[settingsKey(projectName)] };
-                _settingsCacheProject = projectName;
-                resolve(_settingsCache);
-            }
-        );
-    });
+const loadSettings = async (projectName) => {
+    if (_settingsCache && _settingsCacheProject === projectName) return _settingsCache;
+    if (!projectName) return { ...DEFAULT_SETTINGS };
+    /* 常に存在するlocalから読み、未設定項目はDEFAULT_SETTINGSで補完 */
+    _settingsCache = await loadFromStorage(
+        chrome.storage.local,
+        settingsKey(projectName),
+        DEFAULT_SETTINGS,
+        v => ({ ...DEFAULT_SETTINGS, ...v })
+    );
+    _settingsCacheProject = projectName;
+    return _settingsCache;
 };
 
 /* プロジェクトの設定をストレージに保存する */

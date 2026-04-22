@@ -53,5 +53,15 @@ const getStorage = (syncEnabled) => {
     }
 };
 
+/* chrome.storage から1キーを読み、必要なら値を変換して返すPromiseを返す */
+const loadFromStorage = (storage, key, defaultValue, transform = null) => {
+    return new Promise(resolve => {
+        storage.get({ [key]: defaultValue }, data => {
+            const value = data[key] ?? defaultValue;
+            resolve(transform ? transform(value) : value);
+        });
+    });
+};
+
 /* 拡張機能が実行中かどうかを判定する */
 const isExtensionAlive = () => !!window.__SB_EXTENSION_RUNNING__;

@@ -7,7 +7,7 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
     if (!isPaperIntroPage(lines)) return;
 
     /* 著者推定のため統計を先に計算（_lastTalkStatsに格納される） */
-    buildTalkStats(rawLines);
+    buildTalkStats(lines);
 
     let inQnA = false;
     const questionMap = new Map();
@@ -41,6 +41,6 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
     const fragment = document.createDocumentFragment();
     appendQuestionList(fragment, questions);
 
-    appendStatsBlock(fragment, rawLines);
+    appendStatsBlock(fragment, lines);
     bodyNode.replaceChildren(fragment);
 };

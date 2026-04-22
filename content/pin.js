@@ -3,13 +3,7 @@
 /* ピン留めページ一覧をストレージから読み込む（sync設定に従う） */
 const loadPinnedPages = async (projectName) => {
     const settings = await loadSettings(projectName);
-    const storage = getStorage(settings.syncPinned);
-    return new Promise(resolve => {
-        storage.get(
-            { [pinnedKey(projectName)]: [] },
-            data => resolve(data[pinnedKey(projectName)] || [])
-        );
-    });
+    return loadFromStorage(getStorage(settings.syncPinned), pinnedKey(projectName), []);
 };
 
 /* ピン留めページ一覧をストレージに保存する（sync設定に従う） */

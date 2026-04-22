@@ -3,13 +3,12 @@
 /* 正規化済みの閲覧履歴をストレージから読み込む（sync設定に従う） */
 const loadHistory = async (projectName) => {
     const settings = await loadSettings(projectName);
-    const storage = getStorage(settings.syncHistory);
-    return new Promise(resolve => {
-        storage.get(
-            { [historyKey(projectName)]: [] },
-            data => resolve(normalizeHistoryEntries(data[historyKey(projectName)]))
-        );
-    });
+    return loadFromStorage(
+        getStorage(settings.syncHistory),
+        historyKey(projectName),
+        [],
+        normalizeHistoryEntries
+    );
 };
 
 /* 閲覧履歴をストレージに追記する（sync設定に従う） */

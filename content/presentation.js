@@ -5,7 +5,7 @@ const renderPresentationFromLines = (pageName, rawLines) => {
     const lines = normalizeLines(rawLines, { withUid: true });
 
     /* 著者推定のため統計を先に計算（_lastTalkStatsに格納される） */
-    buildTalkStats(rawLines);
+    buildTalkStats(lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = setupPanelHeader(panelNode, rawLines);
@@ -43,6 +43,6 @@ const renderPresentationFromLines = (pageName, rawLines) => {
         appendQuestionList(fragment, questions);
     });
 
-    appendStatsBlock(fragment, rawLines);
+    appendStatsBlock(fragment, lines);
     bodyNode.replaceChildren(fragment);
 };

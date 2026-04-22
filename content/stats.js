@@ -13,17 +13,9 @@ let userNameCacheLoaded = false;
 const loadUserNameCache = async (projectName) => {
     if (userNameCacheLoaded) return userNameCache;
     const settings = await loadSettings(projectName);
-    const storage = getStorage(settings.syncUserMap);
-    return new Promise(resolve => {
-        storage.get(
-            { [userMapKey(projectName)]: {} },
-            data => {
-                userNameCache = data[userMapKey(projectName)] || {};
-                userNameCacheLoaded = true;
-                resolve(userNameCache);
-            }
-        );
-    });
+    userNameCache = await loadFromStorage(getStorage(settings.syncUserMap), userMapKey(projectName), {});
+    userNameCacheLoaded = true;
+    return userNameCache;
 };
 
 /* APIレスポンスのcollaboratorsからuid→名前を一括登録する（最も正確） */
@@ -94,11 +86,10 @@ const resolveUserName = (uid) => {
 /* 直近のbuildTalkStats結果（著者推定のフォールバックに使う） */
 let _lastTalkStats = {};
 
-/* 行データからユーザーごとの発言量統計を集計する */
-const buildTalkStats = (rawLines) => {
+/* 正規化済みlines(withUid)からユーザーごとの発言量統計を集計する */
+const buildTalkStats = (lines) => {
     const stats = {};
     const idToName = {};
-    const lines = normalizeLines(rawLines, { withUid: true });
 
     /* まず既知のuid→名前を引く */
     Object.keys(userNameCache).forEach(uid => {
@@ -131,9 +122,9 @@ const isLikelyAuthor = (uid) => {
     return _lastTalkStats[uid] / total >= 0.02;
 };
 
-/* 統計を計算してfragmentに追加する（ページハンドラ共通） */
-const appendStatsBlock = (fragment, rawLines) => {
-    const { stats, idToName } = buildTalkStats(rawLines);
+/* 統計を計算してfragmentに追加する（ページハンドラ共通、linesは正規化済みwithUid） */
+const appendStatsBlock = (fragment, lines) => {
+    const { stats, idToName } = buildTalkStats(lines);
     if (!Object.keys(stats).length) return;
     const box = document.createElement('div');
     renderTalkStats(box, stats, idToName);
