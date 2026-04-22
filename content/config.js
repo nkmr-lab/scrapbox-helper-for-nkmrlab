@@ -107,7 +107,7 @@ const initTheme = async (projectName) => {
 
 /* Scrapboxのページコンテナを左/右/中央寄せにする + page-menuの回避配置 */
 /* Scrapboxは .container 内の .page-column が display:grid で中央配置している */
-const applyPageAlign = (align, calendarPosition) => {
+const applyPageAlign = (align, calendarPosition, floatMenuPosition) => {
     const id = '__sb_page_align_style__';
     let styleEl = document.getElementById(id);
     if (!styleEl) {
@@ -130,13 +130,17 @@ const applyPageAlign = (align, calendarPosition) => {
         );
     }
 
-    /* カレンダーが右側にある場合、page-menu（右上の縦メニュー）がカレンダーと被るので避ける */
+    /* カレンダーが右側にある場合、page-menuがカレンダーと被るので反対側に避ける。
+       さらに、反対側にフロートメニュー（☰ メニュー）があれば、その上/下に重ねないよう更にオフセットする。 */
+    const FLOAT_TOGGLE_H = 40; /* sb-float-toggle の高さ + 余白 */
     if (calendarPosition === 'top-right') {
-        /* カレンダーが右上 → page-menuを画面下部に */
-        parts.push('.page-menu { position:fixed !important; bottom:16px !important; right:16px !important; top:auto !important; z-index:99998 !important; }');
+        /* カレンダーが右上 → page-menuを画面下部へ。フロートメニューが bottom-right ならその上に退避 */
+        const bottom = (floatMenuPosition === 'bottom-right') ? (16 + FLOAT_TOGGLE_H) : 16;
+        parts.push(`.page-menu { position:fixed !important; bottom:${bottom}px !important; right:16px !important; top:auto !important; z-index:99998 !important; }`);
     } else if (calendarPosition === 'bottom-right') {
-        /* カレンダーが右下 → page-menuを画面上部に */
-        parts.push('.page-menu { position:fixed !important; top:16px !important; right:16px !important; bottom:auto !important; z-index:99998 !important; }');
+        /* カレンダーが右下 → page-menuを画面上部へ。フロートメニューが top-right ならその下に退避 */
+        const top = (floatMenuPosition === 'top-right') ? (16 + FLOAT_TOGGLE_H) : 16;
+        parts.push(`.page-menu { position:fixed !important; top:${top}px !important; right:16px !important; bottom:auto !important; z-index:99998 !important; }`);
     }
 
     styleEl.textContent = parts.join('\n');
