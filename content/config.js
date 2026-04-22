@@ -105,8 +105,40 @@ const initTheme = async (projectName) => {
     injectStyleSheet();
 };
 
-/* Scrapboxのページコンテナを左/右/中央寄せにする + page-menuの回避配置 */
-/* Scrapboxは .container 内の .page-column が display:grid で中央配置している */
+/* ページ整列用CSS片を生成する（左寄せ/右寄せ時のみ内容あり） */
+/* Scrapboxは .container 内の .page-column が display:grid で中央配置しているので両方を上書きする */
+const buildPageAlignCss = (align) => {
+    if (align === 'left') {
+        return [
+            '#app-container .container { margin-left:0 !important; margin-right:auto !important; max-width:none !important; width:auto !important; }',
+            '.page-column { justify-content:start !important; }',
+        ];
+    }
+    if (align === 'right') {
+        return [
+            '#app-container .container { margin-left:auto !important; margin-right:0 !important; max-width:none !important; width:auto !important; }',
+            '.page-column { justify-content:end !important; }',
+        ];
+    }
+    return [];
+};
+
+/* page-menu（Scrapbox純正の右上縦メニュー）をカレンダー/フロートメニューと衝突しない位置へ退避するCSS片を生成する */
+/* カレンダーが右にある場合のみ page-menu を反対側（縦方向）に移動し、同じ辺にフロートメニュー☰があれば更にその分オフセットする */
+const buildPageMenuCss = (calendarPosition, floatMenuPosition) => {
+    const base = `position:fixed !important; right:${PAGE_MENU_OFFSET}px !important; z-index:99998 !important;`;
+    if (calendarPosition === 'top-right') {
+        const bottom = PAGE_MENU_OFFSET + (floatMenuPosition === 'bottom-right' ? FLOAT_TOGGLE_CLEARANCE : 0);
+        return [`.page-menu { ${base} bottom:${bottom}px !important; top:auto !important; }`];
+    }
+    if (calendarPosition === 'bottom-right') {
+        const top = PAGE_MENU_OFFSET + (floatMenuPosition === 'top-right' ? FLOAT_TOGGLE_CLEARANCE : 0);
+        return [`.page-menu { ${base} top:${top}px !important; bottom:auto !important; }`];
+    }
+    return [];
+};
+
+/* ページ整列とpage-menu位置をstyle要素にまとめて適用する（個別ページ遷移時にrouterから呼ばれる） */
 const applyPageAlign = (align, calendarPosition, floatMenuPosition) => {
     const id = '__sb_page_align_style__';
     let styleEl = document.getElementById(id);
@@ -115,35 +147,10 @@ const applyPageAlign = (align, calendarPosition, floatMenuPosition) => {
         styleEl.id = id;
         document.head.appendChild(styleEl);
     }
-
-    const parts = [];
-
-    if (align === 'left') {
-        parts.push(
-            '#app-container .container { margin-left:0 !important; margin-right:auto !important; max-width:none !important; width:auto !important; }',
-            '.page-column { justify-content:start !important; }'
-        );
-    } else if (align === 'right') {
-        parts.push(
-            '#app-container .container { margin-left:auto !important; margin-right:0 !important; max-width:none !important; width:auto !important; }',
-            '.page-column { justify-content:end !important; }'
-        );
-    }
-
-    /* カレンダーが右側にある場合、page-menuがカレンダーと被るので反対側に避ける。
-       さらに、反対側にフロートメニュー（☰ メニュー）があれば、その上/下に重ねないよう更にオフセットする。 */
-    const FLOAT_TOGGLE_H = 40; /* sb-float-toggle の高さ + 余白 */
-    if (calendarPosition === 'top-right') {
-        /* カレンダーが右上 → page-menuを画面下部へ。フロートメニューが bottom-right ならその上に退避 */
-        const bottom = (floatMenuPosition === 'bottom-right') ? (16 + FLOAT_TOGGLE_H) : 16;
-        parts.push(`.page-menu { position:fixed !important; bottom:${bottom}px !important; right:16px !important; top:auto !important; z-index:99998 !important; }`);
-    } else if (calendarPosition === 'bottom-right') {
-        /* カレンダーが右下 → page-menuを画面上部へ。フロートメニューが top-right ならその下に退避 */
-        const top = (floatMenuPosition === 'top-right') ? (16 + FLOAT_TOGGLE_H) : 16;
-        parts.push(`.page-menu { position:fixed !important; top:${top}px !important; right:16px !important; bottom:auto !important; z-index:99998 !important; }`);
-    }
-
-    styleEl.textContent = parts.join('\n');
+    styleEl.textContent = [
+        ...buildPageAlignCss(align),
+        ...buildPageMenuCss(calendarPosition, floatMenuPosition),
+    ].join('\n');
 };
 
 /* パネルの表示位置をポジション文字列に基づいて設定する */

@@ -34,6 +34,10 @@ const RECENT_PAGES_LIMIT = 10;
 const FREQUENT_PAGES_LIMIT = 5;
 const CALENDAR_SNIPPET_LIMIT = 10;
 
+/* --- Layout --- */
+const PAGE_MENU_OFFSET = 16;          /* 画面端からの基本マージン (px) */
+const FLOAT_TOGGLE_CLEARANCE = 40;    /* フロートメニュー☰ボタンの高さ+余白 (px) */
+
 /* --- Global State --- */
 const closedPanels = new Set();
 let currentProjectName = null;
