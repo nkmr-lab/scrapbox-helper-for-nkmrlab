@@ -8,11 +8,12 @@
 const OPENAI_MODEL = 'gpt-4.1-mini';
 
 /* --- Scrapbox API --- */
-/* Scrapboxページをフェッチして返す */
+/* Scrapboxページをフェッチして返す（ブラウザキャッシュを避ける） */
 const fetchPage = async (projectName, pageName) => {
     if (projectName === null) return null;
     const r = await fetch(
-        `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}`
+        `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}`,
+        { cache: 'no-cache' }
     );
     if (!r.ok) { console.warn(`[SB Helper] fetchPage failed: ${r.status} ${projectName}/${pageName}`); return null; }
     return r.json();
@@ -50,15 +51,15 @@ const loadProjectUsers = async (projectName) => {
     }
 };
 
-/* ページのETagをHEADリクエストで取得する */
+/* ページのETagをHEADリクエストで取得する（ブラウザキャッシュを避け、ETagは丸ごと使う） */
 const headPageETag = async (projectName, pageName) => {
     try {
         const r = await fetch(
             `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}`,
-            { method: 'HEAD' }
+            { method: 'HEAD', cache: 'no-cache' }
         );
         if (!r.ok) return null;
-        return r.headers.get('etag').substring(3, 8);
+        return r.headers.get('etag') || null;
     } catch {
         return null;
     }
