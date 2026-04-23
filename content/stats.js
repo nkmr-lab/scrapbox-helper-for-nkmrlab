@@ -41,7 +41,7 @@ const buildTalkStats = (lines) => {
     return stats;
 };
 
-/* 統計バーを fragment に追加する（applyCollaborators で設定された現在マップを使う） */
+/* 統計バーを fragment に追加する（applyProjectUsers で設定された現在マップを使う） */
 const appendStatsBlock = (fragment, lines) => {
     const stats = buildTalkStats(lines);
     if (!Object.keys(stats).length) return;

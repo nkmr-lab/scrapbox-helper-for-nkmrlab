@@ -94,7 +94,8 @@
 - `_closedPanels` — ユーザーが閉じたパネルID（view.jsで管理）
 - `_calendarExpanded` — カレンダーの拡大/縮小状態（calendar.jsで管理）
 - `_settingsCache` — 設定のメモリキャッシュ（config.jsで管理）
-- `_userNameCache` / `_userNameCacheLoaded` — uid→名前の投票キャッシュ（stats.jsで管理）
+- `_currentUidNameMap` / `_currentSlugNameMap` — 現在ページの uid/slug → displayName マップ（stats.jsで管理、ページ遷移ごとに置換）
+- `_projectUsersCache` — プロジェクトの uid→displayName / slug→displayName のセッションメモ（api.jsで管理）
 - `_aiCache` — AI結果キャッシュ（api.jsで管理、ページ遷移でクリア）
 
 ### 読み込み順序（manifest.json）
@@ -107,7 +108,7 @@
  5. parser.js          ← テキスト解析（DOM非依存）
  6. api.js             ← API呼び出し（config.jsのloadSettingsを使用）
  7. pagewatcher.js     ← ページ変更検知クラス
- 8. stats.js           ← 発言量統計 + collaborators/投票による発言者解決
+ 8. stats.js           ← 発言量統計 + uid/slug→displayName 解決（per-pageマップ）
  9. pin.js             ← ピン留め機能
 10. history.js         ← 閲覧履歴
 11. top_page.js        ← トップページ描画
@@ -138,7 +139,7 @@ content/
 ├── parser.js          テキスト解析・ページ分類（Modelレイヤー）
 ├── api.js             Scrapbox API / OpenAI API / AIキャッシュ
 ├── pagewatcher.js     ETagベースのページ変更検知
-├── stats.js           発言量統計・collaborators/投票によるユーザー名解決
+├── stats.js           発言量統計・uid/slug → displayName 解決（per-page）
 ├── pin.js             ピン留めのCRUD + 描画
 ├── history.js         閲覧履歴のCRUD + 描画
 ├── top_page.js        プロジェクトトップページ描画

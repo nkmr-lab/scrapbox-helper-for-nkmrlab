@@ -128,7 +128,7 @@ const parseCalendarData = (rawLines) => {
 };
 
 /* --- 質問抽出（議事録・論文紹介・発表練習で共通） --- */
-/* 指定行範囲から質問行を抽出する（著者推定: 上位アイコン → uidから現在ページのcollaborators解決 → null） */
+/* 指定行範囲から質問行を抽出する（著者推定: 上位アイコンslug→displayName化 → uidからdisplayName解決 → null） */
 const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
     const qs = [];
 
