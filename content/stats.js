@@ -1,30 +1,37 @@
 /* ================= 統計処理 ==================== */
 
-/*
- * _userNameCache の構造（ページ数ベース投票方式）:
- *   { uid: { "名前A": 5, "名前B": 1 }, ... }
- * 最も多くのページで使われた名前を正式名とする。
- * 1ページで1回の誤認識では覆らない。
- */
+/* uid → 表示名 のキャッシュ（ScrapboxAPIのcollaboratorsから登録） */
 let _userNameCache = {};
 let _userNameCacheLoaded = false;
 
-/* ユーザーID→名前マッピング（投票式）をストレージから読み込む（sync設定に従う） */
+/* uid→名前マッピングをストレージから読み込む（旧投票オブジェクト形式が残っていれば最多得票名に正規化） */
 const loadUserNameCache = async (projectName) => {
     if (_userNameCacheLoaded) return _userNameCache;
     const settings = await loadSettings(projectName);
-    _userNameCache = await loadFromStorage(getStorage(settings.syncUserMap), userMapKey(projectName), {});
+    const raw = await loadFromStorage(getStorage(settings.syncUserMap), userMapKey(projectName), {});
+    _userNameCache = {};
+    for (const [uid, val] of Object.entries(raw)) {
+        if (typeof val === 'string') {
+            _userNameCache[uid] = val;
+        } else if (val && typeof val === 'object') {
+            /* 旧形式 {name: count} → 最多得票名にフラット化 */
+            let best = null, max = 0;
+            for (const [name, count] of Object.entries(val)) {
+                if (count > max) { best = name; max = count; }
+            }
+            if (best) _userNameCache[uid] = best;
+        }
+    }
     _userNameCacheLoaded = true;
     return _userNameCache;
 };
 
-/* APIレスポンスのcollaboratorsからuid→名前を一括登録する（最も正確） */
+/* APIレスポンスのcollaboratorsからuid→名前を一括登録（60秒スロットル付き） */
 let _lastCollaboratorsApply = 0;
 
 const applyCollaborators = async (projectName, collaborators) => {
     if (!Array.isArray(collaborators) || !collaborators.length) return;
 
-    /* 60秒に1回だけ適用（頻繁なWatcher更新での無駄を省く） */
     const now = Date.now();
     if (now - _lastCollaboratorsApply < COLLABORATORS_REFRESH_INTERVAL) return;
     _lastCollaboratorsApply = now;
@@ -44,54 +51,18 @@ const applyCollaborators = async (projectName, collaborators) => {
     }
 };
 
-/* resolveUserNameをcollaborators対応に（文字列ならそのまま返す） */
-
-/* 現在のページでの uid→name 投票を記録する（ページ単位で1票） */
-const _votedThisPage = new Set();
-
-const resetPageVotes = () => {
-    _votedThisPage.clear();
-    _lastCollaboratorsApply = 0;
-};
-
-const voteUserName = async (projectName, uid, name) => {
-    if (!uid || !name) return;
-
-    /* 同一ページで同じuid+nameの組み合わせは1票だけ */
-    const voteKey = `${uid}:${name}`;
-    if (_votedThisPage.has(voteKey)) return;
-    _votedThisPage.add(voteKey);
-
-    if (!_userNameCache[uid]) _userNameCache[uid] = {};
-    _userNameCache[uid][name] = (_userNameCache[uid][name] || 0) + 1;
-
-    const settings = await loadSettings(projectName);
-    getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: _userNameCache });
-};
-
-/* uidに対して最も投票数の多い名前を返す */
-const resolveUserName = (uid) => {
-    const votes = _userNameCache[uid];
-    if (!votes || typeof votes === 'string') {
-        /* 旧形式（文字列）との互換性 */
-        return typeof votes === 'string' ? votes : null;
-    }
-    let best = null, max = 0;
-    for (const [name, count] of Object.entries(votes)) {
-        if (count > max) { best = name; max = count; }
-    }
-    return best;
-};
+/* uidに対する表示名を返す（未登録ならnull） */
+const resolveUserName = (uid) => _userNameCache[uid] || null;
 
 /* 直近のbuildTalkStats結果（著者推定のフォールバックに使う） */
 let _lastTalkStats = {};
 
-/* 正規化済みlines(withUid)からユーザーごとの発言量統計を集計する */
+/* 正規化済みlines(withUid)からユーザーごとの発言量統計を集計する。
+   アイコン記法を見つけたら局所的にidToNameを補完する（永続化はしない、collaboratorsが正規ソース） */
 const buildTalkStats = (lines) => {
     const stats = {};
     const idToName = {};
 
-    /* まず既知のuid→名前を引く */
     Object.keys(_userNameCache).forEach(uid => {
         const name = resolveUserName(uid);
         if (name) idToName[uid] = name;
@@ -101,11 +72,9 @@ const buildTalkStats = (lines) => {
         const { text, uid } = line;
         if (!uid || uid === 'unknown') return;
 
-        const name = extractIconName(text);
-        if (name) {
-            idToName[uid] = name;
-            voteUserName(currentProjectName, uid, name);
-        }
+        const iconName = extractIconName(text);
+        if (iconName && !idToName[uid]) idToName[uid] = iconName;
+
         if (text && !text.startsWith('[')) {
             stats[uid] = (stats[uid] || 0) + text.length;
         }

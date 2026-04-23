@@ -45,7 +45,6 @@ const createRouter = (watcherManager) => {
         _closedPanels.clear();
         clearAiCache();
         clearSettingsCache();
-        resetPageVotes();
         window.__jumpedToTodayInNote = false;
 
         const match = url.match(/^\/([^/]+)(?:\/(.*))?$/);
