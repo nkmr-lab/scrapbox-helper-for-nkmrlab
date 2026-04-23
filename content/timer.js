@@ -81,49 +81,73 @@ const parseTimerInput = (input) => {
     return (Number(s) || 0) * 60;
 };
 
-/* 3ベル設定でタイマーを開始する */
-const startTimer = ({ bells, endBell }) => {
+/* 3ベル設定でタイマーをarmed（スタート待機）状態にする。idle設定画面の[OK]から呼ばれる */
+const armTimer = ({ bells, endBell }) => {
     if (!bells || bells.some(b => b <= 0)) return;
     const state = {
-        startAnchor: Date.now(),
-        paused: false,
-        pauseElapsedMs: null,
+        mode: 'armed',          // 'armed' | 'running' | 'paused'
         bells,
         endBell,
+        startAnchor: null,
+        pauseElapsedMs: null,
         bellsRung: [false, false, false],
     };
     _saveTimerState(state);
     _mountTimerWidget();
+    _renderTimerWidget();
+};
+
+/* armed → running（実際に計測開始）。armed画面の[スタート]から呼ばれる */
+const startTimer = async () => {
+    const state = await _loadTimerState();
+    if (!state || state.mode !== 'armed') return;
+    state.mode = 'running';
+    state.startAnchor = Date.now();
+    state.bellsRung = [false, false, false];
+    _saveTimerState(state);
     _startTicking();
 };
 
 const pauseTimer = async () => {
     const state = await _loadTimerState();
-    if (!state || state.paused) return;
+    if (!state || state.mode !== 'running') return;
     state.pauseElapsedMs = Date.now() - state.startAnchor;
-    state.paused = true;
+    state.mode = 'paused';
     _saveTimerState(state);
     _renderTimerWidget();
 };
 
 const resumeTimer = async () => {
     const state = await _loadTimerState();
-    if (!state || !state.paused) return;
+    if (!state || state.mode !== 'paused') return;
     state.startAnchor = Date.now() - state.pauseElapsedMs;
-    state.paused = false;
     state.pauseElapsedMs = null;
+    state.mode = 'running';
     _saveTimerState(state);
     _startTicking();
 };
 
-/* タイマーを停止してidle状態に戻す（入力値は継承） */
-const stopTimer = () => {
+/* running/paused → armed（同じベル設定のまま先頭に戻る、再スタート可能） */
+const resetTimer = async () => {
+    const state = await _loadTimerState();
+    if (!state) return;
+    state.mode = 'armed';
+    state.startAnchor = null;
+    state.pauseElapsedMs = null;
+    state.bellsRung = [false, false, false];
+    _saveTimerState(state);
+    if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+    _renderTimerWidget();
+};
+
+/* 設定画面に戻る（状態クリア、入力値はprefsで継承） */
+const openTimerConfig = () => {
     _saveTimerState(null);
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     _renderTimerWidget();
 };
 
-/* ウィジェット自体を閉じる（タイマー動作中なら停止も行う） */
+/* ウィジェット自体を閉じる（状態クリア） */
 const closeTimerWidget = () => {
     _saveTimerState(null);
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
@@ -208,42 +232,50 @@ const _renderIdleView = async (widget) => {
     };
     endRow.append(endLbl, endSel);
 
-    /* 開始ボタン */
-    const startBtn = document.createElement('button');
-    startBtn.textContent = '開始';
-    startBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
-    startBtn.onclick = () => {
+    /* OKボタン（armed状態に遷移） */
+    const okBtn = document.createElement('button');
+    okBtn.textContent = 'OK';
+    okBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
+    okBtn.onclick = () => {
         const bells = [
             parseTimerInput(b1Row.querySelector('input').value),
             parseTimerInput(b2Row.querySelector('input').value),
             parseTimerInput(b3Row.querySelector('input').value),
         ];
         if (bells.some(b => b <= 0)) return;
-        startTimer({ bells, endBell: prefs.endBell });
+        armTimer({ bells, endBell: prefs.endBell });
     };
 
-    widget.replaceChildren(header, b1Row, b2Row, b3Row, endRow, startBtn);
+    widget.replaceChildren(header, b1Row, b2Row, b3Row, endRow, okBtn);
 };
 
-/* 実行中ビュー（経過時間/残り時間 + 色変化 + 操作ボタン）を描画 */
+/* 経過時間(ms)を状態から取得する。armed=0, paused=凍結値, running=現在差分 */
+const _getElapsedMs = (state) => {
+    if (state.mode === 'armed') return 0;
+    if (state.mode === 'paused') return state.pauseElapsedMs;
+    return Date.now() - state.startAnchor;
+};
+
+/* armed/running/paused共通のビューを描画（時刻表示 + モード別ボタン） */
 const _renderRunningView = (widget, state) => {
     if (!widget) return;
 
-    const elapsedMs = state.paused ? state.pauseElapsedMs : (Date.now() - state.startAnchor);
+    const elapsedMs = _getElapsedMs(state);
     const elapsedSec = Math.floor(elapsedMs / 1000);
     const bells = state.bells;
     const endBellSec = bells[state.endBell - 1];
 
-    /* 色状態（色はモードに関係なく経過時間ベース） */
+    /* 色状態（armedでは色変化なし、経過基準） */
     widget.className = 'sb-timer-widget';
-    if (elapsedMs >= bells[2] * 1000) widget.classList.add('sb-timer-widget--done');
-    else if (elapsedMs >= endBellSec * 1000) widget.classList.add('sb-timer-widget--danger');
-    else if (elapsedMs >= bells[0] * 1000) widget.classList.add('sb-timer-widget--warn');
-    if (state.paused) widget.classList.add('sb-timer-widget--paused');
+    if (state.mode !== 'armed') {
+        if (elapsedMs >= bells[2] * 1000) widget.classList.add('sb-timer-widget--done');
+        else if (elapsedMs >= endBellSec * 1000) widget.classList.add('sb-timer-widget--danger');
+        else if (elapsedMs >= bells[0] * 1000) widget.classList.add('sb-timer-widget--warn');
+    }
+    if (state.mode === 'paused') widget.classList.add('sb-timer-widget--paused');
 
     const timeNode = document.createElement('div');
     timeNode.className = 'sb-timer-time sb-timer-time--clickable';
-    /* down: 発表終了ベルまでの残り時間。超過で負数表示 */
     const displayedSec = _displayMode === 'down' ? (endBellSec - elapsedSec) : elapsedSec;
     timeNode.textContent = formatTimerMMSS(displayedSec);
     timeNode.title = 'クリックで表示切替（経過 / 残り）';
@@ -256,26 +288,39 @@ const _renderRunningView = (widget, state) => {
 
     const btns = document.createElement('div');
     btns.className = 'sb-timer-btns';
-    const pauseResumeBtn = renderButton(state.paused ? '▶' : '⏸',
-        () => state.paused ? resumeTimer() : pauseTimer());
-    pauseResumeBtn.classList.add('sb-timer-btn');
-    const stopBtn = renderButton('↺', stopTimer);
-    stopBtn.classList.add('sb-timer-btn');
-    const closeBtn = renderButton('✕', closeTimerWidget);
-    closeBtn.classList.add('sb-timer-btn');
-    btns.append(pauseResumeBtn, stopBtn, closeBtn);
+
+    if (state.mode === 'armed') {
+        const startBtn = renderButton('▶ スタート', startTimer);
+        startBtn.classList.add('sb-timer-btn', 'sb-timer-btn--primary');
+        const configBtn = renderButton('設定', openTimerConfig);
+        configBtn.classList.add('sb-timer-btn');
+        const closeBtn = renderButton('✕', closeTimerWidget);
+        closeBtn.classList.add('sb-timer-btn');
+        btns.append(startBtn, configBtn, closeBtn);
+    } else {
+        const pauseResumeBtn = renderButton(state.mode === 'paused' ? '▶' : '⏸',
+            () => state.mode === 'paused' ? resumeTimer() : pauseTimer());
+        pauseResumeBtn.classList.add('sb-timer-btn');
+        const resetBtn = renderButton('↺', resetTimer);
+        resetBtn.classList.add('sb-timer-btn');
+        const configBtn = renderButton('設定', openTimerConfig);
+        configBtn.classList.add('sb-timer-btn');
+        const closeBtn = renderButton('✕', closeTimerWidget);
+        closeBtn.classList.add('sb-timer-btn');
+        btns.append(pauseResumeBtn, resetBtn, configBtn, closeBtn);
+    }
 
     widget.replaceChildren(timeNode, subNode, btns);
 };
 
-/* 定期更新ループ。各ベル到達時に鳴動、3ベル超過後1時間で自動クリーンアップ */
+/* 定期更新ループ。running状態でのみベル検出を行う */
 const _startTicking = () => {
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     const tick = async () => {
         const state = await _loadTimerState();
         if (!state) { _renderTimerWidget(); return; }
         _renderRunningView(document.getElementById(TIMER_WIDGET_ID), state);
-        if (state.paused) return;
+        if (state.mode !== 'running') return;
 
         const elapsedMs = Date.now() - state.startAnchor;
 
@@ -288,8 +333,8 @@ const _startTicking = () => {
             }
         }
 
-        /* 3ベル超過後1時間で自動終了 */
-        if (elapsedMs > state.bells[2] * 1000 + 60 * 60 * 1000) stopTimer();
+        /* 3ベル超過後1時間で自動リセット（armedに戻す） */
+        if (elapsedMs > state.bells[2] * 1000 + 60 * 60 * 1000) resetTimer();
     };
     tick();
     _timerInterval = setInterval(tick, 500);
@@ -311,7 +356,7 @@ const openTimer = async () => {
     _displayMode = prefs.displayMode || 'up';
     _mountTimerWidget();
     const state = await _loadTimerState();
-    if (state) _startTicking();
+    if (state?.mode === 'running') _startTicking();
     else _renderTimerWidget();
 };
 
@@ -323,19 +368,19 @@ const restoreTimer = async () => {
     const prefs = await _loadTimerPrefs();
     _displayMode = prefs.displayMode || 'up';
 
-    if (state.paused) {
+    /* 3ベルから1時間以上経過した残骸は破棄（runningのみ判定） */
+    if (state.mode === 'running') {
+        const elapsedMs = Date.now() - state.startAnchor;
+        if (elapsedMs > state.bells[2] * 1000 + 60 * 60 * 1000) {
+            _saveTimerState(null);
+            return;
+        }
         _mountTimerWidget();
-        _renderTimerWidget();
+        _startTicking();
         return;
     }
 
-    /* 3ベルから1時間以上経過した残骸は破棄 */
-    const elapsedMs = Date.now() - state.startAnchor;
-    if (elapsedMs > state.bells[2] * 1000 + 60 * 60 * 1000) {
-        _saveTimerState(null);
-        return;
-    }
-
+    /* armed/paused は復元後tickしない */
     _mountTimerWidget();
-    _startTicking();
+    _renderTimerWidget();
 };

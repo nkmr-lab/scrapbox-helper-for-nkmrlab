@@ -273,6 +273,10 @@ const injectStyleSheet = () => {
 .sb-timer-btns  { display:flex; gap:6px; justify-content:center; margin-top:4px; }
 .sb-timer-btn   { cursor:pointer; padding:2px 8px; font-size:13px; opacity:0.85; }
 .sb-timer-btn:hover { opacity:1; }
+.sb-timer-btn--primary {
+    padding:4px 18px; font-size:14px; font-weight:bold;
+    background:rgba(255,255,255,0.18); border-radius:4px;
+}
 /* Idle mode（入力フォーム） */
 .sb-timer-widget--idle {
     background:var(--sb-panelBg); color:var(--sb-text);
