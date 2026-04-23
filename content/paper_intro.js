@@ -2,12 +2,12 @@
 /* 論文紹介ページの質問抽出と統計表示 */
 
 /* 論文紹介ページの質問一覧と統計をパネルに描画する */
-const renderPaperIntroFromLines = (pageName, rawLines, collaborators) => {
+const renderPaperIntroFromLines = (pageName, rawLines, projectUsers) => {
     const lines = normalizeLines(rawLines, { withUid: true });
     if (!isPaperIntroPage(lines)) return;
 
     /* 当該ページの名前解決マップを用意する */
-    applyCollaborators(collaborators, lines);
+    applyProjectUsers(projectUsers, lines);
 
     let inQnA = false;
     const questionMap = new Map();

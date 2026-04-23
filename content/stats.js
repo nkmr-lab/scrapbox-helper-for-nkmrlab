@@ -1,35 +1,23 @@
 /* ================= 統計処理 ==================== */
 /* 著者推定はすべて「行のuid（書き込み者ID）」を一次キーとし、
-   表示名は当該ページの collaborators 配列から都度引く（永続キャッシュなし）。
-   collaborators に該当が無いuidは、ページ内のアイコン記法 `[name.icon]` で補完、
-   それも無ければuidをそのまま表示する。
-   これにより同名取り違えや、別ページのキャッシュ汚染を排除する。 */
+   表示名は /api/projects/:proj から取得した uid → displayName マップを使う（永続キャッシュなし、
+   プロジェクト単位でセッションメモ）。当該ページのアイコン記法 `[name.icon]` でメンバー外を補完。 */
 
 /* 現在ページの uid → 表示名 マップ（per-page、ページ遷移ごとに置換） */
 let _currentUidNameMap = {};
 
-/* collaborators配列 + 当該ページの行データ から uid→表示名マップを構築する */
-const buildUidNameMap = (collaborators, lines) => {
-    const map = {};
-    if (Array.isArray(collaborators)) {
-        collaborators.forEach(c => {
-            const name = c?.displayName || c?.name;
-            if (c?.id && name) map[c.id] = name;
-        });
-    }
+/* プロジェクトメンバーマップに当該ページのアイコン記法情報をマージしてセットする。
+   各レンダラーが描画前に必ず呼ぶ */
+const applyProjectUsers = (projectUsers, lines) => {
+    _currentUidNameMap = { ...(projectUsers || {}) };
     if (Array.isArray(lines)) {
         lines.forEach(line => {
             const iconName = extractIconName(line.text || '');
-            if (iconName && line.uid && !map[line.uid]) map[line.uid] = iconName;
+            if (iconName && line.uid && !_currentUidNameMap[line.uid]) {
+                _currentUidNameMap[line.uid] = iconName;
+            }
         });
     }
-    return map;
-};
-
-/* 当該ページの collaborators と正規化済みlines を渡して、resolveUserName が引けるようにする。
-   各レンダラーが描画前に必ず呼ぶ */
-const applyCollaborators = (collaborators, lines) => {
-    _currentUidNameMap = buildUidNameMap(collaborators, lines);
 };
 
 /* 現在ページのマップから uid に対する表示名を返す（未登録ならnull） */

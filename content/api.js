@@ -18,6 +18,34 @@ const fetchPage = async (projectName, pageName) => {
     return r.json();
 };
 
+/* プロジェクトメンバーの uid → displayName マップを取得する（プロジェクト単位でメモ化）。
+   /api/pages のレスポンスには users の id しか入らないので別エンドポイントから引く。 */
+const _projectUsersCache = {};
+
+const loadProjectUsers = async (projectName) => {
+    if (!projectName) return {};
+    if (_projectUsersCache[projectName]) return _projectUsersCache[projectName];
+    try {
+        const r = await fetch(`https://scrapbox.io/api/projects/${projectName}`);
+        if (!r.ok) { console.warn(`[SB Helper] loadProjectUsers failed: ${r.status} ${projectName}`); return {}; }
+        const json = await r.json();
+        const map = {};
+        const register = (u) => {
+            if (!u?.id) return;
+            const name = u.displayName || u.name;
+            if (name && !map[u.id]) map[u.id] = name;
+        };
+        (json.users || []).forEach(register);
+        (json.admins || []).forEach(register);
+        register(json.owner);
+        _projectUsersCache[projectName] = map;
+        return map;
+    } catch (e) {
+        console.warn('[SB Helper] loadProjectUsers error:', e);
+        return {};
+    }
+};
+
 /* ページのETagをHEADリクエストで取得する */
 const headPageETag = async (projectName, pageName) => {
     try {

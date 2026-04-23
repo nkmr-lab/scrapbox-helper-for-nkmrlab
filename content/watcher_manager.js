@@ -9,22 +9,26 @@ class WatcherManager {
             paperIntro: new PageWatcher({
                 fetchPage,
                 headPageETag,
-                onInit: ({ pageName, json }) => {
-                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, json.collaborators);
+                onInit: async ({ pageName, json }) => {
+                    const projectUsers = await loadProjectUsers(this.projectName);
+                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, projectUsers);
                 },
-                onUpdate: ({ pageName, json }) => {
-                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, json.collaborators);
+                onUpdate: async ({ pageName, json }) => {
+                    const projectUsers = await loadProjectUsers(this.projectName);
+                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, projectUsers);
                 }
             }),
 
             presentation: new PageWatcher({
                 fetchPage,
                 headPageETag,
-                onInit: ({ pageName, json }) => {
-                    renderPresentationFromLines(pageName, json.lines, json.collaborators);
+                onInit: async ({ pageName, json }) => {
+                    const projectUsers = await loadProjectUsers(this.projectName);
+                    renderPresentationFromLines(pageName, json.lines, projectUsers);
                 },
-                onUpdate: ({ pageName, json }) => {
-                    renderPresentationFromLines(pageName, json.lines, json.collaborators);
+                onUpdate: async ({ pageName, json }) => {
+                    const projectUsers = await loadProjectUsers(this.projectName);
+                    renderPresentationFromLines(pageName, json.lines, projectUsers);
                 },
             }),
 
@@ -52,10 +56,12 @@ class WatcherManager {
                 fetchPage,
                 headPageETag,
                 onInit: async ({ pageName, json }) => {
-                    await renderMinutesFromLines(json.lines, json.collaborators);
+                    const projectUsers = await loadProjectUsers(this.projectName);
+                    await renderMinutesFromLines(json.lines, projectUsers);
                 },
                 onUpdate: async ({ pageName, json }) => {
-                    await renderMinutesFromLines(json.lines, json.collaborators);
+                    const projectUsers = await loadProjectUsers(this.projectName);
+                    await renderMinutesFromLines(json.lines, projectUsers);
                 },
             }),
         };
