@@ -173,21 +173,21 @@ const renderMenuButtons = (panelNode, showCreate) => {
     btnRow.className = 'sb-form-row sb-menu-btn-row';
 
     const timerBtn = document.createElement('button');
-    timerBtn.textContent = '⏱ タイマー';
+    timerBtn.textContent = 'タイマー';
     timerBtn.className = 'sb-menu-btn';
     timerBtn.onclick = () => openTimer();
     btnRow.appendChild(timerBtn);
 
     if (showCreate) {
         const createBtn = document.createElement('button');
-        createBtn.textContent = '📝 ページ生成';
+        createBtn.textContent = 'ページ生成';
         createBtn.className = 'sb-menu-btn';
         createBtn.onclick = () => openPageCreateModal();
         btnRow.appendChild(createBtn);
     }
 
     const settingsBtn = document.createElement('button');
-    settingsBtn.textContent = '⚙ 設定';
+    settingsBtn.textContent = '設定';
     settingsBtn.className = 'sb-menu-btn';
     settingsBtn.onclick = () => openSettingsModal();
     btnRow.appendChild(settingsBtn);
