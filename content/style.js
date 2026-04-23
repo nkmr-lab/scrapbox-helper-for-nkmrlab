@@ -276,6 +276,13 @@ const injectStyleSheet = () => {
 .sb-timer-btn--disabled {
     opacity:0.3; cursor:not-allowed; pointer-events:none;
 }
+.sb-timer-btn--spaced { margin-left:22px; }
+.sb-timer-close-corner {
+    position:absolute; top:6px; right:10px;
+    cursor:pointer; font-size:14px; opacity:0.55;
+    user-select:none; padding:2px 4px;
+}
+.sb-timer-close-corner:hover { opacity:1; }
 /* Idle mode（入力フォーム） */
 .sb-timer-widget--idle {
     background:var(--sb-panelBg); color:var(--sb-text);
@@ -284,9 +291,9 @@ const injectStyleSheet = () => {
     animation:none;
 }
 .sb-timer-header {
-    display:flex; justify-content:space-between; align-items:center;
     font-weight:bold; margin-bottom:6px; font-size:13px;
     border-bottom:1px solid var(--sb-border); padding-bottom:4px;
+    text-align:center;
 }
 .sb-timer-idle-row {
     display:flex; gap:6px; align-items:center; margin:4px 0;

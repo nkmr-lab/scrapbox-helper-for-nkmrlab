@@ -179,11 +179,7 @@ const _renderIdleView = async (widget) => {
 
     const header = document.createElement('div');
     header.className = 'sb-timer-header';
-    const title = document.createElement('span');
-    title.textContent = 'タイマー';
-    const closeBtn = renderButton('✕', closeTimerWidget);
-    closeBtn.classList.add('sb-timer-btn');
-    header.append(title, closeBtn);
+    header.textContent = 'タイマー';
 
     const makeBellRow = (label, prefKey) => {
         const row = document.createElement('div');
@@ -246,7 +242,7 @@ const _renderIdleView = async (widget) => {
         armTimer({ bells, endBell: prefs.endBell });
     };
 
-    widget.replaceChildren(header, b1Row, b2Row, b3Row, endRow, okBtn);
+    widget.replaceChildren(_makeCornerCloseBtn(), header, b1Row, b2Row, b3Row, endRow, okBtn);
 };
 
 /* 経過時間(ms)を状態から取得する。armed=0, paused=凍結値, running=現在差分 */
@@ -286,7 +282,7 @@ const _renderRunningView = (widget, state) => {
     const modeLabel = _displayMode === 'down' ? '残り' : '経過';
     subNode.textContent = `${modeLabel} / 発表終了 ${formatTimerMMSS(endBellSec)}（${state.endBell}ベル）`;
 
-    /* 全モード共通の5ボタン固定レイアウト（モードに応じて有効/無効が切り替わる） */
+    /* ボタンレイアウト: [▶][⏸][↺]（主要コントロール群） ［間隔］ [⚙]（設定） */
     const isArmed = state.mode === 'armed';
     const isRunning = state.mode === 'running';
     const isPaused = state.mode === 'paused';
@@ -300,19 +296,27 @@ const _renderRunningView = (widget, state) => {
             { disabled: !isRunning, title: '一時停止' }),
         _mkTimerBtn('↺', resetTimer,
             { disabled: isArmed, title: 'リセット（同じ設定で先頭へ）' }),
-        _mkTimerBtn('⚙', openTimerConfig, { title: '設定' }),
-        _mkTimerBtn('✕', closeTimerWidget, { title: '閉じる' }),
+        _mkTimerBtn('⚙', openTimerConfig, { title: '設定', spaced: true }),
     );
 
-    widget.replaceChildren(timeNode, subNode, btns);
+    widget.replaceChildren(_makeCornerCloseBtn(), timeNode, subNode, btns);
 };
 
-/* タイマー用ボタンを生成する（無効化・ツールチップ対応） */
-const _mkTimerBtn = (label, fn, { disabled = false, title = '' } = {}) => {
+/* タイマー用ボタンを生成する（無効化・ツールチップ・左マージン対応） */
+const _mkTimerBtn = (label, fn, { disabled = false, title = '', spaced = false } = {}) => {
     const btn = renderButton(label, disabled ? undefined : fn);
     btn.classList.add('sb-timer-btn');
     if (disabled) btn.classList.add('sb-timer-btn--disabled');
+    if (spaced) btn.classList.add('sb-timer-btn--spaced');
     if (title) btn.title = title;
+    return btn;
+};
+
+/* ウィジェット右上に配置する閉じるボタンを生成する */
+const _makeCornerCloseBtn = () => {
+    const btn = renderButton('✕', closeTimerWidget);
+    btn.className = 'sb-timer-close-corner';
+    btn.title = '閉じる';
     return btn;
 };
 
