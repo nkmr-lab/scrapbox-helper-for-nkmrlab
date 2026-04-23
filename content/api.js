@@ -18,31 +18,35 @@ const fetchPage = async (projectName, pageName) => {
     return r.json();
 };
 
-/* プロジェクトメンバーの uid → displayName マップを取得する（プロジェクト単位でメモ化）。
-   /api/pages のレスポンスには users の id しか入らないので別エンドポイントから引く。 */
+/* プロジェクトメンバーの uid → displayName および slug(name) → displayName マップを取得する。
+   プロジェクト単位でメモ化、/api/pages にはユーザのidしか入らないので別エンドポイントから引く。
+   slugマップは アイコン記法 [name.icon] からの著者推定を displayName に揃えるために使う。 */
 const _projectUsersCache = {};
 
 const loadProjectUsers = async (projectName) => {
-    if (!projectName) return {};
+    const empty = { byId: {}, bySlug: {} };
+    if (!projectName) return empty;
     if (_projectUsersCache[projectName]) return _projectUsersCache[projectName];
     try {
         const r = await fetch(`https://scrapbox.io/api/projects/${projectName}`);
-        if (!r.ok) { console.warn(`[SB Helper] loadProjectUsers failed: ${r.status} ${projectName}`); return {}; }
+        if (!r.ok) { console.warn(`[SB Helper] loadProjectUsers failed: ${r.status} ${projectName}`); return empty; }
         const json = await r.json();
-        const map = {};
+        const byId = {}, bySlug = {};
         const register = (u) => {
             if (!u?.id) return;
-            const name = u.displayName || u.name;
-            if (name && !map[u.id]) map[u.id] = name;
+            const display = u.displayName || u.name;
+            if (display && !byId[u.id]) byId[u.id] = display;
+            if (u.name && display && !bySlug[u.name]) bySlug[u.name] = display;
         };
         (json.users || []).forEach(register);
         (json.admins || []).forEach(register);
         register(json.owner);
-        _projectUsersCache[projectName] = map;
-        return map;
+        const result = { byId, bySlug };
+        _projectUsersCache[projectName] = result;
+        return result;
     } catch (e) {
         console.warn('[SB Helper] loadProjectUsers error:', e);
-        return {};
+        return empty;
     }
 };
 

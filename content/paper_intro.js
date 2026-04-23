@@ -22,7 +22,9 @@ const renderPaperIntroFromLines = (pageName, rawLines, projectUsers) => {
         if (inQnA && /^\?\s/.test(t)) {
             const text = normalize(t.replace(/^\?\s*/, ''));
             let author = findAuthorAbove(lines, idx);
-            if (!author && line.uid && line.uid !== 'unknown') {
+            if (author) {
+                author = resolveDisplayBySlug(author);
+            } else if (line.uid && line.uid !== 'unknown') {
                 author = resolveUserName(line.uid);
             }
             const existing = questionMap.get(text);

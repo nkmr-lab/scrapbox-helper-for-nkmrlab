@@ -55,8 +55,9 @@ const collectImpressions = (lines, start, end) => {
 
     const ims = [];
     for (let i = start; i <= end; i++) {
-        const author = extractIconName(lines[i]?.text);
-        if (!author) continue;
+        const slug = extractIconName(lines[i]?.text);
+        if (!slug) continue;
+        const author = resolveDisplayBySlug(slug);
         const texts = [];
         let j = i + 1;
         while (j <= end && lines[j]?.text && !isBoundaryLine(lines[j].text)) {

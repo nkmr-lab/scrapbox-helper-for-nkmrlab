@@ -5,23 +5,28 @@
 
 /* 現在ページの uid → 表示名 マップ（per-page、ページ遷移ごとに置換） */
 let _currentUidNameMap = {};
+/* 現在ページの slug(account name) → 表示名 マップ（アイコン記法由来の著者を displayName に揃える） */
+let _currentSlugNameMap = {};
 
-/* プロジェクトメンバーマップに当該ページのアイコン記法情報をマージしてセットする。
-   各レンダラーが描画前に必ず呼ぶ */
+/* loadProjectUsers の戻り {byId, bySlug} に当該ページのアイコン記法情報をマージしてセットする */
 const applyProjectUsers = (projectUsers, lines) => {
-    _currentUidNameMap = { ...(projectUsers || {}) };
+    _currentUidNameMap = { ...(projectUsers?.byId || {}) };
+    _currentSlugNameMap = { ...(projectUsers?.bySlug || {}) };
     if (Array.isArray(lines)) {
         lines.forEach(line => {
             const iconName = extractIconName(line.text || '');
-            if (iconName && line.uid && !_currentUidNameMap[line.uid]) {
-                _currentUidNameMap[line.uid] = iconName;
-            }
+            if (!iconName) return;
+            if (line.uid && !_currentUidNameMap[line.uid]) _currentUidNameMap[line.uid] = iconName;
+            if (!_currentSlugNameMap[iconName]) _currentSlugNameMap[iconName] = iconName;
         });
     }
 };
 
-/* 現在ページのマップから uid に対する表示名を返す（未登録ならnull） */
+/* uid → 表示名（未登録ならnull） */
 const resolveUserName = (uid) => _currentUidNameMap[uid] || null;
+
+/* slug(アカウント名) → 表示名（未登録ならslugそのまま返す＝アイコン記法のフォールバック表示） */
+const resolveDisplayBySlug = (slug) => _currentSlugNameMap[slug] || slug;
 
 /* 正規化済みlines(withUid)からユーザーごとの発言量統計を集計する */
 const buildTalkStats = (lines) => {

@@ -142,7 +142,9 @@ const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
         seen.add(key);
 
         let author = findAuthorAbove(lines, i);
-        if (!author && lines[i].uid && lines[i].uid !== 'unknown') {
+        if (author) {
+            author = resolveDisplayBySlug(author);
+        } else if (lines[i].uid && lines[i].uid !== 'unknown') {
             author = resolveUserName(lines[i].uid);
         }
 
