@@ -11,6 +11,9 @@ const start = () => {
     document.addEventListener('visibilitychange', router.onVisibilityChange);
     setInterval(router.tick, TICK_INTERVAL);
     router.tick();
+
+    /* 前回動作していたタイマーがあれば復元（ページリロードを跨いで継続） */
+    restoreTimer();
 };
 
 start();

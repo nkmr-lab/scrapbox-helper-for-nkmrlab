@@ -39,6 +39,10 @@ const DEFAULT_SETTINGS = {
     promptSummary: '',            // 空欄ならデフォルトプロンプト
     promptExperimentReview: '',
     promptProgramParse: '',
+    /* --- タイマー --- */
+    timerTalkMinutes: 5,
+    timerQAMinutes: 5,
+    timerBeepEnabled: true,
     /* --- 同期設定（何をchrome.storage.syncで共有するか） --- */
     syncSystem: true,       // システム設定（名前・TODOマーク・プロンプト等）
     syncDisplay: false,     // 表示設定（パネルサイズ・位置・テーマ・色等）

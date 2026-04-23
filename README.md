@@ -43,6 +43,13 @@
 - ページ本文の整列（中央 / 左寄せ / 右寄せ）— 個別ページのみ適用、トップページは中央固定
 - カレンダー/フロートメニュー位置に応じて Scrapbox 純正 `.page-menu` を自動退避（衝突回避）
 
+### タイマー（ローカル）
+- フロートメニューから起動: `発表` / `質疑` / `発表+質疑連続` / `カスタム mm:ss`
+- 画面上中央のフロートウィジェット表示（mm:ss、色変化: 1分前=黄 / 10秒前=赤 / 終了=フラッシュ）
+- 一時停止 / リセット
+- ページ遷移・リロードを跨いで継続（chrome.storage.local で状態保持）
+- 残り1分・10秒・終了でビープ音（設定で ON/OFF）
+
 ### 発言者解決
 - Scrapbox API の `collaborators` から uid→表示名を一括解決（60秒スロットル）
 - アイコン記法からの投票方式フォールバック（ページ単位で1票、最多得票を正式名に採用）
@@ -104,10 +111,11 @@
 18. presentation.js    ← 発表練習パネル
 19. settings_ui.js     ← 設定モーダル（タブ式UIビルダー）
 20. page_create.js     ← テンプレート・ページ生成モーダル（12,17,18の関数を使用）
-21. float_menu.js      ← フロートメニュー
-22. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
-23. router.js          ← SPAルーティング
-24. main.js            ← エントリポイント
+21. timer.js           ← カウントダウンタイマー（ローカル、状態はchrome.storage.local）
+22. float_menu.js      ← フロートメニュー
+23. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
+24. router.js          ← SPAルーティング
+25. main.js            ← エントリポイント
 ```
 
 ## ファイル構成
@@ -134,7 +142,8 @@ content/
 ├── presentation.js    発表練習パネル（質問抽出・統計）
 ├── settings_ui.js     設定モーダル（タブ式UIビルダー）
 ├── page_create.js     テンプレート集約 + ページ生成モーダル + AI変換
-├── float_menu.js      フロートメニュー（ピン留め・履歴・ボタン）
+├── timer.js           カウントダウンタイマー（フロートウィジェット + 状態永続化）
+├── float_menu.js      フロートメニュー（ピン留め・履歴・タイマー・ボタン）
 ├── watcher_manager.js Watcher管理（PageWatcherインスタンスの保持・起動・停止）
 ├── router.js          SPAルーティング（URL変更検知・ページ種別振り分け）
 └── main.js            エントリポイント（初期化・ルーター起動）

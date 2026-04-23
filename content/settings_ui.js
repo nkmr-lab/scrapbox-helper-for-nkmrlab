@@ -368,6 +368,25 @@ const _buildMainTab = (settings) => {
     return { mainContent, mainPosI, mainWI, mainHI, recentI, frequentI };
 };
 
+/* タイマー設定タブを構築する */
+const _buildTimerTab = (settings) => {
+    const talkI = _input(settings.timerTalkMinutes, 'number');
+    const qaI = _input(settings.timerQAMinutes, 'number');
+    const beepI = _select(settings.timerBeepEnabled ? 'on' : 'off', [
+        ['on', 'ON'], ['off', 'OFF'],
+    ]);
+
+    const timerContent = document.createElement('div');
+    timerContent.append(
+        _desc('論文紹介・発表練習などで使うカウントダウンタイマーの設定です。フロートメニューから起動します。'),
+        _field('発表時間（分）', talkI),
+        _field('質疑時間（分）', qaI),
+        _field('ビープ音', beepI),
+    );
+
+    return { timerContent, talkI, qaI, beepI };
+};
+
 /* その他パネル設定タブを構築する */
 const _buildOtherTab = (settings) => {
     const otherPosI = _select(settings.otherPosition, POSITION_OPTIONS);
@@ -394,6 +413,7 @@ const _collectSettingsValues = ({
     mainPosI, mainWI, mainHI, recentI, frequentI,
     otherPosI, otherWI, otherHI,
     apiKeyI, promptSummaryI, promptExperimentI, promptProgramI,
+    talkI, qaI, beepI,
 }) => {
     const newCustom = {};
     Object.entries(colorInputs).forEach(([key, textI]) => {
@@ -424,6 +444,9 @@ const _collectSettingsValues = ({
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),
+        timerTalkMinutes: +talkI.value,
+        timerQAMinutes: +qaI.value,
+        timerBeepEnabled: beepI.value === 'on',
         syncSystem: syncSystemCb.checked,
         syncDisplay: syncDisplayCb.checked,
         syncPinned: syncPinnedCb.checked,
@@ -448,6 +471,7 @@ const openSettingsModal = async () => {
     const color = _buildColorTab(settings);
     const sync = _buildSyncTab(settings);
     const ai = _buildAiTab(settings);
+    const timer = _buildTimerTab(settings);
 
     /* ===== タブ組み立て ===== */
     const { bar, panels } = renderTabs([
@@ -456,6 +480,7 @@ const openSettingsModal = async () => {
         { label: 'カレンダー', content: cal.calContent },
         { label: 'TODO', content: todo.todoContent },
         { label: '他ページ', content: other.otherContent },
+        { label: 'タイマー', content: timer.timerContent },
         { label: '色', content: color.colorContent },
         { label: '同期', content: sync.syncContent },
         { label: 'AI', content: ai.aiContent },
@@ -469,7 +494,7 @@ const openSettingsModal = async () => {
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = () => {
         const newSettings = _collectSettingsValues({
-            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...sync, ...ai,
+            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...sync, ...ai, ...timer,
         });
         saveSettings(currentProjectName, newSettings);
         location.reload();

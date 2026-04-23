@@ -247,6 +247,39 @@ const injectStyleSheet = () => {
     width:var(--sb-floatMenuWidth, 320px); max-height:70vh; padding:8px;
 }
 
+/* ===== Timer ===== */
+.sb-timer-widget {
+    position:fixed; top:10px; left:50%; transform:translateX(-50%);
+    z-index:100001;
+    background:var(--sb-titleBg); color:var(--sb-titleText);
+    border:1px solid var(--sb-panelBorder); border-radius:8px;
+    box-shadow:0 4px 12px var(--sb-panelShadow);
+    padding:8px 18px; min-width:160px; text-align:center;
+    font-family:'Courier New', monospace;
+    transition:background 0.3s;
+}
+.sb-timer-widget--warn   { background:#f39c12 !important; color:#fff; }
+.sb-timer-widget--danger { background:#e74c3c !important; color:#fff;
+    animation:sbTimerPulse 0.5s infinite alternate; }
+.sb-timer-widget--done   { background:#c0392b !important; color:#fff;
+    animation:sbTimerFlash 0.4s infinite alternate; }
+.sb-timer-widget--paused { opacity:0.55; }
+@keyframes sbTimerPulse { from { box-shadow:0 0 8px rgba(231,76,60,.6); } to { box-shadow:0 0 26px rgba(231,76,60,1); } }
+@keyframes sbTimerFlash { from { opacity:1; } to { opacity:0.35; } }
+.sb-timer-label { font-size:11px; opacity:0.9; letter-spacing:0.5px; margin-bottom:2px; }
+.sb-timer-time  { font-size:32px; font-weight:bold; line-height:1.1; }
+.sb-timer-btns  { display:flex; gap:6px; justify-content:center; margin-top:4px; }
+.sb-timer-btn   { cursor:pointer; padding:2px 8px; font-size:13px; opacity:0.85; }
+.sb-timer-btn:hover { opacity:1; }
+.sb-timer-preset-row, .sb-timer-custom-row { display:flex; gap:4px; margin:4px 0; }
+.sb-timer-preset-btn {
+    flex:1; padding:4px 6px; font-size:11px; cursor:pointer;
+    color:var(--sb-formText); background:var(--sb-panelBg);
+    border:1px solid var(--sb-border);
+}
+.sb-timer-preset-btn:hover { opacity:0.8; }
+.sb-timer-custom-input { flex:1; padding:2px 6px; font-size:12px; color:var(--sb-formText); }
+
 /* ===== Settings Modal ===== */
 .sb-modal-overlay {
     position:fixed; top:0; left:0; right:0; bottom:0;
