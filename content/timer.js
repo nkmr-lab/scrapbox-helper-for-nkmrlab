@@ -6,7 +6,8 @@
 
 let _timerInterval = null;
 let _audioCtx = null;
-let _displayMode = 'up';  // 'up'(経過時間) | 'down'(残り時間=発表終了ベルまで)
+let _displayMode = 'up';      // 'up'(経過時間) | 'down'(残り時間=発表終了ベルまで)
+let _beepEnabled = true;      // ビープON/OFF（prefsから同期）
 let _configViewOpen = false;  // 稼働中のタイマーを保持したまま設定画面を表示しているか
 
 /* 現在のタイマー状態を取得（なければnull） */
@@ -17,31 +18,29 @@ const _saveTimerState = (state) => {
     else chrome.storage.local.remove(TIMER_STATE_KEY);
 };
 
-/* 前回のベル設定を取得。未保存なら設定デフォルトから生成 */
+/* 前回のタイマー設定を取得。未保存ならハードコードされたデフォルトを返す */
 const _loadTimerPrefs = async () => {
     const prefs = await loadFromStorage(chrome.storage.local, TIMER_PREFS_KEY, null);
-    if (prefs && prefs.bell1Text) {
-        if (!prefs.displayMode) prefs.displayMode = 'up';
-        return prefs;
-    }
-    const settings = await loadSettings(currentProjectName);
-    return {
-        bell1Text: settings.timerBell1Text || '4:00',
-        bell2Text: settings.timerBell2Text || '5:00',
-        bell3Text: settings.timerBell3Text || '10:00',
-        endBell: settings.timerEndBell || 2,
-        displayMode: 'up',           // 'up' | 'down'
+    const defaults = {
+        bell1Text: '4:00',
+        bell2Text: '5:00',
+        bell3Text: '10:00',
+        endBell: 2,
+        displayMode: 'up',          // 'up' | 'down'
+        beepEnabled: true,
     };
+    if (!prefs || !prefs.bell1Text) return defaults;
+    /* 既存prefsに新フィールドが欠けていれば補完 */
+    return { ...defaults, ...prefs };
 };
 
 const _saveTimerPrefs = (prefs) => {
     chrome.storage.local.set({ [TIMER_PREFS_KEY]: prefs });
 };
 
-/* Web Audio APIで短いビープ音を鳴らす（設定でOFFの場合スキップ） */
-const _playBeep = async (freq = 800, durationMs = 200, gainVal = 0.25) => {
-    const settings = await loadSettings(currentProjectName);
-    if (!settings.timerBeepEnabled) return;
+/* Web Audio APIで短いビープ音を鳴らす（_beepEnabledがfalseならスキップ） */
+const _playBeep = (freq = 800, durationMs = 200, gainVal = 0.25) => {
+    if (!_beepEnabled) return;
     try {
         if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = _audioCtx.createOscillator();
@@ -236,6 +235,23 @@ const _renderIdleView = async (widget) => {
     };
     endRow.append(endLbl, endSel);
 
+    /* ビープON/OFFトグル */
+    const beepRow = document.createElement('label');
+    beepRow.className = 'sb-timer-idle-row';
+    const beepLbl = document.createElement('span');
+    beepLbl.className = 'sb-timer-idle-label';
+    beepLbl.textContent = 'ビープ音';
+    const beepCb = document.createElement('input');
+    beepCb.type = 'checkbox';
+    beepCb.checked = !!prefs.beepEnabled;
+    beepCb.className = 'sb-timer-idle-checkbox';
+    beepCb.onchange = () => {
+        prefs.beepEnabled = beepCb.checked;
+        _beepEnabled = beepCb.checked;
+        _saveTimerPrefs(prefs);
+    };
+    beepRow.append(beepLbl, beepCb);
+
     /* 確定ボタン: 変更なしなら稼働中タイマーをそのまま続行、変更ありなら新規armed */
     const okBtn = document.createElement('button');
     okBtn.textContent = '✓ 確定';
@@ -264,7 +280,7 @@ const _renderIdleView = async (widget) => {
         }
     };
 
-    widget.replaceChildren(_makeCornerCloseBtn(), header, b1Row, b2Row, b3Row, endRow, okBtn);
+    widget.replaceChildren(_makeCornerCloseBtn(), header, b1Row, b2Row, b3Row, endRow, beepRow, okBtn);
 };
 
 /* 経過時間(ms)を状態から取得する。armed=0, paused=凍結値, running=現在差分 */
@@ -388,7 +404,8 @@ const _toggleDisplayMode = async () => {
 const openTimer = async () => {
     if (document.getElementById(TIMER_WIDGET_ID)) return;
     const prefs = await _loadTimerPrefs();
-    _displayMode = prefs.displayMode || 'up';
+    _displayMode = prefs.displayMode;
+    _beepEnabled = prefs.beepEnabled;
     _mountTimerWidget();
     const state = await _loadTimerState();
     if (state?.mode === 'running') _startTicking();
@@ -401,7 +418,8 @@ const restoreTimer = async () => {
     if (!state) return;
 
     const prefs = await _loadTimerPrefs();
-    _displayMode = prefs.displayMode || 'up';
+    _displayMode = prefs.displayMode;
+    _beepEnabled = prefs.beepEnabled;
 
     /* 3ベルから1時間以上経過した残骸は破棄（runningのみ判定） */
     if (state.mode === 'running') {

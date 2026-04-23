@@ -312,6 +312,7 @@ const injectStyleSheet = () => {
 }
 .sb-timer-idle-btn:hover { opacity:0.8; }
 .sb-timer-idle-btn--wide { width:100%; padding:5px; margin:6px 0; }
+.sb-timer-idle-checkbox { cursor:pointer; }
 
 /* ===== Settings Modal ===== */
 .sb-modal-overlay {
