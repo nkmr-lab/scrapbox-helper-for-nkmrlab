@@ -109,7 +109,6 @@ const renderGPTBatchReviewUI = (sections) => {
 const renderExperimentPlan = async (pageName) => {
     const json = await fetchPage(currentProjectName, pageName);
     if (!json) return;
-    applyCollaborators(currentProjectName, json.collaborators);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = renderPanelHeader(panelNode, json.lines, '📋');

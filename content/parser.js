@@ -128,7 +128,7 @@ const parseCalendarData = (rawLines) => {
 };
 
 /* --- 質問抽出（議事録・論文紹介・発表練習で共通） --- */
-/* 指定行範囲から質問行を抽出する（アイコン→userId→不明の順で著者推定） */
+/* 指定行範囲から質問行を抽出する（著者推定: 上位アイコン → uidから現在ページのcollaborators解決 → null） */
 const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
     const qs = [];
 
@@ -141,9 +141,8 @@ const collectQuestions = (lines, start, end, { seen = new Set() } = {}) => {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        /* 著者推定: アイコン記法 → 行のuserId(十分な文字数がある場合のみ) → null */
         let author = findAuthorAbove(lines, i);
-        if (!author && lines[i].uid && lines[i].uid !== 'unknown' && isLikelyAuthor(lines[i].uid)) {
+        if (!author && lines[i].uid && lines[i].uid !== 'unknown') {
             author = resolveUserName(lines[i].uid);
         }
 

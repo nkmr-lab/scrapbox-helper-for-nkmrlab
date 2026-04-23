@@ -1,105 +1,64 @@
 /* ================= 統計処理 ==================== */
+/* 著者推定はすべて「行のuid（書き込み者ID）」を一次キーとし、
+   表示名は当該ページの collaborators 配列から都度引く（永続キャッシュなし）。
+   collaborators に該当が無いuidは、ページ内のアイコン記法 `[name.icon]` で補完、
+   それも無ければuidをそのまま表示する。
+   これにより同名取り違えや、別ページのキャッシュ汚染を排除する。 */
 
-/* uid → 表示名 のキャッシュ（ScrapboxAPIのcollaboratorsから登録） */
-let _userNameCache = {};
-let _userNameCacheLoaded = false;
+/* 現在ページの uid → 表示名 マップ（per-page、ページ遷移ごとに置換） */
+let _currentUidNameMap = {};
 
-/* uid→名前マッピングをローカルストレージから読み込む（同期不要、各PCで個別にcollaboratorsから再構築可能） */
-const loadUserNameCache = async (projectName) => {
-    if (_userNameCacheLoaded) return _userNameCache;
-    const raw = await loadFromStorage(chrome.storage.local, userMapKey(projectName), {});
-    _userNameCache = {};
-    for (const [uid, val] of Object.entries(raw)) {
-        if (typeof val === 'string') {
-            _userNameCache[uid] = val;
-        } else if (val && typeof val === 'object') {
-            /* 旧形式 {name: count} → 最多得票名にフラット化 */
-            let best = null, max = 0;
-            for (const [name, count] of Object.entries(val)) {
-                if (count > max) { best = name; max = count; }
-            }
-            if (best) _userNameCache[uid] = best;
-        }
+/* collaborators配列 + 当該ページの行データ から uid→表示名マップを構築する */
+const buildUidNameMap = (collaborators, lines) => {
+    const map = {};
+    if (Array.isArray(collaborators)) {
+        collaborators.forEach(c => {
+            const name = c?.displayName || c?.name;
+            if (c?.id && name) map[c.id] = name;
+        });
     }
-    _userNameCacheLoaded = true;
-    return _userNameCache;
+    if (Array.isArray(lines)) {
+        lines.forEach(line => {
+            const iconName = extractIconName(line.text || '');
+            if (iconName && line.uid && !map[line.uid]) map[line.uid] = iconName;
+        });
+    }
+    return map;
 };
 
-/* APIレスポンスのcollaboratorsからuid→名前を一括登録（60秒スロットル付き） */
-let _lastCollaboratorsApply = 0;
-
-const applyCollaborators = async (projectName, collaborators) => {
-    if (!Array.isArray(collaborators) || !collaborators.length) return;
-
-    const now = Date.now();
-    if (now - _lastCollaboratorsApply < COLLABORATORS_REFRESH_INTERVAL) return;
-    _lastCollaboratorsApply = now;
-
-    let changed = false;
-    collaborators.forEach(c => {
-        if (!c.id) return;
-        const name = c.displayName || c.name;
-        if (!name) return;
-        if (_userNameCache[c.id] === name) return;
-        _userNameCache[c.id] = name;
-        changed = true;
-    });
-    if (changed) {
-        chrome.storage.local.set({ [userMapKey(projectName)]: _userNameCache });
-    }
+/* 当該ページの collaborators と正規化済みlines を渡して、resolveUserName が引けるようにする。
+   各レンダラーが描画前に必ず呼ぶ */
+const applyCollaborators = (collaborators, lines) => {
+    _currentUidNameMap = buildUidNameMap(collaborators, lines);
 };
 
-/* uidに対する表示名を返す（未登録ならnull） */
-const resolveUserName = (uid) => _userNameCache[uid] || null;
+/* 現在ページのマップから uid に対する表示名を返す（未登録ならnull） */
+const resolveUserName = (uid) => _currentUidNameMap[uid] || null;
 
-/* 直近のbuildTalkStats結果（著者推定のフォールバックに使う） */
-let _lastTalkStats = {};
-
-/* 正規化済みlines(withUid)からユーザーごとの発言量統計を集計する。
-   アイコン記法を見つけたら局所的にidToNameを補完する（永続化はしない、collaboratorsが正規ソース） */
+/* 正規化済みlines(withUid)からユーザーごとの発言量統計を集計する */
 const buildTalkStats = (lines) => {
     const stats = {};
-    const idToName = {};
-
-    Object.keys(_userNameCache).forEach(uid => {
-        const name = resolveUserName(uid);
-        if (name) idToName[uid] = name;
-    });
-
     lines.forEach(line => {
         const { text, uid } = line;
         if (!uid || uid === 'unknown') return;
-
-        const iconName = extractIconName(text);
-        if (iconName && !idToName[uid]) idToName[uid] = iconName;
-
         if (text && !text.startsWith('[')) {
             stats[uid] = (stats[uid] || 0) + text.length;
         }
     });
-    _lastTalkStats = stats;
-    return { stats, idToName };
+    return stats;
 };
 
-/* 指定uidがページ内で十分な文字数を書いているか判定する */
-const isLikelyAuthor = (uid) => {
-    if (!uid || !_lastTalkStats[uid]) return false;
-    const total = Object.values(_lastTalkStats).reduce((a, b) => a + b, 0);
-    if (total === 0) return false;
-    return _lastTalkStats[uid] / total >= 0.02;
-};
-
-/* 統計を計算してfragmentに追加する（ページハンドラ共通、linesは正規化済みwithUid） */
+/* 統計バーを fragment に追加する（applyCollaborators で設定された現在マップを使う） */
 const appendStatsBlock = (fragment, lines) => {
-    const { stats, idToName } = buildTalkStats(lines);
+    const stats = buildTalkStats(lines);
     if (!Object.keys(stats).length) return;
     const box = document.createElement('div');
-    renderTalkStats(box, stats, idToName);
+    renderTalkStats(box, stats);
     fragment.appendChild(box);
 };
 
 /* 発言量統計をバーチャートとして描画する */
-const renderTalkStats = (parentNode, stats, idToName) => {
+const renderTalkStats = (parentNode, stats) => {
     const entries = Object.entries(stats);
     if (!entries.length) return;
 
@@ -107,7 +66,7 @@ const renderTalkStats = (parentNode, stats, idToName) => {
     const max = Math.max(...entries.map(([, v]) => v), 1);
 
     entries.sort((a, b) => b[1] - a[1]).forEach(([uid, count]) => {
-        const name = idToName[uid] || resolveUserName(uid) || uid;
+        const name = resolveUserName(uid) || uid;
 
         const row = document.createElement('div');
         row.className = 'sb-stats-row';

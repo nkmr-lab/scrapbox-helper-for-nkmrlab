@@ -10,12 +10,10 @@ class WatcherManager {
                 fetchPage,
                 headPageETag,
                 onInit: ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
-                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines);
+                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, json.collaborators);
                 },
                 onUpdate: ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
-                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines);
+                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, json.collaborators);
                 }
             }),
 
@@ -23,12 +21,10 @@ class WatcherManager {
                 fetchPage,
                 headPageETag,
                 onInit: ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
-                    renderPresentationFromLines(pageName, json.lines);
+                    renderPresentationFromLines(pageName, json.lines, json.collaborators);
                 },
                 onUpdate: ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
-                    renderPresentationFromLines(pageName, json.lines);
+                    renderPresentationFromLines(pageName, json.lines, json.collaborators);
                 },
             }),
 
@@ -36,7 +32,6 @@ class WatcherManager {
                 fetchPage,
                 headPageETag,
                 onInit: async ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
                     const settings = await loadSettings(this.projectName);
                     renderCalendar(pageName);
                     renderCalendarFromLines(pageName, json);
@@ -48,7 +43,6 @@ class WatcherManager {
                     await renderTodoPanel(json.lines);
                 },
                 onUpdate: async ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
                     renderCalendarFromLines(pageName, json);
                     await renderTodoPanel(json.lines);
                 }
@@ -58,12 +52,10 @@ class WatcherManager {
                 fetchPage,
                 headPageETag,
                 onInit: async ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
-                    await renderMinutesFromLines(json.lines);
+                    await renderMinutesFromLines(json.lines, json.collaborators);
                 },
                 onUpdate: async ({ pageName, json }) => {
-                    applyCollaborators(this.projectName, json.collaborators);
-                    await renderMinutesFromLines(json.lines);
+                    await renderMinutesFromLines(json.lines, json.collaborators);
                 },
             }),
         };

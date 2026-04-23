@@ -92,12 +92,12 @@ const populateSessionData = (sessions, lines) => {
 };
 
 /* 議事録の行データをパースしてパネルに描画する */
-const renderMinutesFromLines = async (rawLines) => {
+const renderMinutesFromLines = async (rawLines, collaborators) => {
     const enableOpenAI = await isOpenAIEnabled();
     const lines = normalizeLines(rawLines, { withUid: true });
 
-    /* 著者推定のため、描画前に統計を計算しておく（_lastTalkStatsに格納される） */
-    buildTalkStats(lines);
+    /* 当該ページの名前解決マップを用意する */
+    applyCollaborators(collaborators, lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = renderPanelHeader(panelNode, rawLines);

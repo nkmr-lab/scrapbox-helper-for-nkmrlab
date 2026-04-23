@@ -2,12 +2,12 @@
 /* 論文紹介ページの質問抽出と統計表示 */
 
 /* 論文紹介ページの質問一覧と統計をパネルに描画する */
-const renderPaperIntroFromLines = (pageName, rawLines) => {
+const renderPaperIntroFromLines = (pageName, rawLines, collaborators) => {
     const lines = normalizeLines(rawLines, { withUid: true });
     if (!isPaperIntroPage(lines)) return;
 
-    /* 著者推定のため統計を先に計算（_lastTalkStatsに格納される） */
-    buildTalkStats(lines);
+    /* 当該ページの名前解決マップを用意する */
+    applyCollaborators(collaborators, lines);
 
     let inQnA = false;
     const questionMap = new Map();
@@ -22,7 +22,7 @@ const renderPaperIntroFromLines = (pageName, rawLines) => {
         if (inQnA && /^\?\s/.test(t)) {
             const text = normalize(t.replace(/^\?\s*/, ''));
             let author = findAuthorAbove(lines, idx);
-            if (!author && line.uid && line.uid !== 'unknown' && isLikelyAuthor(line.uid)) {
+            if (!author && line.uid && line.uid !== 'unknown') {
                 author = resolveUserName(line.uid);
             }
             const existing = questionMap.get(text);

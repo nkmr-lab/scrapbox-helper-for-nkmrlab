@@ -23,13 +23,11 @@ const isNkmrLabProject = () => currentProjectName === 'nkmr-lab';
 /* --- Storage Keys --- */
 const settingsKey = projectName => `sb:${projectName}:settings`;
 const historyKey = projectName => `sb:${projectName}:history`;
-const userMapKey = projectName => `sb:${projectName}:userMap`;
 const pinnedKey = projectName => `sb:${projectName}:pinned`;
 
 /* --- Timing (ms) --- */
 const TICK_INTERVAL = 600;
 const WATCHER_INTERVAL = 10000;
-const COLLABORATORS_REFRESH_INTERVAL = 60000;
 const FADE_TIMEOUT = 5000;
 
 /* --- Display --- */

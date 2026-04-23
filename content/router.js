@@ -54,7 +54,6 @@ const createRouter = (watcherManager) => {
         const pageName = match[2] ? decodeURIComponent(match[2]) : null;
 
         await initTheme(currentProjectName);
-        await loadUserNameCache(currentProjectName);
         saveHistory(currentProjectName, pageName);
 
         /* フロートメニューは全ページで表示 */

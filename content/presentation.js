@@ -1,11 +1,11 @@
 /* ================= 発表練習パネル =============== */
 
 /* 発表練習ページの質問一覧と統計をパネルに描画する */
-const renderPresentationFromLines = (pageName, rawLines) => {
+const renderPresentationFromLines = (pageName, rawLines, collaborators) => {
     const lines = normalizeLines(rawLines, { withUid: true });
 
-    /* 著者推定のため統計を先に計算（_lastTalkStatsに格納される） */
-    buildTalkStats(lines);
+    /* 当該ページの名前解決マップを用意する */
+    applyCollaborators(collaborators, lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     const { bodyNode } = renderPanelHeader(panelNode, rawLines);
