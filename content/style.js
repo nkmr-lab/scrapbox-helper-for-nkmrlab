@@ -271,14 +271,35 @@ const injectStyleSheet = () => {
 .sb-timer-btns  { display:flex; gap:6px; justify-content:center; margin-top:4px; }
 .sb-timer-btn   { cursor:pointer; padding:2px 8px; font-size:13px; opacity:0.85; }
 .sb-timer-btn:hover { opacity:1; }
-.sb-timer-preset-row, .sb-timer-custom-row { display:flex; gap:4px; margin:4px 0; }
-.sb-timer-preset-btn {
-    flex:1; padding:4px 6px; font-size:11px; cursor:pointer;
+/* Idle mode（入力フォーム） */
+.sb-timer-widget--idle {
+    background:var(--sb-panelBg); color:var(--sb-text);
+    font-family:sans-serif; text-align:left;
+    padding:10px 14px; min-width:260px;
+    animation:none;
+}
+.sb-timer-header {
+    display:flex; justify-content:space-between; align-items:center;
+    font-weight:bold; margin-bottom:6px; font-size:13px;
+    border-bottom:1px solid var(--sb-border); padding-bottom:4px;
+}
+.sb-timer-idle-row {
+    display:flex; gap:6px; align-items:center; margin:4px 0;
+}
+.sb-timer-idle-label {
+    width:56px; font-size:12px; color:var(--sb-textMuted);
+}
+.sb-timer-idle-input {
+    flex:1; padding:3px 6px; font-size:12px; color:var(--sb-formText);
+    font-family:monospace;
+}
+.sb-timer-idle-btn {
+    padding:3px 10px; font-size:11px; cursor:pointer;
     color:var(--sb-formText); background:var(--sb-panelBg);
     border:1px solid var(--sb-border);
 }
-.sb-timer-preset-btn:hover { opacity:0.8; }
-.sb-timer-custom-input { flex:1; padding:2px 6px; font-size:12px; color:var(--sb-formText); }
+.sb-timer-idle-btn:hover { opacity:0.8; }
+.sb-timer-idle-btn--wide { width:100%; padding:5px; margin:6px 0; }
 
 /* ===== Settings Modal ===== */
 .sb-modal-overlay {

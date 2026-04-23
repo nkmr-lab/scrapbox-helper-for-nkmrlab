@@ -167,10 +167,16 @@ const createModalDialog = (modalId, titleText) => {
 };
 
 /* --- メニューボタン --- */
-/* ページ生成・設定ボタン行をパネルに追加する */
+/* タイマー・ページ生成・設定ボタン行をパネルに追加する */
 const renderMenuButtons = (panelNode, showCreate) => {
     const btnRow = document.createElement('div');
     btnRow.className = 'sb-form-row sb-menu-btn-row';
+
+    const timerBtn = document.createElement('button');
+    timerBtn.textContent = '⏱ タイマー';
+    timerBtn.className = 'sb-menu-btn';
+    timerBtn.onclick = () => openTimer();
+    btnRow.appendChild(timerBtn);
 
     if (showCreate) {
         const createBtn = document.createElement('button');

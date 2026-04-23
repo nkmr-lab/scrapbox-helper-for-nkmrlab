@@ -13,8 +13,9 @@ const SETTINGS_MODAL_ID = '__sb_settings_modal__';
 const PAGE_CREATE_MODAL_ID = '__sb_page_create_modal__';
 const TIMER_WIDGET_ID = '__sb_timer_widget__';
 
-/* --- Timer State Key (ユーザー単位のローカルセッション状態、per-project にはしない) --- */
+/* --- Timer State/Prefs Key (ユーザー単位のローカルセッション状態、per-project にはしない) --- */
 const TIMER_STATE_KEY = '__sb_timer_state__';
+const TIMER_PREFS_KEY = '__sb_timer_prefs__';
 
 /* nkmr-lab プロジェクト判定 */
 const isNkmrLabProject = () => currentProjectName === 'nkmr-lab';

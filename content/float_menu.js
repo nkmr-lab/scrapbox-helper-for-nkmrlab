@@ -90,7 +90,6 @@ const openFloatMenu = async () => {
     setOpen(false);
 
     /* コンテンツ */
-    await renderTimerSection(panel);
     await _renderPinSection(panel, getCurrentPageName());
 
     const history = await loadHistory(currentProjectName);

@@ -1,17 +1,33 @@
 /* ================= タイマー ================= */
-/* 発表・質疑のカウントダウンタイマー。完全ローカル。chrome.storage.localで状態保持し、
-   ページ遷移・リロードを跨いで継続動作する。フロートメニューから起動。 */
+/* 発表・質疑のカウントダウンタイマー。完全ローカル。
+   ウィジェット自身が時間設定UIを持ち、前回値（テキスト）を chrome.storage.local に継承保存する。
+   フロートメニューからは openTimer() で呼び出すのみ。ページ遷移・リロードを跨いで継続動作する。 */
 
 let _timerInterval = null;
 let _audioCtx = null;
 
-/* 現在のタイマー状態をchrome.storage.localから取得（なければnull） */
+/* 現在のタイマー状態を取得（なければnull） */
 const _loadTimerState = () => loadFromStorage(chrome.storage.local, TIMER_STATE_KEY, null);
 
-/* タイマー状態を保存。nullならキーを削除してタイマーを終了扱いにする */
 const _saveTimerState = (state) => {
     if (state) chrome.storage.local.set({ [TIMER_STATE_KEY]: state });
     else chrome.storage.local.remove(TIMER_STATE_KEY);
+};
+
+/* 前回のタイマー入力値（テキスト形式）を取得。未保存なら設定デフォルトから生成 */
+const _loadTimerPrefs = async () => {
+    const prefs = await loadFromStorage(chrome.storage.local, TIMER_PREFS_KEY, null);
+    if (prefs) return prefs;
+    const settings = await loadSettings(currentProjectName);
+    return {
+        talkText: formatTimerMMSS((settings.timerTalkMinutes || 5) * 60),
+        qaText: formatTimerMMSS((settings.timerQAMinutes || 5) * 60),
+        customText: '',
+    };
+};
+
+const _saveTimerPrefs = (prefs) => {
+    chrome.storage.local.set({ [TIMER_PREFS_KEY]: prefs });
 };
 
 /* Web Audio APIで短いビープ音を鳴らす（設定でOFFの場合スキップ） */
@@ -68,17 +84,15 @@ const startTimer = ({ label, seconds, nextPhase = null }) => {
     _startTicking();
 };
 
-/* 動作中のタイマーを一時停止する */
 const pauseTimer = async () => {
     const state = await _loadTimerState();
     if (!state || state.paused) return;
     state.pauseRemainingMs = state.endTime - Date.now();
     state.paused = true;
     _saveTimerState(state);
-    _updateTimerWidget(state);
+    _renderTimerWidget();
 };
 
-/* 一時停止中のタイマーを再開する */
 const resumeTimer = async () => {
     const state = await _loadTimerState();
     if (!state || !state.paused) return;
@@ -89,14 +103,21 @@ const resumeTimer = async () => {
     _startTicking();
 };
 
-/* タイマーを停止してウィジェットを閉じる */
-const resetTimer = () => {
+/* タイマーを停止してidle状態に戻す（ウィジェットは残る、入力を再調整可能） */
+const stopTimer = () => {
     _saveTimerState(null);
-    _unmountTimerWidget();
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+    _renderTimerWidget();
 };
 
-/* タイマーウィジェットのDOMコンテナを画面に配置する（既存なら何もしない） */
+/* ウィジェット全体を閉じる（タイマー動作中なら停止も同時に行う） */
+const closeTimerWidget = () => {
+    _saveTimerState(null);
+    if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+    document.getElementById(TIMER_WIDGET_ID)?.remove();
+};
+
+/* ウィジェットのコンテナを配置（既存なら何もしない） */
 const _mountTimerWidget = () => {
     if (document.getElementById(TIMER_WIDGET_ID)) return;
     const widget = document.createElement('div');
@@ -105,15 +126,85 @@ const _mountTimerWidget = () => {
     document.body.appendChild(widget);
 };
 
-const _unmountTimerWidget = () => {
-    document.getElementById(TIMER_WIDGET_ID)?.remove();
+/* タイマー状態に応じてidle/runningビューを切り替えて再描画する */
+const _renderTimerWidget = async () => {
+    const widget = document.getElementById(TIMER_WIDGET_ID);
+    if (!widget) return;
+    const state = await _loadTimerState();
+    if (state) _renderRunningView(widget, state);
+    else await _renderIdleView(widget);
 };
 
-/* ウィジェットの表示内容をstateに合わせて更新する */
-const _updateTimerWidget = (state) => {
-    const widget = document.getElementById(TIMER_WIDGET_ID);
-    if (!widget || !state) return;
+/* 入力フォームを含むidleビューを描画 */
+const _renderIdleView = async (widget) => {
+    const prefs = await _loadTimerPrefs();
 
+    widget.className = 'sb-timer-widget sb-timer-widget--idle';
+
+    const header = document.createElement('div');
+    header.className = 'sb-timer-header';
+    const title = document.createElement('span');
+    title.textContent = '⏱ タイマー';
+    const closeBtn = renderButton('✕', closeTimerWidget);
+    closeBtn.classList.add('sb-timer-btn');
+    header.append(title, closeBtn);
+
+    const makeDurationRow = (labelText, prefKey, startLabel) => {
+        const row = document.createElement('div');
+        row.className = 'sb-timer-idle-row';
+
+        const label = document.createElement('span');
+        label.className = 'sb-timer-idle-label';
+        label.textContent = labelText;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = prefs[prefKey];
+        input.className = 'sb-timer-idle-input';
+        input.oninput = () => {
+            prefs[prefKey] = input.value;
+            _saveTimerPrefs(prefs);
+        };
+
+        const startBtn = document.createElement('button');
+        startBtn.textContent = startLabel;
+        startBtn.className = 'sb-timer-idle-btn';
+        startBtn.onclick = () => {
+            const sec = parseTimerInput(input.value);
+            if (sec > 0) startTimer({ label: labelText, seconds: sec });
+        };
+        input.onkeydown = (e) => { if (e.key === 'Enter') startBtn.click(); };
+
+        row.append(label, input, startBtn);
+        return row;
+    };
+
+    const talkRow = makeDurationRow('発表', 'talkText', '開始');
+    const qaRow = makeDurationRow('質疑', 'qaText', '開始');
+
+    /* 発表+質疑 連続起動（両inputの現在値を読む） */
+    const bothBtn = document.createElement('button');
+    bothBtn.textContent = '発表 + 質疑 連続開始';
+    bothBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
+    bothBtn.onclick = () => {
+        const talkSec = parseTimerInput(talkRow.querySelector('input').value);
+        const qaSec = parseTimerInput(qaRow.querySelector('input').value);
+        if (talkSec > 0 && qaSec > 0) {
+            startTimer({
+                label: '発表', seconds: talkSec,
+                nextPhase: { label: '質疑', seconds: qaSec },
+            });
+        }
+    };
+
+    const customRow = makeDurationRow('カスタム', 'customText', '開始');
+    customRow.querySelector('input').placeholder = 'mm:ss';
+
+    widget.replaceChildren(header, talkRow, qaRow, bothBtn, customRow);
+};
+
+/* 実行中ビュー（大きなカウントダウン + 操作ボタン）を描画 */
+const _renderRunningView = (widget, state) => {
     const remainingMs = state.paused ? state.pauseRemainingMs : state.endTime - Date.now();
     const seconds = Math.ceil(remainingMs / 1000);
 
@@ -138,11 +229,11 @@ const _updateTimerWidget = (state) => {
     const pauseResumeBtn = renderButton(state.paused ? '▶' : '⏸',
         () => state.paused ? resumeTimer() : pauseTimer());
     pauseResumeBtn.classList.add('sb-timer-btn');
-    const resetBtn = renderButton('↺', resetTimer);
-    resetBtn.classList.add('sb-timer-btn');
-    const closeBtn = renderButton('✕', resetTimer);
+    const stopBtn = renderButton('↺', stopTimer);
+    stopBtn.classList.add('sb-timer-btn');
+    const closeBtn = renderButton('✕', closeTimerWidget);
     closeBtn.classList.add('sb-timer-btn');
-    btns.append(pauseResumeBtn, resetBtn, closeBtn);
+    btns.append(pauseResumeBtn, stopBtn, closeBtn);
 
     widget.replaceChildren(labelNode, timeNode, btns);
 };
@@ -152,14 +243,13 @@ const _startTicking = () => {
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     const tick = async () => {
         const state = await _loadTimerState();
-        if (!state) { _unmountTimerWidget(); return; }
+        if (!state) { _renderTimerWidget(); return; }
 
-        _updateTimerWidget(state);
+        _renderRunningView(document.getElementById(TIMER_WIDGET_ID), state);
         if (state.paused) return;
 
         const remainingMs = state.endTime - Date.now();
 
-        /* 警告ビープ（残り1分、残り10秒、それぞれ1回だけ） */
         if (!state.warn60Played && remainingMs <= 60000 && remainingMs > 10000) {
             state.warn60Played = true;
             _saveTimerState(state);
@@ -173,7 +263,6 @@ const _startTicking = () => {
 
         if (remainingMs > 0) return;
 
-        /* 終了時の処理 */
         if (state.nextPhase && !state.phase2Started) {
             state.phase2Started = true;
             _saveTimerState(state);
@@ -193,58 +282,20 @@ const _startTicking = () => {
             setTimeout(() => _playBeep(800, 300), 400);
             setTimeout(() => _playBeep(800, 300), 800);
         }
-        /* 終了後1時間経過で自動クリーンアップ（放置防止） */
-        if (remainingMs < -60 * 60 * 1000) resetTimer();
+        if (remainingMs < -60 * 60 * 1000) stopTimer();
     };
     tick();
     _timerInterval = setInterval(tick, 500);
 };
 
-/* フロートメニュー内にタイマーのプリセット＋カスタム入力セクションを描画する */
-const renderTimerSection = async (parentNode) => {
-    const settings = await loadSettings(currentProjectName);
-    const talkMin = settings.timerTalkMinutes || 5;
-    const qaMin = settings.timerQAMinutes || 5;
-
-    appendSectionHeader(parentNode, '⏱ タイマー');
-
-    const presetRow = document.createElement('div');
-    presetRow.className = 'sb-timer-preset-row';
-
-    const makePresetBtn = (label, onClick) => {
-        const btn = document.createElement('button');
-        btn.textContent = label;
-        btn.className = 'sb-timer-preset-btn';
-        btn.onclick = onClick;
-        return btn;
-    };
-
-    presetRow.append(
-        makePresetBtn(`発表 ${formatTimerMMSS(talkMin * 60)}`,
-            () => startTimer({ label: '発表', seconds: talkMin * 60 })),
-        makePresetBtn(`質疑 ${formatTimerMMSS(qaMin * 60)}`,
-            () => startTimer({ label: '質疑', seconds: qaMin * 60 })),
-        makePresetBtn('発表+質疑',
-            () => startTimer({
-                label: '発表', seconds: talkMin * 60,
-                nextPhase: { label: '質疑', seconds: qaMin * 60 },
-            })),
-    );
-    parentNode.appendChild(presetRow);
-
-    const customRow = document.createElement('div');
-    customRow.className = 'sb-timer-custom-row';
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'mm:ss';
-    input.className = 'sb-timer-custom-input';
-    const startBtn = makePresetBtn('開始', () => {
-        const sec = parseTimerInput(input.value);
-        if (sec > 0) startTimer({ label: 'カスタム', seconds: sec });
-    });
-    input.onkeydown = (e) => { if (e.key === 'Enter') startBtn.click(); };
-    customRow.append(input, startBtn);
-    parentNode.appendChild(customRow);
+/* フロートメニューから呼ばれるエントリポイント。
+   既にウィジェットが開いていれば何もせず、開いていなければ idle/running を自動判定して開く */
+const openTimer = async () => {
+    if (document.getElementById(TIMER_WIDGET_ID)) return;
+    _mountTimerWidget();
+    const state = await _loadTimerState();
+    if (state) _startTicking();
+    else _renderTimerWidget();
 };
 
 /* 起動時にchrome.storage.localから保存済みタイマー状態を復元する */
@@ -254,7 +305,7 @@ const restoreTimer = async () => {
 
     if (state.paused) {
         _mountTimerWidget();
-        _updateTimerWidget(state);
+        _renderTimerWidget();
         return;
     }
 
