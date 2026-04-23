@@ -252,9 +252,9 @@ const injectStyleSheet = () => {
     position:fixed; top:10px; left:50%; transform:translateX(-50%);
     z-index:100001;
     background:var(--sb-titleBg); color:var(--sb-titleText);
-    border:1px solid var(--sb-panelBorder); border-radius:8px;
+    border:1px solid var(--sb-panelBorder); border-radius:10px;
     box-shadow:0 4px 12px var(--sb-panelShadow);
-    padding:8px 18px; min-width:160px; text-align:center;
+    padding:12px 28px; min-width:240px; text-align:center;
     font-family:'Courier New', monospace;
     transition:background 0.3s;
 }
@@ -267,7 +267,7 @@ const injectStyleSheet = () => {
 @keyframes sbTimerPulse { from { box-shadow:0 0 8px rgba(231,76,60,.6); } to { box-shadow:0 0 26px rgba(231,76,60,1); } }
 @keyframes sbTimerFlash { from { opacity:1; } to { opacity:0.35; } }
 .sb-timer-label { font-size:11px; opacity:0.9; letter-spacing:0.5px; margin-bottom:2px; }
-.sb-timer-time  { font-size:32px; font-weight:bold; line-height:1.1; user-select:none; }
+.sb-timer-time  { font-size:64px; font-weight:bold; line-height:1.05; user-select:none; letter-spacing:1px; }
 .sb-timer-time--clickable { cursor:pointer; }
 .sb-timer-time--clickable:hover { opacity:0.85; }
 .sb-timer-btns  { display:flex; gap:6px; justify-content:center; margin-top:4px; }
