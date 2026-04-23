@@ -4,11 +4,10 @@
 let _userNameCache = {};
 let _userNameCacheLoaded = false;
 
-/* uid→名前マッピングをストレージから読み込む（旧投票オブジェクト形式が残っていれば最多得票名に正規化） */
+/* uid→名前マッピングをローカルストレージから読み込む（同期不要、各PCで個別にcollaboratorsから再構築可能） */
 const loadUserNameCache = async (projectName) => {
     if (_userNameCacheLoaded) return _userNameCache;
-    const settings = await loadSettings(projectName);
-    const raw = await loadFromStorage(getStorage(settings.syncUserMap), userMapKey(projectName), {});
+    const raw = await loadFromStorage(chrome.storage.local, userMapKey(projectName), {});
     _userNameCache = {};
     for (const [uid, val] of Object.entries(raw)) {
         if (typeof val === 'string') {
@@ -46,8 +45,7 @@ const applyCollaborators = async (projectName, collaborators) => {
         changed = true;
     });
     if (changed) {
-        const settings = await loadSettings(projectName);
-        getStorage(settings.syncUserMap).set({ [userMapKey(projectName)]: _userNameCache });
+        chrome.storage.local.set({ [userMapKey(projectName)]: _userNameCache });
     }
 };
 

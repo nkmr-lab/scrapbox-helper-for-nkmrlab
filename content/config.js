@@ -45,7 +45,6 @@ const DEFAULT_SETTINGS = {
     syncDisplay: false,     // 表示設定（パネルサイズ・位置・テーマ・色等）
     syncPinned: true,
     syncHistory: true,
-    syncUserMap: true,
 };
 
 const POSITION_OPTIONS = [

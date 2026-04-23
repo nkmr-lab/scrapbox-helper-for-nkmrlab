@@ -141,19 +141,17 @@ const _buildSyncTab = (settings) => {
     const syncDisplayI = _checkbox('表示設定（パネルサイズ・位置・テーマ・色等）', settings.syncDisplay);
     const syncPinnedI = _checkbox('ピン留め', settings.syncPinned);
     const syncHistoryI = _checkbox('閲覧履歴', settings.syncHistory);
-    const syncUserMapI = _checkbox('ユーザー名マップ', settings.syncUserMap);
 
     const syncContent = document.createElement('div');
     syncContent.append(
         _desc('Googleアカウントでログインしている場合、チェックした項目が他のPCと同期されます。'),
         syncSystemI.wrap, syncDisplayI.wrap,
-        syncPinnedI.wrap, syncHistoryI.wrap, syncUserMapI.wrap,
+        syncPinnedI.wrap, syncHistoryI.wrap,
     );
 
     return { syncContent,
         syncSystemCb: syncSystemI.cb, syncDisplayCb: syncDisplayI.cb,
-        syncPinnedCb: syncPinnedI.cb, syncHistoryCb: syncHistoryI.cb,
-        syncUserMapCb: syncUserMapI.cb };
+        syncPinnedCb: syncPinnedI.cb, syncHistoryCb: syncHistoryI.cb };
 };
 
 /* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
@@ -387,7 +385,7 @@ const _buildOtherTab = (settings) => {
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
     nameI, pageCreateI, floatPosI, floatWI, pageAlignI,
-    syncSystemCb, syncDisplayCb, syncPinnedCb, syncHistoryCb, syncUserMapCb,
+    syncSystemCb, syncDisplayCb, syncPinnedCb, syncHistoryCb,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
@@ -428,7 +426,6 @@ const _collectSettingsValues = ({
         syncDisplay: syncDisplayCb.checked,
         syncPinned: syncPinnedCb.checked,
         syncHistory: syncHistoryCb.checked,
-        syncUserMap: syncUserMapCb.checked,
     };
 };
 
