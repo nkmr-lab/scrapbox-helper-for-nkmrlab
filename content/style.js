@@ -267,7 +267,9 @@ const injectStyleSheet = () => {
 @keyframes sbTimerPulse { from { box-shadow:0 0 8px rgba(231,76,60,.6); } to { box-shadow:0 0 26px rgba(231,76,60,1); } }
 @keyframes sbTimerFlash { from { opacity:1; } to { opacity:0.35; } }
 .sb-timer-label { font-size:11px; opacity:0.9; letter-spacing:0.5px; margin-bottom:2px; }
-.sb-timer-time  { font-size:32px; font-weight:bold; line-height:1.1; }
+.sb-timer-time  { font-size:32px; font-weight:bold; line-height:1.1; user-select:none; }
+.sb-timer-time--clickable { cursor:pointer; }
+.sb-timer-time--clickable:hover { opacity:0.85; }
 .sb-timer-btns  { display:flex; gap:6px; justify-content:center; margin-top:4px; }
 .sb-timer-btn   { cursor:pointer; padding:2px 8px; font-size:13px; opacity:0.85; }
 .sb-timer-btn:hover { opacity:1; }

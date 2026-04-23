@@ -6,6 +6,7 @@
 
 let _timerInterval = null;
 let _audioCtx = null;
+let _displayMode = 'up';  // 'up'(経過時間) | 'down'(残り時間=発表終了ベルまで)
 
 /* 現在のタイマー状態を取得（なければnull） */
 const _loadTimerState = () => loadFromStorage(chrome.storage.local, TIMER_STATE_KEY, null);
@@ -18,13 +19,17 @@ const _saveTimerState = (state) => {
 /* 前回のベル設定を取得。未保存なら設定デフォルトから生成 */
 const _loadTimerPrefs = async () => {
     const prefs = await loadFromStorage(chrome.storage.local, TIMER_PREFS_KEY, null);
-    if (prefs && prefs.bell1Text) return prefs;
+    if (prefs && prefs.bell1Text) {
+        if (!prefs.displayMode) prefs.displayMode = 'up';
+        return prefs;
+    }
     const settings = await loadSettings(currentProjectName);
     return {
-        bell1Text: settings.timerBell1Text || '4:30',
+        bell1Text: settings.timerBell1Text || '4:00',
         bell2Text: settings.timerBell2Text || '5:00',
         bell3Text: settings.timerBell3Text || '10:00',
         endBell: settings.timerEndBell || 2,
+        displayMode: 'up',           // 'up' | 'down'
     };
 };
 
@@ -220,7 +225,7 @@ const _renderIdleView = async (widget) => {
     widget.replaceChildren(header, b1Row, b2Row, b3Row, endRow, startBtn);
 };
 
-/* 実行中ビュー（経過時間 + 色変化 + 操作ボタン）を描画 */
+/* 実行中ビュー（経過時間/残り時間 + 色変化 + 操作ボタン）を描画 */
 const _renderRunningView = (widget, state) => {
     if (!widget) return;
 
@@ -229,7 +234,7 @@ const _renderRunningView = (widget, state) => {
     const bells = state.bells;
     const endBellSec = bells[state.endBell - 1];
 
-    /* 色状態 */
+    /* 色状態（色はモードに関係なく経過時間ベース） */
     widget.className = 'sb-timer-widget';
     if (elapsedMs >= bells[2] * 1000) widget.classList.add('sb-timer-widget--done');
     else if (elapsedMs >= endBellSec * 1000) widget.classList.add('sb-timer-widget--danger');
@@ -237,12 +242,17 @@ const _renderRunningView = (widget, state) => {
     if (state.paused) widget.classList.add('sb-timer-widget--paused');
 
     const timeNode = document.createElement('div');
-    timeNode.className = 'sb-timer-time';
-    timeNode.textContent = formatTimerMMSS(elapsedSec);
+    timeNode.className = 'sb-timer-time sb-timer-time--clickable';
+    /* down: 発表終了ベルまでの残り時間。超過で負数表示 */
+    const displayedSec = _displayMode === 'down' ? (endBellSec - elapsedSec) : elapsedSec;
+    timeNode.textContent = formatTimerMMSS(displayedSec);
+    timeNode.title = 'クリックで表示切替（経過 / 残り）';
+    timeNode.onclick = _toggleDisplayMode;
 
     const subNode = document.createElement('div');
     subNode.className = 'sb-timer-label';
-    subNode.textContent = `発表終了 ${formatTimerMMSS(endBellSec)}（${state.endBell}ベル）`;
+    const modeLabel = _displayMode === 'down' ? '残り' : '経過';
+    subNode.textContent = `${modeLabel} / 発表終了 ${formatTimerMMSS(endBellSec)}（${state.endBell}ベル）`;
 
     const btns = document.createElement('div');
     btns.className = 'sb-timer-btns';
@@ -285,9 +295,20 @@ const _startTicking = () => {
     _timerInterval = setInterval(tick, 500);
 };
 
+/* 表示モード（経過 / 残り）をトグルして prefs に保存する */
+const _toggleDisplayMode = async () => {
+    _displayMode = _displayMode === 'up' ? 'down' : 'up';
+    const prefs = await _loadTimerPrefs();
+    prefs.displayMode = _displayMode;
+    _saveTimerPrefs(prefs);
+    _renderTimerWidget();
+};
+
 /* フロートメニューから呼ばれるエントリポイント */
 const openTimer = async () => {
     if (document.getElementById(TIMER_WIDGET_ID)) return;
+    const prefs = await _loadTimerPrefs();
+    _displayMode = prefs.displayMode || 'up';
     _mountTimerWidget();
     const state = await _loadTimerState();
     if (state) _startTicking();
@@ -298,6 +319,9 @@ const openTimer = async () => {
 const restoreTimer = async () => {
     const state = await _loadTimerState();
     if (!state) return;
+
+    const prefs = await _loadTimerPrefs();
+    _displayMode = prefs.displayMode || 'up';
 
     if (state.paused) {
         _mountTimerWidget();

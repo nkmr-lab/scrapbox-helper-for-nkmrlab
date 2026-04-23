@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS = {
     promptExperimentReview: '',
     promptProgramParse: '',
     /* --- タイマー（3ベル方式） --- */
-    timerBell1Text: '4:30',
+    timerBell1Text: '4:00',
     timerBell2Text: '5:00',
     timerBell3Text: '10:00',
     timerEndBell: 2,              // 1 | 2 | 3（どのベルを発表終了とするか）
