@@ -232,9 +232,9 @@ const _renderIdleView = async (widget) => {
     };
     endRow.append(endLbl, endSel);
 
-    /* OKボタン（armed状態に遷移） */
+    /* 確定ボタン（armed状態に遷移） */
     const okBtn = document.createElement('button');
-    okBtn.textContent = 'OK';
+    okBtn.textContent = '✓ 確定';
     okBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
     okBtn.onclick = () => {
         const bells = [
@@ -286,31 +286,34 @@ const _renderRunningView = (widget, state) => {
     const modeLabel = _displayMode === 'down' ? '残り' : '経過';
     subNode.textContent = `${modeLabel} / 発表終了 ${formatTimerMMSS(endBellSec)}（${state.endBell}ベル）`;
 
+    /* 全モード共通の5ボタン固定レイアウト（モードに応じて有効/無効が切り替わる） */
+    const isArmed = state.mode === 'armed';
+    const isRunning = state.mode === 'running';
+    const isPaused = state.mode === 'paused';
+
     const btns = document.createElement('div');
     btns.className = 'sb-timer-btns';
-
-    if (state.mode === 'armed') {
-        const startBtn = renderButton('▶ スタート', startTimer);
-        startBtn.classList.add('sb-timer-btn', 'sb-timer-btn--primary');
-        const configBtn = renderButton('設定', openTimerConfig);
-        configBtn.classList.add('sb-timer-btn');
-        const closeBtn = renderButton('✕', closeTimerWidget);
-        closeBtn.classList.add('sb-timer-btn');
-        btns.append(startBtn, configBtn, closeBtn);
-    } else {
-        const pauseResumeBtn = renderButton(state.mode === 'paused' ? '▶' : '⏸',
-            () => state.mode === 'paused' ? resumeTimer() : pauseTimer());
-        pauseResumeBtn.classList.add('sb-timer-btn');
-        const resetBtn = renderButton('↺', resetTimer);
-        resetBtn.classList.add('sb-timer-btn');
-        const configBtn = renderButton('設定', openTimerConfig);
-        configBtn.classList.add('sb-timer-btn');
-        const closeBtn = renderButton('✕', closeTimerWidget);
-        closeBtn.classList.add('sb-timer-btn');
-        btns.append(pauseResumeBtn, resetBtn, configBtn, closeBtn);
-    }
+    btns.append(
+        _mkTimerBtn('▶', isPaused ? resumeTimer : startTimer,
+            { disabled: isRunning, title: 'スタート' }),
+        _mkTimerBtn('⏸', pauseTimer,
+            { disabled: !isRunning, title: '一時停止' }),
+        _mkTimerBtn('↺', resetTimer,
+            { disabled: isArmed, title: 'リセット（同じ設定で先頭へ）' }),
+        _mkTimerBtn('⚙', openTimerConfig, { title: '設定' }),
+        _mkTimerBtn('✕', closeTimerWidget, { title: '閉じる' }),
+    );
 
     widget.replaceChildren(timeNode, subNode, btns);
+};
+
+/* タイマー用ボタンを生成する（無効化・ツールチップ対応） */
+const _mkTimerBtn = (label, fn, { disabled = false, title = '' } = {}) => {
+    const btn = renderButton(label, disabled ? undefined : fn);
+    btn.classList.add('sb-timer-btn');
+    if (disabled) btn.classList.add('sb-timer-btn--disabled');
+    if (title) btn.title = title;
+    return btn;
 };
 
 /* 定期更新ループ。running状態でのみベル検出を行う */
