@@ -7,6 +7,7 @@
 let _timerInterval = null;
 let _audioCtx = null;
 let _displayMode = 'up';  // 'up'(経過時間) | 'down'(残り時間=発表終了ベルまで)
+let _configViewOpen = false;  // 稼働中のタイマーを保持したまま設定画面を表示しているか
 
 /* 現在のタイマー状態を取得（なければnull） */
 const _loadTimerState = () => loadFromStorage(chrome.storage.local, TIMER_STATE_KEY, null);
@@ -84,6 +85,7 @@ const parseTimerInput = (input) => {
 /* 3ベル設定でタイマーをarmed（スタート待機）状態にする。idle設定画面の[OK]から呼ばれる */
 const armTimer = ({ bells, endBell }) => {
     if (!bells || bells.some(b => b <= 0)) return;
+    if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     const state = {
         mode: 'armed',          // 'armed' | 'running' | 'paused'
         bells,
@@ -140,16 +142,18 @@ const resetTimer = async () => {
     _renderTimerWidget();
 };
 
-/* 設定画面に戻る（状態クリア、入力値はprefsで継承） */
-const openTimerConfig = () => {
-    _saveTimerState(null);
-    if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
-    _renderTimerWidget();
+/* 設定画面を開く（状態はクリアしない。変更がなければ確定時にそのまま稼働継続） */
+const openTimerConfig = async () => {
+    const state = await _loadTimerState();
+    _configViewOpen = !!state;
+    const widget = document.getElementById(TIMER_WIDGET_ID);
+    if (widget) _renderIdleView(widget);
 };
 
 /* ウィジェット自体を閉じる（状態クリア） */
 const closeTimerWidget = () => {
     _saveTimerState(null);
+    _configViewOpen = false;
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     document.getElementById(TIMER_WIDGET_ID)?.remove();
 };
@@ -171,9 +175,13 @@ const _renderTimerWidget = async () => {
     else await _renderIdleView(widget);
 };
 
+/* ベル設定の同値判定 */
+const _bellsEqual = (a, b) => a && b && a.length === b.length && a.every((v, i) => v === b[i]);
+
 /* 設定フォームを含むidleビューを描画 */
 const _renderIdleView = async (widget) => {
     const prefs = await _loadTimerPrefs();
+    const existingState = await _loadTimerState();
 
     widget.className = 'sb-timer-widget sb-timer-widget--idle';
 
@@ -228,18 +236,32 @@ const _renderIdleView = async (widget) => {
     };
     endRow.append(endLbl, endSel);
 
-    /* 確定ボタン（armed状態に遷移） */
+    /* 確定ボタン: 変更なしなら稼働中タイマーをそのまま続行、変更ありなら新規armed */
     const okBtn = document.createElement('button');
     okBtn.textContent = '✓ 確定';
     okBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
-    okBtn.onclick = () => {
+    okBtn.onclick = async () => {
         const bells = [
             parseTimerInput(b1Row.querySelector('input').value),
             parseTimerInput(b2Row.querySelector('input').value),
             parseTimerInput(b3Row.querySelector('input').value),
         ];
         if (bells.some(b => b <= 0)) return;
-        armTimer({ bells, endBell: prefs.endBell });
+        const endBell = prefs.endBell;
+
+        const unchanged = existingState
+            && _bellsEqual(existingState.bells, bells)
+            && existingState.endBell === endBell;
+
+        _configViewOpen = false;
+        if (unchanged) {
+            /* 設定変更なし → 既存タイマーの表示に戻る */
+            await _renderTimerWidget();
+            if (existingState.mode === 'running' && !_timerInterval) _startTicking();
+        } else {
+            /* 変更あり（または新規）→ 既存をクリアして新しいarmedへ */
+            armTimer({ bells, endBell });
+        }
     };
 
     widget.replaceChildren(_makeCornerCloseBtn(), header, b1Row, b2Row, b3Row, endRow, okBtn);
@@ -325,8 +347,14 @@ const _startTicking = () => {
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     const tick = async () => {
         const state = await _loadTimerState();
-        if (!state) { _renderTimerWidget(); return; }
-        _renderRunningView(document.getElementById(TIMER_WIDGET_ID), state);
+        if (!state) {
+            if (!_configViewOpen) _renderTimerWidget();
+            return;
+        }
+        /* 設定画面表示中はUI更新を抑制（ベル検出は継続） */
+        if (!_configViewOpen) {
+            _renderRunningView(document.getElementById(TIMER_WIDGET_ID), state);
+        }
         if (state.mode !== 'running') return;
 
         const elapsedMs = Date.now() - state.startAnchor;
