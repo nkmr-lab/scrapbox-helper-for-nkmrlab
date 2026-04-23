@@ -1,7 +1,8 @@
 /* ================= タイマー ================= */
-/* 発表・質疑のカウントダウンタイマー。完全ローカル。
-   ウィジェット自身が時間設定UIを持ち、前回値（テキスト）を chrome.storage.local に継承保存する。
-   フロートメニューからは openTimer() で呼び出すのみ。ページ遷移・リロードを跨いで継続動作する。 */
+/* 発表用3ベルカウントアップタイマー。完全ローカル。
+   1ベル/2ベル/3ベルの各鳴動時刻を設定し、どのベルを「発表終了」とみなすかを選ぶ。
+   ウィジェット自身が設定UIを持ち、前回値を chrome.storage.local に継承保存する。
+   フロートメニューからは openTimer() で呼び出す。ページ遷移・リロードを跨いで継続。 */
 
 let _timerInterval = null;
 let _audioCtx = null;
@@ -14,15 +15,16 @@ const _saveTimerState = (state) => {
     else chrome.storage.local.remove(TIMER_STATE_KEY);
 };
 
-/* 前回のタイマー入力値（テキスト形式）を取得。未保存なら設定デフォルトから生成 */
+/* 前回のベル設定を取得。未保存なら設定デフォルトから生成 */
 const _loadTimerPrefs = async () => {
     const prefs = await loadFromStorage(chrome.storage.local, TIMER_PREFS_KEY, null);
-    if (prefs) return prefs;
+    if (prefs && prefs.bell1Text) return prefs;
     const settings = await loadSettings(currentProjectName);
     return {
-        talkText: formatTimerMMSS((settings.timerTalkMinutes || 5) * 60),
-        qaText: formatTimerMMSS((settings.timerQAMinutes || 5) * 60),
-        customText: '',
+        bell1Text: settings.timerBell1Text || '4:30',
+        bell2Text: settings.timerBell2Text || '5:00',
+        bell3Text: settings.timerBell3Text || '10:00',
+        endBell: settings.timerEndBell || 2,
     };
 };
 
@@ -47,6 +49,13 @@ const _playBeep = async (freq = 800, durationMs = 200, gainVal = 0.25) => {
     } catch {}
 };
 
+/* n回連続でビープを鳴らす（ベルn番相当、300ms間隔） */
+const _playBellSequence = (count, freq = 700) => {
+    for (let i = 0; i < count; i++) {
+        setTimeout(() => _playBeep(freq, 220), i * 320);
+    }
+};
+
 /* 秒数をmm:ss形式に整形。負数は'-mm:ss' */
 const formatTimerMMSS = (seconds) => {
     const sign = seconds < 0 ? '-' : '';
@@ -67,17 +76,16 @@ const parseTimerInput = (input) => {
     return (Number(s) || 0) * 60;
 };
 
-/* タイマーを開始する（既存のタイマーは上書きされる） */
-const startTimer = ({ label, seconds, nextPhase = null }) => {
-    if (seconds <= 0) return;
+/* 3ベル設定でタイマーを開始する */
+const startTimer = ({ bells, endBell }) => {
+    if (!bells || bells.some(b => b <= 0)) return;
     const state = {
-        label,
-        endTime: Date.now() + seconds * 1000,
+        startAnchor: Date.now(),
         paused: false,
-        pauseRemainingMs: null,
-        nextPhase,
-        warn60Played: false,
-        warn10Played: false,
+        pauseElapsedMs: null,
+        bells,
+        endBell,
+        bellsRung: [false, false, false],
     };
     _saveTimerState(state);
     _mountTimerWidget();
@@ -87,7 +95,7 @@ const startTimer = ({ label, seconds, nextPhase = null }) => {
 const pauseTimer = async () => {
     const state = await _loadTimerState();
     if (!state || state.paused) return;
-    state.pauseRemainingMs = state.endTime - Date.now();
+    state.pauseElapsedMs = Date.now() - state.startAnchor;
     state.paused = true;
     _saveTimerState(state);
     _renderTimerWidget();
@@ -96,28 +104,27 @@ const pauseTimer = async () => {
 const resumeTimer = async () => {
     const state = await _loadTimerState();
     if (!state || !state.paused) return;
-    state.endTime = Date.now() + state.pauseRemainingMs;
+    state.startAnchor = Date.now() - state.pauseElapsedMs;
     state.paused = false;
-    state.pauseRemainingMs = null;
+    state.pauseElapsedMs = null;
     _saveTimerState(state);
     _startTicking();
 };
 
-/* タイマーを停止してidle状態に戻す（ウィジェットは残る、入力を再調整可能） */
+/* タイマーを停止してidle状態に戻す（入力値は継承） */
 const stopTimer = () => {
     _saveTimerState(null);
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     _renderTimerWidget();
 };
 
-/* ウィジェット全体を閉じる（タイマー動作中なら停止も同時に行う） */
+/* ウィジェット自体を閉じる（タイマー動作中なら停止も行う） */
 const closeTimerWidget = () => {
     _saveTimerState(null);
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     document.getElementById(TIMER_WIDGET_ID)?.remove();
 };
 
-/* ウィジェットのコンテナを配置（既存なら何もしない） */
 const _mountTimerWidget = () => {
     if (document.getElementById(TIMER_WIDGET_ID)) return;
     const widget = document.createElement('div');
@@ -135,7 +142,7 @@ const _renderTimerWidget = async () => {
     else await _renderIdleView(widget);
 };
 
-/* 入力フォームを含むidleビューを描画 */
+/* 設定フォームを含むidleビューを描画 */
 const _renderIdleView = async (widget) => {
     const prefs = await _loadTimerPrefs();
 
@@ -144,85 +151,98 @@ const _renderIdleView = async (widget) => {
     const header = document.createElement('div');
     header.className = 'sb-timer-header';
     const title = document.createElement('span');
-    title.textContent = '⏱ タイマー';
+    title.textContent = 'タイマー';
     const closeBtn = renderButton('✕', closeTimerWidget);
     closeBtn.classList.add('sb-timer-btn');
     header.append(title, closeBtn);
 
-    const makeDurationRow = (labelText, prefKey, startLabel) => {
+    const makeBellRow = (label, prefKey) => {
         const row = document.createElement('div');
         row.className = 'sb-timer-idle-row';
 
-        const label = document.createElement('span');
-        label.className = 'sb-timer-idle-label';
-        label.textContent = labelText;
+        const lbl = document.createElement('span');
+        lbl.className = 'sb-timer-idle-label';
+        lbl.textContent = label;
 
         const input = document.createElement('input');
         input.type = 'text';
         input.value = prefs[prefKey];
         input.className = 'sb-timer-idle-input';
+        input.placeholder = 'mm:ss';
         input.oninput = () => {
             prefs[prefKey] = input.value;
             _saveTimerPrefs(prefs);
         };
 
-        const startBtn = document.createElement('button');
-        startBtn.textContent = startLabel;
-        startBtn.className = 'sb-timer-idle-btn';
-        startBtn.onclick = () => {
-            const sec = parseTimerInput(input.value);
-            if (sec > 0) startTimer({ label: labelText, seconds: sec });
-        };
-        input.onkeydown = (e) => { if (e.key === 'Enter') startBtn.click(); };
-
-        row.append(label, input, startBtn);
+        row.append(lbl, input);
         return row;
     };
 
-    const talkRow = makeDurationRow('発表', 'talkText', '開始');
-    const qaRow = makeDurationRow('質疑', 'qaText', '開始');
+    const b1Row = makeBellRow('1ベル', 'bell1Text');
+    const b2Row = makeBellRow('2ベル', 'bell2Text');
+    const b3Row = makeBellRow('3ベル', 'bell3Text');
 
-    /* 発表+質疑 連続起動（両inputの現在値を読む） */
-    const bothBtn = document.createElement('button');
-    bothBtn.textContent = '発表 + 質疑 連続開始';
-    bothBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
-    bothBtn.onclick = () => {
-        const talkSec = parseTimerInput(talkRow.querySelector('input').value);
-        const qaSec = parseTimerInput(qaRow.querySelector('input').value);
-        if (talkSec > 0 && qaSec > 0) {
-            startTimer({
-                label: '発表', seconds: talkSec,
-                nextPhase: { label: '質疑', seconds: qaSec },
-            });
-        }
+    /* 発表終了ベル選択 */
+    const endRow = document.createElement('div');
+    endRow.className = 'sb-timer-idle-row';
+    const endLbl = document.createElement('span');
+    endLbl.className = 'sb-timer-idle-label';
+    endLbl.textContent = '発表終了';
+    const endSel = document.createElement('select');
+    endSel.className = 'sb-timer-idle-input';
+    [1, 2, 3].forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = String(n);
+        opt.textContent = `${n}ベル`;
+        if (prefs.endBell === n) opt.selected = true;
+        endSel.appendChild(opt);
+    });
+    endSel.onchange = () => {
+        prefs.endBell = Number(endSel.value);
+        _saveTimerPrefs(prefs);
+    };
+    endRow.append(endLbl, endSel);
+
+    /* 開始ボタン */
+    const startBtn = document.createElement('button');
+    startBtn.textContent = '開始';
+    startBtn.className = 'sb-timer-idle-btn sb-timer-idle-btn--wide';
+    startBtn.onclick = () => {
+        const bells = [
+            parseTimerInput(b1Row.querySelector('input').value),
+            parseTimerInput(b2Row.querySelector('input').value),
+            parseTimerInput(b3Row.querySelector('input').value),
+        ];
+        if (bells.some(b => b <= 0)) return;
+        startTimer({ bells, endBell: prefs.endBell });
     };
 
-    const customRow = makeDurationRow('カスタム', 'customText', '開始');
-    customRow.querySelector('input').placeholder = 'mm:ss';
-
-    widget.replaceChildren(header, talkRow, qaRow, bothBtn, customRow);
+    widget.replaceChildren(header, b1Row, b2Row, b3Row, endRow, startBtn);
 };
 
-/* 実行中ビュー（大きなカウントダウン + 操作ボタン）を描画 */
+/* 実行中ビュー（経過時間 + 色変化 + 操作ボタン）を描画 */
 const _renderRunningView = (widget, state) => {
-    const remainingMs = state.paused ? state.pauseRemainingMs : state.endTime - Date.now();
-    const seconds = Math.ceil(remainingMs / 1000);
+    if (!widget) return;
 
+    const elapsedMs = state.paused ? state.pauseElapsedMs : (Date.now() - state.startAnchor);
+    const elapsedSec = Math.floor(elapsedMs / 1000);
+    const bells = state.bells;
+    const endBellSec = bells[state.endBell - 1];
+
+    /* 色状態 */
     widget.className = 'sb-timer-widget';
-    if (remainingMs <= 0) widget.classList.add('sb-timer-widget--done');
-    else if (remainingMs <= 10000) widget.classList.add('sb-timer-widget--danger');
-    else if (remainingMs <= 60000) widget.classList.add('sb-timer-widget--warn');
+    if (elapsedMs >= bells[2] * 1000) widget.classList.add('sb-timer-widget--done');
+    else if (elapsedMs >= endBellSec * 1000) widget.classList.add('sb-timer-widget--danger');
+    else if (elapsedMs >= bells[0] * 1000) widget.classList.add('sb-timer-widget--warn');
     if (state.paused) widget.classList.add('sb-timer-widget--paused');
-
-    const labelText = state.label + (state.nextPhase ? ` → ${state.nextPhase.label}` : '');
-
-    const labelNode = document.createElement('div');
-    labelNode.className = 'sb-timer-label';
-    labelNode.textContent = labelText;
 
     const timeNode = document.createElement('div');
     timeNode.className = 'sb-timer-time';
-    timeNode.textContent = formatTimerMMSS(seconds);
+    timeNode.textContent = formatTimerMMSS(elapsedSec);
+
+    const subNode = document.createElement('div');
+    subNode.className = 'sb-timer-label';
+    subNode.textContent = `発表終了 ${formatTimerMMSS(endBellSec)}（${state.endBell}ベル）`;
 
     const btns = document.createElement('div');
     btns.className = 'sb-timer-btns';
@@ -235,61 +255,37 @@ const _renderRunningView = (widget, state) => {
     closeBtn.classList.add('sb-timer-btn');
     btns.append(pauseResumeBtn, stopBtn, closeBtn);
 
-    widget.replaceChildren(labelNode, timeNode, btns);
+    widget.replaceChildren(timeNode, subNode, btns);
 };
 
-/* 定期更新ループ。残り時間に応じて警告ビープ・終了処理・連続フェーズ遷移を行う */
+/* 定期更新ループ。各ベル到達時に鳴動、3ベル超過後1時間で自動クリーンアップ */
 const _startTicking = () => {
     if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
     const tick = async () => {
         const state = await _loadTimerState();
         if (!state) { _renderTimerWidget(); return; }
-
         _renderRunningView(document.getElementById(TIMER_WIDGET_ID), state);
         if (state.paused) return;
 
-        const remainingMs = state.endTime - Date.now();
+        const elapsedMs = Date.now() - state.startAnchor;
 
-        if (!state.warn60Played && remainingMs <= 60000 && remainingMs > 10000) {
-            state.warn60Played = true;
-            _saveTimerState(state);
-            _playBeep(500, 120);
-        }
-        if (!state.warn10Played && remainingMs <= 10000 && remainingMs > 0) {
-            state.warn10Played = true;
-            _saveTimerState(state);
-            _playBeep(500, 160);
+        /* ベル発動: i番目のベル時刻を超えたら i+1 回鳴らす */
+        for (let i = 0; i < 3; i++) {
+            if (!state.bellsRung[i] && elapsedMs >= state.bells[i] * 1000) {
+                state.bellsRung[i] = true;
+                _saveTimerState(state);
+                _playBellSequence(i + 1, 600 + i * 120);
+            }
         }
 
-        if (remainingMs > 0) return;
-
-        if (state.nextPhase && !state.phase2Started) {
-            state.phase2Started = true;
-            _saveTimerState(state);
-            _playBeep(800, 250);
-            setTimeout(() => _playBeep(800, 250), 300);
-            setTimeout(() => startTimer({
-                label: state.nextPhase.label,
-                seconds: state.nextPhase.seconds,
-            }), 600);
-            if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
-            return;
-        }
-        if (!state.endBeepPlayed) {
-            state.endBeepPlayed = true;
-            _saveTimerState(state);
-            _playBeep(800, 300);
-            setTimeout(() => _playBeep(800, 300), 400);
-            setTimeout(() => _playBeep(800, 300), 800);
-        }
-        if (remainingMs < -60 * 60 * 1000) stopTimer();
+        /* 3ベル超過後1時間で自動終了 */
+        if (elapsedMs > state.bells[2] * 1000 + 60 * 60 * 1000) stopTimer();
     };
     tick();
     _timerInterval = setInterval(tick, 500);
 };
 
-/* フロートメニューから呼ばれるエントリポイント。
-   既にウィジェットが開いていれば何もせず、開いていなければ idle/running を自動判定して開く */
+/* フロートメニューから呼ばれるエントリポイント */
 const openTimer = async () => {
     if (document.getElementById(TIMER_WIDGET_ID)) return;
     _mountTimerWidget();
@@ -298,7 +294,7 @@ const openTimer = async () => {
     else _renderTimerWidget();
 };
 
-/* 起動時にchrome.storage.localから保存済みタイマー状態を復元する */
+/* 起動時に保存済みタイマー状態を復元する */
 const restoreTimer = async () => {
     const state = await _loadTimerState();
     if (!state) return;
@@ -309,8 +305,9 @@ const restoreTimer = async () => {
         return;
     }
 
-    /* 1時間以上経過した残骸は破棄 */
-    if (state.endTime - Date.now() < -60 * 60 * 1000) {
+    /* 3ベルから1時間以上経過した残骸は破棄 */
+    const elapsedMs = Date.now() - state.startAnchor;
+    if (elapsedMs > state.bells[2] * 1000 + 60 * 60 * 1000) {
         _saveTimerState(null);
         return;
     }

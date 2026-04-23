@@ -39,9 +39,11 @@ const DEFAULT_SETTINGS = {
     promptSummary: '',            // 空欄ならデフォルトプロンプト
     promptExperimentReview: '',
     promptProgramParse: '',
-    /* --- タイマー --- */
-    timerTalkMinutes: 5,
-    timerQAMinutes: 5,
+    /* --- タイマー（3ベル方式） --- */
+    timerBell1Text: '4:30',
+    timerBell2Text: '5:00',
+    timerBell3Text: '10:00',
+    timerEndBell: 2,              // 1 | 2 | 3（どのベルを発表終了とするか）
     timerBeepEnabled: true,
     /* --- 同期設定（何をchrome.storage.syncで共有するか） --- */
     syncSystem: true,       // システム設定（名前・TODOマーク・プロンプト等）

@@ -368,23 +368,29 @@ const _buildMainTab = (settings) => {
     return { mainContent, mainPosI, mainWI, mainHI, recentI, frequentI };
 };
 
-/* タイマー設定タブを構築する */
+/* タイマー設定タブを構築する（3ベル方式、ウィジェット初回起動時の初期値として使われる） */
 const _buildTimerTab = (settings) => {
-    const talkI = _input(settings.timerTalkMinutes, 'number');
-    const qaI = _input(settings.timerQAMinutes, 'number');
+    const bell1I = _input(settings.timerBell1Text);
+    const bell2I = _input(settings.timerBell2Text);
+    const bell3I = _input(settings.timerBell3Text);
+    const endBellI = _select(String(settings.timerEndBell), [
+        ['1', '1ベル'], ['2', '2ベル'], ['3', '3ベル'],
+    ]);
     const beepI = _select(settings.timerBeepEnabled ? 'on' : 'off', [
         ['on', 'ON'], ['off', 'OFF'],
     ]);
 
     const timerContent = document.createElement('div');
     timerContent.append(
-        _desc('論文紹介・発表練習などで使うカウントダウンタイマーの設定です。フロートメニューから起動します。'),
-        _field('発表時間（分）', talkI),
-        _field('質疑時間（分）', qaI),
+        _desc('3ベル式の発表タイマー。ここの値はウィジェット初回起動時の初期値です（ウィジェット内で変更した値はそのまま記憶されます）。'),
+        _field('1ベル (mm:ss)', bell1I),
+        _field('2ベル (mm:ss)', bell2I),
+        _field('3ベル (mm:ss)', bell3I),
+        _field('発表終了とみなすベル', endBellI),
         _field('ビープ音', beepI),
     );
 
-    return { timerContent, talkI, qaI, beepI };
+    return { timerContent, bell1I, bell2I, bell3I, endBellI, beepI };
 };
 
 /* その他パネル設定タブを構築する */
@@ -413,7 +419,7 @@ const _collectSettingsValues = ({
     mainPosI, mainWI, mainHI, recentI, frequentI,
     otherPosI, otherWI, otherHI,
     apiKeyI, promptSummaryI, promptExperimentI, promptProgramI,
-    talkI, qaI, beepI,
+    bell1I, bell2I, bell3I, endBellI, beepI,
 }) => {
     const newCustom = {};
     Object.entries(colorInputs).forEach(([key, textI]) => {
@@ -444,8 +450,10 @@ const _collectSettingsValues = ({
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),
-        timerTalkMinutes: +talkI.value,
-        timerQAMinutes: +qaI.value,
+        timerBell1Text: bell1I.value.trim(),
+        timerBell2Text: bell2I.value.trim(),
+        timerBell3Text: bell3I.value.trim(),
+        timerEndBell: +endBellI.value,
         timerBeepEnabled: beepI.value === 'on',
         syncSystem: syncSystemCb.checked,
         syncDisplay: syncDisplayCb.checked,
