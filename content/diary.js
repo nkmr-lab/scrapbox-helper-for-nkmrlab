@@ -35,14 +35,18 @@ const _startOfWeekMonday = (date) => {
 const _lastDayOfMonth = (year, month1based) => new Date(year, month1based, 0);
 
 /* --- 画像URL判定（Scrapbox記法 [url] の中身用） --- */
-const _IMG_URL_RE = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg)(\?\S*)?$/i;
-const _GYAZO_PAGE_RE = /^https?:\/\/(?:www\.)?gyazo\.com\/([a-z0-9]+)(?:\/.*)?$/i;
+const _IMG_URL_RE = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg)(?:[?#]\S*)?$/i;
+const _GYAZO_PAGE_RE = /^https?:\/\/(?:www\.)?gyazo\.com\/([a-z0-9]+)(?:[\/?#].*)?$/i;
 
+/* `[url]` の中身を画像URLに変換する。中身に空白で分けたトークンが含まれる場合（[url label] / [label url] 等）も対応。
+   gyazo の場合は /thumb/1000 を用いる（拡張子無依存で必ずthumbnail画像が返る） */
 const _toImageUrl = (raw) => {
-    const url = raw.trim();
-    const g = url.match(_GYAZO_PAGE_RE);
-    if (g) return `https://i.gyazo.com/${g[1]}.png`;
-    if (_IMG_URL_RE.test(url)) return url;
+    const tokens = raw.trim().split(/\s+/);
+    for (const tok of tokens) {
+        const g = tok.match(_GYAZO_PAGE_RE);
+        if (g) return `https://gyazo.com/${g[1]}/thumb/1000`;
+        if (_IMG_URL_RE.test(tok)) return tok;
+    }
     return null;
 };
 
@@ -126,24 +130,6 @@ const _ensureWeekData = async () => {
     _diaryDays = merged;
 };
 
-/* 表示中の週の全7日が現在の基準月と完全に違うなら Scrapbox を該当月の研究ノートへ遷移する */
-const _maybeNavigateScrapbox = () => {
-    if (!_diaryBasePageName) return;
-    const baseYM = _diaryBasePageName.match(/(20\d{2}\.\d{2})/)?.[1];
-    if (!baseYM) return;
-
-    const monthsInWeek = new Set();
-    for (let i = 0; i < 7; i++) {
-        monthsInWeek.add(_formatYM(_addDays(_diaryWeekStart, i)));
-    }
-    if (monthsInWeek.size !== 1) return;
-    const wkYM = [...monthsInWeek][0];
-    if (wkYM === baseYM) return;
-
-    const newPageName = _pageNameForMonth(_diaryBasePageName, wkYM);
-    _diaryBasePageName = newPageName;  // 以降のfetchも新基準で
-    location.assign(`/${currentProjectName}/${encodeURIComponent(newPageName)}`);
-};
 
 /* ダイアリーモーダルを開く */
 const openDiary = async (rawLines, pageName) => {
@@ -330,7 +316,4 @@ const _renderDiary = async () => {
     if (_diaryEscHandler) document.removeEventListener('keydown', _diaryEscHandler);
     _diaryEscHandler = (e) => { if (e.key === 'Escape') closeDiary(); };
     document.addEventListener('keydown', _diaryEscHandler);
-
-    /* 全7日が違う月になったら Scrapbox 側もその月へ遷移（描画後に走らせる） */
-    _maybeNavigateScrapbox();
 };
