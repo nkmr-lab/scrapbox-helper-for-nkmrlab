@@ -479,6 +479,19 @@ const injectStyleSheet = () => {
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .sb-diary-line:hover { background:rgba(184,160,122,0.22); }
+.sb-diary-line--has-img {
+    white-space:normal; overflow-wrap:break-word;
+    text-overflow:clip; line-height:1.4;
+}
+.sb-diary-img {
+    max-height:80px; max-width:100%;
+    vertical-align:middle;
+    margin:3px 4px;
+    border:1px solid #c2a982;
+    border-radius:3px;
+    box-shadow:1px 1px 2px rgba(40,25,10,0.15);
+    object-fit:cover;
+}
 .sb-diary-empty {
     color:#c2a982; font-style:italic;
     padding:14px 6px; font-size:13px;

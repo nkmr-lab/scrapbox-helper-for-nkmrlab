@@ -1,15 +1,20 @@
 /* ================= 研究ノート：週間ダイアリービュー ================= */
-/* 1週間分の研究ノート内容を、週間プランナー風（縦7日ストリップ）にレンダリングする。
-   月内の前後週へページめくりナビゲーション。今日の行クリックで Scrapbox の該当行へジャンプ。 */
+/* 1週間分の研究ノート内容を、見開き2ページ（左=月火水 / 右=木金土日）の紙ノート風モーダルで表示する。
+   月跨ぎの週は前後月のノートも自動でフェッチして合成。
+   週の全7日が現在開いている Scrapbox ページの月と完全に違うなら、Scrapbox 側もその月の研究ノートに自動遷移する。 */
 
-let _diaryDays = {};        // { 'YYYY-MM-DD': line[] }
-let _diaryWeekStart = null; // 表示中の週の月曜日 (Date)
-let _diaryMonthStart = null;
-let _diaryMonthEnd = null;
+let _diaryBasePageName = null;  // Scrapbox上の基準ページ名（月の自動遷移時に更新）
+let _diaryWeekStart = null;     // 表示中の週の月曜日 (Date)
+let _diaryDays = {};            // 表示中の週に必要な全月データのマージ { 'YYYY-MM-DD': line[] }
+let _diaryMonthCache = {};      // { 'YYYY.MM': { 'YYYY-MM-DD': line[] } }
+let _diaryFetchInflight = {};   // 同月への並行fetch重複を抑える { 'YYYY.MM': Promise }
 let _diaryEscHandler = null;
 
 const _formatDateKey = (date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const _formatYM = (date) =>
+    `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
 
 const _addDays = (date, n) => {
     const d = new Date(date);
@@ -27,8 +32,49 @@ const _startOfWeekMonday = (date) => {
     return d;
 };
 
-/* ページの行データを日付ごとに分割する。
-   日付ヘッダ `[*( YYYY.MM.DD ...)]` を境界とする */
+const _lastDayOfMonth = (year, month1based) => new Date(year, month1based, 0);
+
+/* --- 画像URL判定（Scrapbox記法 [url] の中身用） --- */
+const _IMG_URL_RE = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg)(\?\S*)?$/i;
+const _GYAZO_PAGE_RE = /^https?:\/\/(?:www\.)?gyazo\.com\/([a-z0-9]+)(?:\/.*)?$/i;
+
+const _toImageUrl = (raw) => {
+    const url = raw.trim();
+    const g = url.match(_GYAZO_PAGE_RE);
+    if (g) return `https://i.gyazo.com/${g[1]}.png`;
+    if (_IMG_URL_RE.test(url)) return url;
+    return null;
+};
+
+/* テキスト中の [url] を画像なら <img>、そうでなければ元の表記で展開する */
+const _renderLineWithImages = (text, parentNode) => {
+    const re = /\[([^\]]+)\]/g;
+    let lastIndex = 0;
+    let m;
+    let hasImg = false;
+    while ((m = re.exec(text)) !== null) {
+        const before = text.slice(lastIndex, m.index);
+        if (before) parentNode.appendChild(document.createTextNode(before));
+
+        const imgUrl = _toImageUrl(m[1]);
+        if (imgUrl) {
+            const img = document.createElement('img');
+            img.src = imgUrl;
+            img.className = 'sb-diary-img';
+            img.loading = 'lazy';
+            parentNode.appendChild(img);
+            hasImg = true;
+        } else {
+            parentNode.appendChild(document.createTextNode(m[0]));
+        }
+        lastIndex = m.index + m[0].length;
+    }
+    const tail = text.slice(lastIndex);
+    if (tail) parentNode.appendChild(document.createTextNode(tail));
+    return hasImg;
+};
+
+/* ページの行データを日付ごとに分割する。日付ヘッダ `[*( YYYY.MM.DD ...)]` を境界とする */
 const _parseDiaryByDay = (rawLines) => {
     const byDay = {};
     let curKey = null;
@@ -45,39 +91,86 @@ const _parseDiaryByDay = (rawLines) => {
     return byDay;
 };
 
-/* 月の最終日を返す */
-const _lastDayOfMonth = (year, month1based) => new Date(year, month1based, 0);
+/* 基準pageNameの YYYY.MM 部分を ym に置換した新しいpageNameを返す */
+const _pageNameForMonth = (basePageName, ym) =>
+    basePageName.replace(/20\d{2}\.\d{2}/, ym);
 
-/* 週がページの月内にどれだけ含まれるか判定（前後週ボタンの有効/無効に使う） */
-const _weekHasInMonth = (weekStart) => {
-    if (!_diaryMonthStart || !_diaryMonthEnd) return true;
-    const weekEnd = _addDays(weekStart, 6);
-    return weekEnd >= _diaryMonthStart && weekStart <= _diaryMonthEnd;
+/* 指定月のデータをキャッシュから返す。なければfetchして格納（並行fetchは1本にまとめる） */
+const _loadMonthData = async (ym) => {
+    if (_diaryMonthCache[ym]) return _diaryMonthCache[ym];
+    if (_diaryFetchInflight[ym]) return _diaryFetchInflight[ym];
+    if (!_diaryBasePageName) return {};
+
+    _diaryFetchInflight[ym] = (async () => {
+        const pageName = _pageNameForMonth(_diaryBasePageName, ym);
+        const json = await fetchPage(currentProjectName, pageName);
+        const byDay = json ? _parseDiaryByDay(json.lines) : {};
+        _diaryMonthCache[ym] = byDay;
+        delete _diaryFetchInflight[ym];
+        return byDay;
+    })();
+    return _diaryFetchInflight[ym];
 };
 
-/* ダイアリーモーダルを開く（research_note ページの研究ノート行データを渡す） */
-const openDiary = (rawLines, pageName) => {
-    _diaryDays = _parseDiaryByDay(rawLines);
+/* 表示中の週に必要な全月データを fetch+merge して _diaryDays をセット */
+const _ensureWeekData = async () => {
+    const monthsNeeded = new Set();
+    for (let i = 0; i < 7; i++) {
+        monthsNeeded.add(_formatYM(_addDays(_diaryWeekStart, i)));
+    }
+    const merged = {};
+    await Promise.all([...monthsNeeded].map(async ym => {
+        const data = await _loadMonthData(ym);
+        Object.assign(merged, data);
+    }));
+    _diaryDays = merged;
+};
 
-    /* pageName から年月を拾って月境界を決める（無ければ範囲制限なし） */
+/* 表示中の週の全7日が現在の基準月と完全に違うなら Scrapbox を該当月の研究ノートへ遷移する */
+const _maybeNavigateScrapbox = () => {
+    if (!_diaryBasePageName) return;
+    const baseYM = _diaryBasePageName.match(/(20\d{2}\.\d{2})/)?.[1];
+    if (!baseYM) return;
+
+    const monthsInWeek = new Set();
+    for (let i = 0; i < 7; i++) {
+        monthsInWeek.add(_formatYM(_addDays(_diaryWeekStart, i)));
+    }
+    if (monthsInWeek.size !== 1) return;
+    const wkYM = [...monthsInWeek][0];
+    if (wkYM === baseYM) return;
+
+    const newPageName = _pageNameForMonth(_diaryBasePageName, wkYM);
+    _diaryBasePageName = newPageName;  // 以降のfetchも新基準で
+    location.assign(`/${currentProjectName}/${encodeURIComponent(newPageName)}`);
+};
+
+/* ダイアリーモーダルを開く */
+const openDiary = async (rawLines, pageName) => {
+    _diaryBasePageName = pageName;
+    _diaryMonthCache = {};
+    _diaryFetchInflight = {};
+
+    /* 現在ページの月データをパース済みでキャッシュにプライム（即時表示用） */
     const m = pageName?.match(/(20\d{2})\.(\d{2})/);
     if (m) {
-        const y = +m[1], mo = +m[2];
-        _diaryMonthStart = new Date(y, mo - 1, 1);
-        _diaryMonthStart.setHours(0, 0, 0, 0);
-        _diaryMonthEnd = _lastDayOfMonth(y, mo);
-        _diaryMonthEnd.setHours(23, 59, 59, 999);
-    } else {
-        _diaryMonthStart = null;
-        _diaryMonthEnd = null;
+        const ym = `${m[1]}.${m[2]}`;
+        _diaryMonthCache[ym] = _parseDiaryByDay(rawLines);
     }
 
-    /* 初期週: 今日が月内ならその週、外なら月の第1週 */
+    /* 初期週: 今日が当該月内なら今日の週、外なら月の第1週 */
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const inMonth = _diaryMonthStart && today >= _diaryMonthStart && today <= _diaryMonthEnd;
-    _diaryWeekStart = _startOfWeekMonday(inMonth ? today : (_diaryMonthStart || today));
+    let initBase = today;
+    if (m) {
+        const y = +m[1], mo = +m[2];
+        const monthStart = new Date(y, mo - 1, 1);
+        const monthEnd = _lastDayOfMonth(y, mo); monthEnd.setHours(23, 59, 59, 999);
+        const inMonth = today >= monthStart && today <= monthEnd;
+        initBase = inMonth ? today : monthStart;
+    }
+    _diaryWeekStart = _startOfWeekMonday(initBase);
 
-    _renderDiary();
+    await _renderDiary();
 };
 
 const closeDiary = () => {
@@ -88,7 +181,7 @@ const closeDiary = () => {
     }
 };
 
-/* 1日分の日付ボックス+コンテンツのDOMを生成する（週開始日からのオフセット i で日付決定） */
+/* 1日分の日付ボックス+コンテンツのDOMを生成する */
 const _buildDayBlock = (weekStart, i, todayKey) => {
     const weekdayJa = ['日', '月', '火', '水', '木', '金', '土'];
     const weekdayEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -98,14 +191,12 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
     const dayLines = _diaryDays[dateKey] || [];
     const dayOfWeek = d.getDay();
     const isToday = dateKey === todayKey;
-    const inMonth = !_diaryMonthStart || (d >= _diaryMonthStart && d <= _diaryMonthEnd);
 
     const dayBlock = document.createElement('div');
     dayBlock.className = 'sb-diary-day' +
         (dayOfWeek === 0 ? ' sb-diary-day--sun' : '') +
         (dayOfWeek === 6 ? ' sb-diary-day--sat' : '') +
-        (isToday ? ' sb-diary-day--today' : '') +
-        (inMonth ? '' : ' sb-diary-day--outside');
+        (isToday ? ' sb-diary-day--today' : '');
 
     const dateBox = document.createElement('div');
     dateBox.className = 'sb-diary-date-box';
@@ -127,12 +218,7 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
     const content = document.createElement('div');
     content.className = 'sb-diary-content';
 
-    if (!inMonth) {
-        const off = document.createElement('div');
-        off.textContent = '(月外)';
-        off.className = 'sb-diary-empty';
-        content.appendChild(off);
-    } else if (dayLines.length === 0) {
+    if (dayLines.length === 0) {
         const empty = document.createElement('div');
         empty.textContent = '—';
         empty.className = 'sb-diary-empty';
@@ -143,9 +229,22 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
             if (!t) return;
             const node = document.createElement('div');
             node.className = 'sb-diary-line';
-            node.textContent = t;
+            const hasImg = _renderLineWithImages(t, node);
+            if (hasImg) node.classList.add('sb-diary-line--has-img');
             node.title = '元の行へジャンプ';
-            node.onclick = () => { closeDiary(); jumpToLineId(line.id); };
+            node.onclick = () => {
+                /* ページが違えばまずそちらへ移動してからジャンプ */
+                const lineYM = _formatYM(d);
+                const baseYM = _diaryBasePageName?.match(/(20\d{2}\.\d{2})/)?.[1];
+                if (baseYM && lineYM !== baseYM) {
+                    const newPage = _pageNameForMonth(_diaryBasePageName, lineYM);
+                    closeDiary();
+                    location.assign(`/${currentProjectName}/${encodeURIComponent(newPage)}#${line.id}`);
+                } else {
+                    closeDiary();
+                    jumpToLineId(line.id);
+                }
+            };
             content.appendChild(node);
         });
     }
@@ -154,7 +253,10 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
     return dayBlock;
 };
 
-const _renderDiary = () => {
+const _renderDiary = async () => {
+    /* 必要月のデータを揃える */
+    await _ensureWeekData();
+
     document.getElementById(DIARY_MODAL_ID)?.remove();
 
     const overlay = document.createElement('div');
@@ -166,7 +268,6 @@ const _renderDiary = () => {
     modal.className = 'sb-diary-modal';
     modal.onclick = (e) => e.stopPropagation();
 
-    /* 閉じるボタン（コーナー） */
     const closeBtn = document.createElement('div');
     closeBtn.textContent = '✕';
     closeBtn.className = 'sb-diary-close';
@@ -178,17 +279,11 @@ const _renderDiary = () => {
     const header = document.createElement('div');
     header.className = 'sb-diary-header';
 
-    const prevWeekStart = _addDays(_diaryWeekStart, -7);
-    const nextWeekStart = _addDays(_diaryWeekStart, 7);
-    const prevAvailable = _weekHasInMonth(prevWeekStart);
-    const nextAvailable = _weekHasInMonth(nextWeekStart);
-
     const prevBtn = document.createElement('button');
     prevBtn.textContent = '◀ 前週';
-    prevBtn.className = 'sb-diary-nav-btn' + (prevAvailable ? '' : ' sb-diary-nav-btn--disabled');
+    prevBtn.className = 'sb-diary-nav-btn';
     prevBtn.onclick = () => {
-        if (!prevAvailable) return;
-        _diaryWeekStart = prevWeekStart;
+        _diaryWeekStart = _addDays(_diaryWeekStart, -7);
         _renderDiary();
     };
 
@@ -203,17 +298,16 @@ const _renderDiary = () => {
 
     const nextBtn = document.createElement('button');
     nextBtn.textContent = '次週 ▶';
-    nextBtn.className = 'sb-diary-nav-btn' + (nextAvailable ? '' : ' sb-diary-nav-btn--disabled');
+    nextBtn.className = 'sb-diary-nav-btn';
     nextBtn.onclick = () => {
-        if (!nextAvailable) return;
-        _diaryWeekStart = nextWeekStart;
+        _diaryWeekStart = _addDays(_diaryWeekStart, 7);
         _renderDiary();
     };
 
     header.append(prevBtn, title, nextBtn);
     modal.appendChild(header);
 
-    /* 本体: 見開き2ページ（左=月火水（3日）、右=木金土日（4日）。週末は記載量少ない前提で右に集約） */
+    /* 本体: 見開き2ページ（左=月火水 / 右=木金土日） */
     const spread = document.createElement('div');
     spread.className = 'sb-diary-spread';
 
@@ -236,4 +330,7 @@ const _renderDiary = () => {
     if (_diaryEscHandler) document.removeEventListener('keydown', _diaryEscHandler);
     _diaryEscHandler = (e) => { if (e.key === 'Escape') closeDiary(); };
     document.addEventListener('keydown', _diaryEscHandler);
+
+    /* 全7日が違う月になったら Scrapbox 側もその月へ遷移（描画後に走らせる） */
+    _maybeNavigateScrapbox();
 };
