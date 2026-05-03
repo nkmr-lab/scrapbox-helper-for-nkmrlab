@@ -130,6 +130,13 @@ const renderCalendarFromLines = (pageName, json) => {
 
     while (gridNode.children.length > 7) gridNode.removeChild(gridNode.lastChild);
 
+    /* ヘッダーのダイアリーボタンを最新の json.lines にバインドし直す */
+    panelNode.querySelector('.sb-cal-diary-btn')?.remove();
+    const diaryBtn = renderButton('📖', () => openDiary(json.lines, pageName));
+    diaryBtn.classList.add('sb-cal-diary-btn');
+    diaryBtn.title = '週間ダイアリービューを開く';
+    panelNode.querySelector('.sb-cal-header')?.appendChild(diaryBtn);
+
     if (countDateHeaders(json.lines) > 0) removeResearchNoteCreateUI();
 
     const { days, snippets } = parseCalendarData(json.lines);

@@ -314,6 +314,124 @@ const injectStyleSheet = () => {
 .sb-timer-idle-btn--wide { width:100%; padding:5px; margin:6px 0; }
 .sb-timer-idle-checkbox { cursor:pointer; }
 
+/* ===== Diary（週間ダイアリービュー） ===== */
+.sb-diary-overlay {
+    position:fixed; inset:0;
+    background:rgba(20,15,10,0.65);
+    z-index:200000;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(2px);
+}
+.sb-diary-modal {
+    position:relative;
+    width:92vw; max-width:880px;
+    height:92vh; max-height:1080px;
+    background:#faf6ec;
+    color:#3a2f24;
+    box-shadow:0 24px 60px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(160,130,90,0.15);
+    border-radius:4px;
+    padding:28px 44px 20px;
+    font-family:'Hiragino Mincho ProN','Yu Mincho','Times New Roman',serif;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+}
+.sb-diary-modal::before {
+    content:''; position:absolute;
+    top:0; bottom:0; left:18px;
+    width:1px; background:rgba(180,90,70,0.35);
+}
+.sb-diary-close {
+    position:absolute; top:10px; right:14px;
+    cursor:pointer; font-size:18px;
+    color:#6a5a48; opacity:0.7;
+    user-select:none; padding:2px 6px;
+    z-index:1;
+}
+.sb-diary-close:hover { opacity:1; }
+
+.sb-diary-header {
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:2px solid #b8a07a;
+    padding-bottom:10px; margin-bottom:14px;
+    flex-shrink:0;
+}
+.sb-diary-week-title {
+    font-size:18px; font-weight:bold;
+    color:#4a3a28; letter-spacing:1px;
+}
+.sb-diary-nav-btn {
+    cursor:pointer; padding:5px 14px; font-size:13px;
+    background:#efe4cc; color:#4a3a28;
+    border:1px solid #b8a07a; border-radius:3px;
+    font-family:inherit;
+}
+.sb-diary-nav-btn:hover { background:#e5d6b6; }
+.sb-diary-nav-btn--disabled {
+    opacity:0.35; cursor:not-allowed; pointer-events:none;
+}
+
+.sb-diary-pages {
+    flex:1; overflow-y:auto;
+    scrollbar-width:thin;
+    padding-right:4px;
+}
+.sb-diary-day {
+    display:flex; align-items:stretch;
+    border-bottom:1px dashed #c2a982;
+    min-height:80px;
+    padding:8px 0;
+}
+.sb-diary-day:last-child { border-bottom:none; }
+.sb-diary-day--today {
+    background:rgba(255,235,160,0.45);
+    box-shadow:inset 4px 0 0 #d4a04a;
+}
+.sb-diary-day--outside { opacity:0.4; }
+
+.sb-diary-date-box {
+    width:74px; flex-shrink:0;
+    text-align:center;
+    padding-top:4px;
+    border-right:1px solid #d8c4a0;
+    margin-right:18px;
+}
+.sb-diary-day-num {
+    font-size:34px; font-weight:bold;
+    line-height:1; color:#3a2f24;
+    font-family:'Georgia','Times New Roman',serif;
+}
+.sb-diary-day-wk-ja {
+    font-size:13px; color:#6a5a48;
+    margin-top:4px; letter-spacing:1px;
+}
+.sb-diary-day-wk-en {
+    font-size:10px; color:#a09078;
+    margin-top:1px; letter-spacing:2px;
+}
+.sb-diary-day--sun .sb-diary-day-num,
+.sb-diary-day--sun .sb-diary-day-wk-ja,
+.sb-diary-day--sun .sb-diary-day-wk-en { color:#b03c3c; }
+.sb-diary-day--sat .sb-diary-day-num,
+.sb-diary-day--sat .sb-diary-day-wk-ja,
+.sb-diary-day--sat .sb-diary-day-wk-en { color:#3c66a0; }
+
+.sb-diary-content {
+    flex:1; padding-top:6px;
+    overflow:hidden;
+    min-width:0;
+}
+.sb-diary-line {
+    padding:3px 6px; line-height:1.65;
+    font-size:14px; cursor:pointer;
+    border-radius:2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.sb-diary-line:hover { background:rgba(184,160,122,0.22); }
+.sb-diary-empty {
+    color:#c2a982; font-style:italic;
+    padding:14px 6px; font-size:13px;
+}
+
 /* ===== Settings Modal ===== */
 .sb-modal-overlay {
     position:fixed; top:0; left:0; right:0; bottom:0;

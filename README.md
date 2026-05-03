@@ -11,6 +11,7 @@
 - 当月ノートの今日の日付へ自動ジャンプ
 - まだ存在しない月のノートをワンクリック作成
 - TODO マーク `[_]` / 完了マーク `[x]` で TODO リスト自動生成
+- **週間ダイアリービュー**（カレンダー右上の `📖` ボタン）— 1週間 = 1ページの紙ノート風レイアウトで前後週ページめくり、行クリックで該当箇所へジャンプ
 
 ### 議事録
 - セッション・発表タイトルへのジャンプ
@@ -114,18 +115,19 @@
 11. top_page.js        ← トップページ描画
 12. research_note.js   ← 研究ノートのページ判定・カレンダー上UI
 13. calendar.js        ← カレンダーパネル
-14. todo.js            ← TODOパネル
-15. experiment.js      ← 実験計画書パネル
-16. minutes.js         ← 議事録パネル
-17. paper_intro.js     ← 論文紹介パネル
-18. presentation.js    ← 発表練習パネル
-19. settings_ui.js     ← 設定モーダル（タブ式UIビルダー）
-20. page_create.js     ← テンプレート・ページ生成モーダル（12,17,18の関数を使用）
-21. timer.js           ← カウントダウンタイマー（ローカル、状態はchrome.storage.local）
-22. float_menu.js      ← フロートメニュー
-23. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
-24. router.js          ← SPAルーティング
-25. main.js            ← エントリポイント
+14. diary.js           ← 週間ダイアリービュー（紙ノート風モーダル）
+15. todo.js            ← TODOパネル
+16. experiment.js      ← 実験計画書パネル
+17. minutes.js         ← 議事録パネル
+18. paper_intro.js     ← 論文紹介パネル
+19. presentation.js    ← 発表練習パネル
+20. settings_ui.js     ← 設定モーダル（タブ式UIビルダー）
+21. page_create.js     ← テンプレート・ページ生成モーダル
+22. timer.js           ← カウントダウンタイマー（ローカル、状態はchrome.storage.local）
+23. float_menu.js      ← フロートメニュー
+24. watcher_manager.js ← Watcher管理（各ページハンドラの描画関数を参照）
+25. router.js          ← SPAルーティング
+26. main.js            ← エントリポイント
 ```
 
 ## ファイル構成
@@ -145,6 +147,7 @@ content/
 ├── top_page.js        プロジェクトトップページ描画
 ├── research_note.js   研究ノートのページ判定 + カレンダー上の作成UI
 ├── calendar.js        月カレンダーパネル（ヒートマップ・拡大）
+├── diary.js           週間ダイアリービュー（1週間=1ページの紙ノート風モーダル）
 ├── todo.js            TODOパネル（折りたたみ・位置追従）
 ├── experiment.js      実験計画書パネル + GPTレビュー
 ├── minutes.js         議事録パネル（セッション・質問・感想・AI要約）
