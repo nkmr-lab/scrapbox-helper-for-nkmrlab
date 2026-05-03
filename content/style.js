@@ -118,37 +118,76 @@ const injectStyleSheet = () => {
 }
 .sb-btn { cursor:pointer; }
 
-/* ===== Calendar ===== */
-.sb-cal-header {
-    padding:6px; font-weight:bold;
-    border-bottom:1px solid var(--sb-border);
-    background:var(--sb-headerBg); color:var(--sb-headerText);
-    display:flex; align-items:center; gap:8px;
+/* ===== Calendar (paper notebook aesthetic, ダイアリーと統一) ===== */
+.sb-panel-calendar {
+    background:#faf6ec !important;
+    color:#3a2f24 !important;
+    border:1px solid #b8a07a !important;
+    box-shadow:0 4px 14px rgba(40,25,10,0.18) !important;
+    font-family:'Hiragino Mincho ProN','Yu Mincho','Times New Roman',serif !important;
 }
+.sb-cal-header {
+    padding:8px 10px; font-weight:bold; font-size:14px;
+    border-bottom:2px solid #b8a07a;
+    background:#f3ead2; color:#4a3a28;
+    display:flex; align-items:center; gap:8px;
+    letter-spacing:1px;
+}
+.sb-cal-header .sb-btn {
+    padding:2px 6px; border-radius:3px;
+    color:#4a3a28;
+}
+.sb-cal-header .sb-btn:hover { background:rgba(184,160,122,0.25); }
+.sb-cal-diary-btn { font-size:16px; padding:2px 8px !important; }
+
 .sb-cal-grid {
     flex:1; min-height:0; padding:6px;
     display:grid; grid-template-columns:repeat(7,1fr);
     grid-template-rows:auto repeat(6,1fr); gap:2px;
     font-size:var(--sb-calFontSize, 11px);
+    background:#faf6ec;
 }
 .sb-cal-grid--expanded {
-    grid-template-rows:auto repeat(6, minmax(140px, 1fr)); gap:8px;
+    grid-template-rows:auto repeat(6, minmax(140px, 1fr)); gap:6px;
     font-size:var(--sb-calFontSizeExpanded, 14px);
+    padding:10px;
 }
-.sb-cal-weekday { font-weight:bold; text-align:center; }
-.sb-cal-weekday--sun { color:var(--sb-calSundayHeader); }
-.sb-cal-weekday--sat { color:var(--sb-calSaturdayHeader); }
+.sb-cal-weekday {
+    font-weight:bold; text-align:center;
+    color:#6a5a48; padding:4px 0;
+    letter-spacing:2px; font-size:11px;
+    border-bottom:1px solid #c2a982;
+}
+.sb-cal-weekday--sun { color:#b03c3c; }
+.sb-cal-weekday--sat { color:#3c66a0; }
+
 .sb-cal-cell {
-    border:1px solid var(--sb-calCellBorder); padding:2px; cursor:pointer;
-    display:flex; flex-direction:column; gap:2px; overflow:hidden; min-height:0;
+    border:1px dashed #c2a982;
+    background:rgba(255,253,244,0.7);
+    padding:3px 4px; cursor:pointer;
+    display:flex; flex-direction:column; gap:2px;
+    overflow:hidden; min-height:0;
+    color:#3a2f24;
+    transition:background 0.15s;
 }
-.sb-cal-cell--today { box-shadow:inset 0 0 0 2px var(--sb-calToday); }
-.sb-cal-cell--sun { color:var(--sb-calSunday); }
-.sb-cal-cell--sat { color:var(--sb-calSaturday); }
-.sb-cal-day { font-weight:bold; line-height:1; }
+.sb-cal-cell:hover { background:rgba(255,250,225,0.95); }
+.sb-cal-cell--today {
+    background:rgba(255,235,160,0.55) !important;
+    box-shadow:inset 4px 0 0 #d4a04a;
+}
+.sb-cal-cell--sun { color:#b03c3c; }
+.sb-cal-cell--sat { color:#3c66a0; }
+
+.sb-cal-day {
+    font-family:'Georgia','Times New Roman',serif;
+    font-weight:bold; line-height:1;
+    font-size:1.15em;
+}
 .sb-cal-snippet {
-    font-size:0.9em; color:var(--sb-calSnippet);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;
+    font-size:0.88em; color:#7a6a55;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    flex-shrink:0;
+    font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
 }
 .sb-cal-create-ui {
     margin:6px; padding:6px;
@@ -200,11 +239,11 @@ const injectStyleSheet = () => {
 .sb-toggle-btn { cursor:pointer; font-size:11px; color:var(--sb-textMuted); margin:4px 0; }
 .sb-create-msg { margin-bottom:6px; color:var(--sb-textMuted); }
 
-/* ===== Heatmap (calendar expanded) ===== */
-.sb-cal-cell--heat1 { background:var(--sb-heatmap1); }
-.sb-cal-cell--heat2 { background:var(--sb-heatmap2); }
-.sb-cal-cell--heat3 { background:var(--sb-heatmap3); }
-.sb-cal-cell--heat4 { background:var(--sb-heatmap4); }
+/* ===== Heatmap (paper notebook 用 warm tone) ===== */
+.sb-cal-cell--heat1 { background:rgba(220, 180, 120, 0.18) !important; }
+.sb-cal-cell--heat2 { background:rgba(220, 160, 90, 0.30) !important; }
+.sb-cal-cell--heat3 { background:rgba(210, 130, 70, 0.42) !important; }
+.sb-cal-cell--heat4 { background:rgba(190, 100, 60, 0.55) !important; }
 
 /* ===== Forms / UI ===== */
 .sb-input { width:100%; color:var(--sb-formText); }
