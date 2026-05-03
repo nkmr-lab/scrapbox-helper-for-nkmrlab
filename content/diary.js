@@ -88,6 +88,72 @@ const closeDiary = () => {
     }
 };
 
+/* 1日分の日付ボックス+コンテンツのDOMを生成する（週開始日からのオフセット i で日付決定） */
+const _buildDayBlock = (weekStart, i, todayKey) => {
+    const weekdayJa = ['日', '月', '火', '水', '木', '金', '土'];
+    const weekdayEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+    const d = _addDays(weekStart, i);
+    const dateKey = _formatDateKey(d);
+    const dayLines = _diaryDays[dateKey] || [];
+    const dayOfWeek = d.getDay();
+    const isToday = dateKey === todayKey;
+    const inMonth = !_diaryMonthStart || (d >= _diaryMonthStart && d <= _diaryMonthEnd);
+
+    const dayBlock = document.createElement('div');
+    dayBlock.className = 'sb-diary-day' +
+        (dayOfWeek === 0 ? ' sb-diary-day--sun' : '') +
+        (dayOfWeek === 6 ? ' sb-diary-day--sat' : '') +
+        (isToday ? ' sb-diary-day--today' : '') +
+        (inMonth ? '' : ' sb-diary-day--outside');
+
+    const dateBox = document.createElement('div');
+    dateBox.className = 'sb-diary-date-box';
+
+    const dayNum = document.createElement('div');
+    dayNum.textContent = String(d.getDate());
+    dayNum.className = 'sb-diary-day-num';
+
+    const dayWk = document.createElement('div');
+    dayWk.textContent = weekdayJa[dayOfWeek];
+    dayWk.className = 'sb-diary-day-wk-ja';
+
+    const dayWkEn = document.createElement('div');
+    dayWkEn.textContent = weekdayEn[dayOfWeek];
+    dayWkEn.className = 'sb-diary-day-wk-en';
+
+    dateBox.append(dayNum, dayWk, dayWkEn);
+
+    const content = document.createElement('div');
+    content.className = 'sb-diary-content';
+
+    if (!inMonth) {
+        const off = document.createElement('div');
+        off.textContent = '(月外)';
+        off.className = 'sb-diary-empty';
+        content.appendChild(off);
+    } else if (dayLines.length === 0) {
+        const empty = document.createElement('div');
+        empty.textContent = '—';
+        empty.className = 'sb-diary-empty';
+        content.appendChild(empty);
+    } else {
+        dayLines.forEach(line => {
+            const t = (line.text || '').trim();
+            if (!t) return;
+            const node = document.createElement('div');
+            node.className = 'sb-diary-line';
+            node.textContent = t;
+            node.title = '元の行へジャンプ';
+            node.onclick = () => { closeDiary(); jumpToLineId(line.id); };
+            content.appendChild(node);
+        });
+    }
+
+    dayBlock.append(dateBox, content);
+    return dayBlock;
+};
+
 const _renderDiary = () => {
     document.getElementById(DIARY_MODAL_ID)?.remove();
 
@@ -147,79 +213,37 @@ const _renderDiary = () => {
     header.append(prevBtn, title, nextBtn);
     modal.appendChild(header);
 
-    /* 本体: 7日縦ストリップ */
-    const pages = document.createElement('div');
-    pages.className = 'sb-diary-pages';
+    /* 本体: 見開き2ページ（左=月火水木、右=金土日+メモ欄） */
+    const spread = document.createElement('div');
+    spread.className = 'sb-diary-spread';
+
+    const leftPage = document.createElement('div');
+    leftPage.className = 'sb-diary-page sb-diary-page--left';
+    const rightPage = document.createElement('div');
+    rightPage.className = 'sb-diary-page sb-diary-page--right';
 
     const todayKey = _formatDateKey(new Date());
-    const weekdayJa = ['日', '月', '火', '水', '木', '金', '土'];
-    const weekdayEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-    for (let i = 0; i < 7; i++) {
-        const d = _addDays(_diaryWeekStart, i);
-        const dateKey = _formatDateKey(d);
-        const dayLines = _diaryDays[dateKey] || [];
-        const dayOfWeek = d.getDay();
-        const isToday = dateKey === todayKey;
-        const inMonth = !_diaryMonthStart || (d >= _diaryMonthStart && d <= _diaryMonthEnd);
+    /* 月-木 を左、金-日 を右 */
+    [0, 1, 2, 3].forEach(i => leftPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
+    [4, 5, 6].forEach(i => rightPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
 
-        const dayBlock = document.createElement('div');
-        dayBlock.className = 'sb-diary-day' +
-            (dayOfWeek === 0 ? ' sb-diary-day--sun' : '') +
-            (dayOfWeek === 6 ? ' sb-diary-day--sat' : '') +
-            (isToday ? ' sb-diary-day--today' : '') +
-            (inMonth ? '' : ' sb-diary-day--outside');
-
-        /* 左: 日付ボックス */
-        const dateBox = document.createElement('div');
-        dateBox.className = 'sb-diary-date-box';
-
-        const dayNum = document.createElement('div');
-        dayNum.textContent = String(d.getDate());
-        dayNum.className = 'sb-diary-day-num';
-
-        const dayWk = document.createElement('div');
-        dayWk.textContent = weekdayJa[dayOfWeek];
-        dayWk.className = 'sb-diary-day-wk-ja';
-
-        const dayWkEn = document.createElement('div');
-        dayWkEn.textContent = weekdayEn[dayOfWeek];
-        dayWkEn.className = 'sb-diary-day-wk-en';
-
-        dateBox.append(dayNum, dayWk, dayWkEn);
-
-        /* 右: コンテンツ */
-        const content = document.createElement('div');
-        content.className = 'sb-diary-content';
-
-        if (!inMonth) {
-            const off = document.createElement('div');
-            off.textContent = '(月外)';
-            off.className = 'sb-diary-empty';
-            content.appendChild(off);
-        } else if (dayLines.length === 0) {
-            const empty = document.createElement('div');
-            empty.textContent = '—';
-            empty.className = 'sb-diary-empty';
-            content.appendChild(empty);
-        } else {
-            dayLines.forEach(line => {
-                const t = (line.text || '').trim();
-                if (!t) return;
-                const node = document.createElement('div');
-                node.className = 'sb-diary-line';
-                node.textContent = t;
-                node.title = '元の行へジャンプ';
-                node.onclick = () => { closeDiary(); jumpToLineId(line.id); };
-                content.appendChild(node);
-            });
-        }
-
-        dayBlock.append(dateBox, content);
-        pages.appendChild(dayBlock);
+    /* 右ページ下のメモ欄（罫線スペース、後で書き込みしたいなら拡張可能） */
+    const memo = document.createElement('div');
+    memo.className = 'sb-diary-memo';
+    const memoTitle = document.createElement('div');
+    memoTitle.className = 'sb-diary-memo-title';
+    memoTitle.textContent = 'MEMO';
+    memo.appendChild(memoTitle);
+    for (let i = 0; i < 6; i++) {
+        const ln = document.createElement('div');
+        ln.className = 'sb-diary-memo-line';
+        memo.appendChild(ln);
     }
+    rightPage.appendChild(memo);
 
-    modal.appendChild(pages);
+    spread.append(leftPage, rightPage);
+    modal.appendChild(spread);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 

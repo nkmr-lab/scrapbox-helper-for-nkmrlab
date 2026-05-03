@@ -324,21 +324,16 @@ const injectStyleSheet = () => {
 }
 .sb-diary-modal {
     position:relative;
-    width:92vw; max-width:880px;
+    width:96vw; max-width:1280px;
     height:92vh; max-height:1080px;
     background:#faf6ec;
     color:#3a2f24;
     box-shadow:0 24px 60px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(160,130,90,0.15);
     border-radius:4px;
-    padding:28px 44px 20px;
+    padding:24px 32px 18px;
     font-family:'Hiragino Mincho ProN','Yu Mincho','Times New Roman',serif;
     display:flex; flex-direction:column;
     overflow:hidden;
-}
-.sb-diary-modal::before {
-    content:''; position:absolute;
-    top:0; bottom:0; left:18px;
-    width:1px; background:rgba(180,90,70,0.35);
 }
 .sb-diary-close {
     position:absolute; top:10px; right:14px;
@@ -370,10 +365,42 @@ const injectStyleSheet = () => {
     opacity:0.35; cursor:not-allowed; pointer-events:none;
 }
 
-.sb-diary-pages {
-    flex:1; overflow-y:auto;
+/* 見開き2ページレイアウト */
+.sb-diary-spread {
+    flex:1; display:flex;
+    overflow:hidden;
+    position:relative;
+    /* 中央の綴じ目（spine）影 */
+    background:
+        linear-gradient(to right,
+            transparent calc(50% - 12px),
+            rgba(120,90,60,0.18) calc(50% - 8px),
+            rgba(60,40,20,0.35) 50%,
+            rgba(120,90,60,0.18) calc(50% + 8px),
+            transparent calc(50% + 12px));
+}
+.sb-diary-page {
+    flex:1; flex-basis:50%;
+    overflow-y:auto;
+    padding:8px 22px;
     scrollbar-width:thin;
-    padding-right:4px;
+    background:rgba(255,253,244,0.55);
+}
+.sb-diary-page--left { padding-right:18px; }
+.sb-diary-page--right { padding-left:18px; }
+
+/* メモ欄（罫線スペース） */
+.sb-diary-memo {
+    margin-top:14px; padding:8px 0;
+    border-top:1px dashed #c2a982;
+}
+.sb-diary-memo-title {
+    font-size:11px; letter-spacing:3px;
+    color:#a09078; margin-bottom:6px;
+}
+.sb-diary-memo-line {
+    border-bottom:1px solid rgba(180,150,110,0.35);
+    height:24px;
 }
 .sb-diary-day {
     display:flex; align-items:stretch;
