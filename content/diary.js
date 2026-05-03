@@ -213,7 +213,7 @@ const _renderDiary = () => {
     header.append(prevBtn, title, nextBtn);
     modal.appendChild(header);
 
-    /* 本体: 見開き2ページ（左=月火水木、右=金土日+メモ欄） */
+    /* 本体: 見開き2ページ（左=月火水（3日）、右=木金土日（4日）。週末は記載量少ない前提で右に集約） */
     const spread = document.createElement('div');
     spread.className = 'sb-diary-spread';
 
@@ -224,23 +224,8 @@ const _renderDiary = () => {
 
     const todayKey = _formatDateKey(new Date());
 
-    /* 月-木 を左、金-日 を右 */
-    [0, 1, 2, 3].forEach(i => leftPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
-    [4, 5, 6].forEach(i => rightPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
-
-    /* 右ページ下のメモ欄（罫線スペース、後で書き込みしたいなら拡張可能） */
-    const memo = document.createElement('div');
-    memo.className = 'sb-diary-memo';
-    const memoTitle = document.createElement('div');
-    memoTitle.className = 'sb-diary-memo-title';
-    memoTitle.textContent = 'MEMO';
-    memo.appendChild(memoTitle);
-    for (let i = 0; i < 6; i++) {
-        const ln = document.createElement('div');
-        ln.className = 'sb-diary-memo-line';
-        memo.appendChild(ln);
-    }
-    rightPage.appendChild(memo);
+    [0, 1, 2].forEach(i => leftPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
+    [3, 4, 5, 6].forEach(i => rightPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
 
     spread.append(leftPage, rightPage);
     modal.appendChild(spread);

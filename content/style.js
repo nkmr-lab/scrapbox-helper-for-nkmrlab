@@ -388,20 +388,6 @@ const injectStyleSheet = () => {
 }
 .sb-diary-page--left { padding-right:18px; }
 .sb-diary-page--right { padding-left:18px; }
-
-/* メモ欄（罫線スペース） */
-.sb-diary-memo {
-    margin-top:14px; padding:8px 0;
-    border-top:1px dashed #c2a982;
-}
-.sb-diary-memo-title {
-    font-size:11px; letter-spacing:3px;
-    color:#a09078; margin-bottom:6px;
-}
-.sb-diary-memo-line {
-    border-bottom:1px solid rgba(180,150,110,0.35);
-    height:24px;
-}
 .sb-diary-day {
     display:flex; align-items:stretch;
     border-bottom:1px dashed #c2a982;
