@@ -406,15 +406,6 @@ const injectStyleSheet = () => {
 .sb-diary-spread {
     flex:1; display:flex;
     overflow:hidden;
-    position:relative;
-    /* 中央の綴じ目（spine）影 */
-    background:
-        linear-gradient(to right,
-            transparent calc(50% - 12px),
-            rgba(120,90,60,0.18) calc(50% - 8px),
-            rgba(60,40,20,0.35) 50%,
-            rgba(120,90,60,0.18) calc(50% + 8px),
-            transparent calc(50% + 12px));
 }
 .sb-diary-page {
     flex:1; flex-basis:50%;
