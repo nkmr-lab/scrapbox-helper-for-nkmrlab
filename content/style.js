@@ -184,7 +184,7 @@ const injectStyleSheet = () => {
     font-size:1.15em;
 }
 .sb-cal-snippet {
-    font-size:0.88em; color:#7a6a55;
+    font-size:0.92em; color:#3a2f24;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     flex-shrink:0;
     font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
