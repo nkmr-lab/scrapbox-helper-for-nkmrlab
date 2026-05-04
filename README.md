@@ -11,7 +11,7 @@
 - 当月ノートの今日の日付へ自動ジャンプ
 - まだ存在しない月のノートをワンクリック作成
 - TODO マーク `[_]` / 完了マーク `[x]` で TODO リスト自動生成
-- **週間ダイアリービュー**（カレンダー右上の `📖` ボタン）— 1週間 = 1ページの紙ノート風レイアウトで前後週ページめくり、行クリックで該当箇所へジャンプ
+- **週間ダイアリービュー**（カレンダー右上の `[週間表示]` ボタン）— **見開き 2 ページ（左 月火水 / 右 木金土日）の紙ノート風モーダル**。前後週ページめくり、行クリックで該当箇所へジャンプ、月跨ぎは該当月のノートを自動 fetch、画像URL `[gyazo...]` や画像並べ記法 `[| [url][url]...]` をサムネイル展開、各日内スクロール
 
 ### 議事録
 - セッション・発表タイトルへのジャンプ
@@ -36,7 +36,7 @@
 
 ### フロートメニュー（全ページ共通）
 - ピン留め（ページのブックマーク）
-- よく見ているページ / 最近見たページ
+- よく見ているページ / 最近見たページ — 履歴は **5秒滞在後にコミット** されるため、タイトル入力中の中途URLは記録されない
 - ページ生成（研究ノート / 発表練習 / 論文紹介 / 学会プログラムからAI変換）
 - 設定モーダル
 
@@ -69,7 +69,8 @@
 - 表示: フロートメニュー位置・幅、ページ整列、最近/よく見るページ表示件数
 - メイン/カレンダー/TODO/その他: パネル位置（4隅）・サイズ個別設定
 - AIサポート: OpenAI API Key、プロンプトのカスタマイズ
-- 同期: 項目カテゴリごとに chrome.storage.sync と local を切り替え
+- 同期: システム/表示/ピン留め/閲覧履歴 を chrome.storage.sync と local を個別に切り替え
+- ※タイマーの設定はタイマーウィジェット内で完結（このモーダルにはタブなし）
 
 ## インストール
 
@@ -105,9 +106,9 @@
  1. constants.js       ← 定数・グローバル状態（全ファイルが参照）
  2. style.js           ← CSSテーマ・スタイルシート注入
  3. config.js          ← 設定の読み書き・applyPanelSettings・applyPageAlign
- 4. view.js            ← DOM生成ユーティリティ（config.jsのapplyPanelSettingsを使用）
- 5. parser.js          ← テキスト解析（DOM非依存）
- 6. api.js             ← API呼び出し（config.jsのloadSettingsを使用）
+ 4. view.js            ← DOM生成ユーティリティ + navigateToPage / jumpToLineId
+ 5. parser.js          ← テキスト解析・日付フォーマット・DATE_HEADER_RE / pageNameWithYM
+ 6. api.js             ← Scrapbox/OpenAI API呼び出し + loadProjectUsers (uid/slug→displayName)
  7. pagewatcher.js     ← ページ変更検知クラス
  8. stats.js           ← 発言量統計 + uid/slug→displayName 解決（per-pageマップ）
  9. pin.js             ← ピン留め機能
@@ -173,11 +174,11 @@ content/
    'report': /レポート/,
    ```
 
-2. **report.js**: ページハンドラを作成（`renderReportFromLines(pageName, rawLines)` 関数）
+2. **report.js**: ページハンドラを作成（`renderReportFromLines(pageName, rawLines, projectUsers)` 関数。`projectUsers` を使うなら `applyProjectUsers(projectUsers, lines)` を最初に呼ぶ）
 
-3. **watcher_manager.js**: `watchers` オブジェクトにWatcher追加
+3. **watcher_manager.js**: `watchers` オブジェクトにWatcher追加（`sharedWatcher` ヘルパーで onInit/onUpdate を一括バインド）
    ```js
-   report: new PageWatcher({ ... onInit/onUpdate で renderReportFromLines を呼ぶ })
+   report: sharedWatcher(renderReportFromLines, /* guard */ isReportPage),
    ```
 
 4. **router.js**: `handlers` にルート追加
@@ -193,6 +194,21 @@ content/
 2. **settings_ui.js** `_build*Tab()`: 対応するタブビルダーに入力要素を追加
 3. **settings_ui.js** `_collectSettingsValues()`: 引数リストと return に追加
 4. 設定を使用するファイルで `loadSettings()` から値を取得
+
+### よく使うヘルパー（重複しがちな処理）
+
+| 関数 | 場所 | 用途 |
+|---|---|---|
+| `navigateToPage(pageName, lineId?)` | view.js | 現在プロジェクトの指定ページへ遷移（任意で行ID hash 付与） |
+| `pageNameWithYM(pageName, ym)` | parser.js | ページ名内の `YYYY.MM` を別年月に置換（研究ノートページ名で頻用） |
+| `formatYm(date)` / `formatYmd(date)` | parser.js | 年月 / 年月日 を `YYYY.MM` / `YYYY.MM.DD` 文字列化 |
+| `DATE_HEADER_RE` | parser.js | 研究ノートの日付ヘッダ `[*( YYYY.MM.DD ...)]` を捕捉する正規表現 |
+| `WEEKDAY_JA` / `WEEKDAY_EN` | constants.js | 曜日配列（`getDay()` でインデックス） |
+| `loadFromStorage(storage, key, default, transform?)` | constants.js | chrome.storage 1キー読み込みのPromiseラッパ |
+| `loadProjectUsers(projectName)` | api.js | `/api/projects/:proj` から `{byId, bySlug}` を返す（プロジェクト単位メモ化） |
+| `applyProjectUsers(projectUsers, lines)` / `resolveUserName(uid)` / `resolveDisplayBySlug(slug)` | stats.js | per-page の発言者名解決 |
+| `appendCloseButton(panelNode, panelId)` | view.js | パネル右上の ✕ ボタン |
+| `createModalDialog(modalId, titleText)` | view.js | overlay+modal の標準モーダル枠 |
 
 ### 命名規則
 
