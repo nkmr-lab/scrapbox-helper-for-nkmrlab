@@ -11,9 +11,20 @@ const loadHistory = async (projectName) => {
     );
 };
 
-/* 閲覧履歴をストレージに追記する（sync設定に従う） */
-const saveHistory = async (projectName, pageName) => {
+/* 閲覧履歴の登録は HISTORY_COMMIT_DELAY 経過後にコミット。
+   タイトル入力中の中途URL（け→けん→けんき…）等の素早いURL変化はキャンセルされる。 */
+let _historyTimer = null;
+
+const saveHistory = (projectName, pageName) => {
     if (!projectName || !pageName) return;
+    if (_historyTimer) { clearTimeout(_historyTimer); _historyTimer = null; }
+    _historyTimer = setTimeout(() => {
+        _historyTimer = null;
+        _commitHistory(projectName, pageName);
+    }, HISTORY_COMMIT_DELAY);
+};
+
+const _commitHistory = async (projectName, pageName) => {
     const settings = await loadSettings(projectName);
     const storage = getStorage(settings.syncHistory);
     storage.get(

@@ -30,6 +30,7 @@ const pinnedKey = projectName => `sb:${projectName}:pinned`;
 const TICK_INTERVAL = 600;
 const WATCHER_INTERVAL = 10000;
 const FADE_TIMEOUT = 5000;
+const HISTORY_COMMIT_DELAY = 5000;  // この時間以上同じページに居てから履歴に登録（タイトル入力中の中途URLを除外）
 
 /* --- Display --- */
 const TODO_SHOW_COUNT = 5;
