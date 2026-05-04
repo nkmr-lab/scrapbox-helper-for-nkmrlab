@@ -5,36 +5,27 @@ class WatcherManager {
     constructor() {
         this.projectName = null;
 
-        this.watchers = {
-            paperIntro: new PageWatcher({
-                fetchPage,
-                headPageETag,
-                onInit: async ({ pageName, json }) => {
-                    const projectUsers = await loadProjectUsers(this.projectName);
-                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, projectUsers);
-                },
-                onUpdate: async ({ pageName, json }) => {
-                    const projectUsers = await loadProjectUsers(this.projectName);
-                    if (isPaperIntroPage(json.lines)) renderPaperIntroFromLines(pageName, json.lines, projectUsers);
-                }
-            }),
+        /* projectUsers をロードして render 関数を呼ぶハンドラを生成する。
+           guard を指定するとそれが falsy を返す場合は描画をスキップする。 */
+        const renderWithUsers = (renderFn, guard = null) => async ({ pageName, json }) => {
+            if (guard && !guard(json.lines)) return;
+            const projectUsers = await loadProjectUsers(this.projectName);
+            await renderFn(pageName, json.lines, projectUsers);
+        };
 
-            presentation: new PageWatcher({
-                fetchPage,
-                headPageETag,
-                onInit: async ({ pageName, json }) => {
-                    const projectUsers = await loadProjectUsers(this.projectName);
-                    renderPresentationFromLines(pageName, json.lines, projectUsers);
-                },
-                onUpdate: async ({ pageName, json }) => {
-                    const projectUsers = await loadProjectUsers(this.projectName);
-                    renderPresentationFromLines(pageName, json.lines, projectUsers);
-                },
-            }),
+        const sharedWatcher = (renderFn, guard = null) => new PageWatcher({
+            fetchPage, headPageETag,
+            onInit: renderWithUsers(renderFn, guard),
+            onUpdate: renderWithUsers(renderFn, guard),
+        });
+
+        this.watchers = {
+            paperIntro: sharedWatcher(renderPaperIntroFromLines, isPaperIntroPage),
+            presentation: sharedWatcher(renderPresentationFromLines),
+            minutes: sharedWatcher(renderMinutesFromLines),
 
             researchNote: new PageWatcher({
-                fetchPage,
-                headPageETag,
+                fetchPage, headPageETag,
                 onInit: async ({ pageName, json }) => {
                     const settings = await loadSettings(this.projectName);
                     renderCalendar(pageName);
@@ -42,26 +33,13 @@ class WatcherManager {
                     renderResearchNoteCreateUI({
                         userName: settings.userName,
                         pageName,
-                        rawLines: json.lines
+                        rawLines: json.lines,
                     });
                     await renderTodoPanel(json.lines);
                 },
                 onUpdate: async ({ pageName, json }) => {
                     renderCalendarFromLines(pageName, json);
                     await renderTodoPanel(json.lines);
-                }
-            }),
-
-            minutes: new PageWatcher({
-                fetchPage,
-                headPageETag,
-                onInit: async ({ pageName, json }) => {
-                    const projectUsers = await loadProjectUsers(this.projectName);
-                    await renderMinutesFromLines(json.lines, projectUsers);
-                },
-                onUpdate: async ({ pageName, json }) => {
-                    const projectUsers = await loadProjectUsers(this.projectName);
-                    await renderMinutesFromLines(json.lines, projectUsers);
                 },
             }),
         };

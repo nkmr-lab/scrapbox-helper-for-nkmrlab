@@ -93,7 +93,7 @@ const populateSessionData = (sessions, lines) => {
 };
 
 /* 議事録の行データをパースしてパネルに描画する */
-const renderMinutesFromLines = async (rawLines, projectUsers) => {
+const renderMinutesFromLines = async (pageName, rawLines, projectUsers) => {
     const enableOpenAI = await isOpenAIEnabled();
     const lines = normalizeLines(rawLines, { withUid: true });
 
