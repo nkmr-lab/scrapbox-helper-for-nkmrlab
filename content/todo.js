@@ -16,7 +16,7 @@ const extractTodos = (settings, lines) => {
 
     lines.forEach(line => {
         const text = (line.text || '').trim();
-        const dm = text.match(/^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/);
+        const dm = text.match(DATE_HEADER_RE);
         if (dm) { currentDate = `${dm[1]}.${dm[2]}.${dm[3]}`; return; }
 
         if (text.includes(settings.todoMark)) {

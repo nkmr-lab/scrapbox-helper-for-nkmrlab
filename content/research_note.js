@@ -22,7 +22,7 @@ const isMyThisMonthResearchNote = (pageName, userName) => {
 
 /* 行データ中の日付ヘッダーの数を数える */
 const countDateHeaders = (lines) =>
-    lines.filter(line => /^\[\*\(\s*20\d{2}\.\d{2}\.\d{2}/.test(line.text || '')).length;
+    lines.filter(line => DATE_HEADER_RE.test(line.text || '')).length;
 
 /* ページ名から年月のDateオブジェクトを抽出する */
 const extractYearMonthFromPageName = (pageName) => {

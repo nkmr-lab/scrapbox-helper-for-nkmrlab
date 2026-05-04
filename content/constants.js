@@ -43,6 +43,10 @@ const CALENDAR_SNIPPET_LIMIT = 10;
 const PAGE_MENU_OFFSET = 16;          /* 画面端からの基本マージン (px) */
 const FLOAT_TOGGLE_CLEARANCE = 40;    /* フロートメニュー☰ボタンの高さ+余白 (px) */
 
+/* --- 曜日（getDay() 0=日 ~ 6=土 で引く） --- */
+const WEEKDAY_JA = ['日', '月', '火', '水', '木', '金', '土'];
+const WEEKDAY_EN = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
 /* --- Global State --- */
 const _closedPanels = new Set();
 let currentProjectName = null;

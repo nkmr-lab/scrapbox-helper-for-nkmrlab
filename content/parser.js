@@ -23,6 +23,10 @@ const formatYmd = (date) => {
     return `${formatYm(date)}.${String(date.getDate()).padStart(2, '0')}`;
 };
 
+/* 研究ノートの日付ヘッダ `[*( YYYY.MM.DD ...)]` を検出する正規表現
+   match[1]=YYYY, match[2]=MM, match[3]=DD */
+const DATE_HEADER_RE = /^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/;
+
 /* --- ページ種別判定 --- */
 const PAGE_TYPES = {
     'research-note':   /研究ノート/,
@@ -110,7 +114,7 @@ const parseCalendarData = (rawLines) => {
 
     for (const line of rawLines) {
         let text = (line.text || '').trim();
-        const mm = text.match(/^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/);
+        const mm = text.match(DATE_HEADER_RE);
         if (mm) {
             cur = `${mm[1]}.${mm[2]}.${mm[3]}`;
             days[cur] = line.id;

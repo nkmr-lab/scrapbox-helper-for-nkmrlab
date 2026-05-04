@@ -10,11 +10,8 @@ let _diaryMonthCache = {};      // { 'YYYY.MM': { 'YYYY-MM-DD': line[] } }
 let _diaryFetchInflight = {};   // 同月への並行fetch重複を抑える { 'YYYY.MM': Promise }
 let _diaryEscHandler = null;
 
-const _formatDateKey = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-const _formatYM = (date) =>
-    `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+/* 日付フォーマットは parser.js の formatYmd / formatYm を共有。
+   _diaryDays のキーは 'YYYY.MM.DD' 形式（formatYmd と一致）。 */
 
 const _addDays = (date, n) => {
     const d = new Date(date);
@@ -109,9 +106,9 @@ const _parseDiaryByDay = (rawLines) => {
     let curKey = null;
     for (const line of rawLines) {
         const text = (line.text || '').trim();
-        const m = text.match(/^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/);
+        const m = text.match(DATE_HEADER_RE);
         if (m) {
-            curKey = `${m[1]}-${m[2]}-${m[3]}`;
+            curKey = `${m[1]}.${m[2]}.${m[3]}`;
             byDay[curKey] = [];
             continue;
         }
@@ -145,7 +142,7 @@ const _loadMonthData = async (ym) => {
 const _ensureWeekData = async () => {
     const monthsNeeded = new Set();
     for (let i = 0; i < 7; i++) {
-        monthsNeeded.add(_formatYM(_addDays(_diaryWeekStart, i)));
+        monthsNeeded.add(formatYm(_addDays(_diaryWeekStart, i)));
     }
     const merged = {};
     await Promise.all([...monthsNeeded].map(async ym => {
@@ -194,11 +191,8 @@ const closeDiary = () => {
 
 /* 1日分の日付ボックス+コンテンツのDOMを生成する */
 const _buildDayBlock = (weekStart, i, todayKey) => {
-    const weekdayJa = ['日', '月', '火', '水', '木', '金', '土'];
-    const weekdayEn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
     const d = _addDays(weekStart, i);
-    const dateKey = _formatDateKey(d);
+    const dateKey = formatYmd(d);
     const dayLines = _diaryDays[dateKey] || [];
     const dayOfWeek = d.getDay();
     const isToday = dateKey === todayKey;
@@ -217,11 +211,11 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
     dayNum.className = 'sb-diary-day-num';
 
     const dayWk = document.createElement('div');
-    dayWk.textContent = weekdayJa[dayOfWeek];
+    dayWk.textContent = WEEKDAY_JA[dayOfWeek];
     dayWk.className = 'sb-diary-day-wk-ja';
 
     const dayWkEn = document.createElement('div');
-    dayWkEn.textContent = weekdayEn[dayOfWeek];
+    dayWkEn.textContent = WEEKDAY_EN[dayOfWeek];
     dayWkEn.className = 'sb-diary-day-wk-en';
 
     dateBox.append(dayNum, dayWk, dayWkEn);
@@ -245,7 +239,7 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
             node.title = '元の行へジャンプ';
             node.onclick = () => {
                 /* ページが違えばまずそちらへ移動してからジャンプ */
-                const lineYM = _formatYM(d);
+                const lineYM = formatYm(d);
                 const baseYM = _diaryBasePageName?.match(/(20\d{2}\.\d{2})/)?.[1];
                 if (baseYM && lineYM !== baseYM) {
                     const newPage = _pageNameForMonth(_diaryBasePageName, lineYM);
@@ -324,7 +318,7 @@ const _renderDiary = async () => {
     const rightPage = document.createElement('div');
     rightPage.className = 'sb-diary-page sb-diary-page--right';
 
-    const todayKey = _formatDateKey(new Date());
+    const todayKey = formatYmd(new Date());
 
     [0, 1, 2].forEach(i => leftPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));
     [3, 4, 5, 6].forEach(i => rightPage.appendChild(_buildDayBlock(_diaryWeekStart, i, todayKey)));

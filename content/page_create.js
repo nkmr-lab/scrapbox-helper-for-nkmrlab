@@ -9,8 +9,6 @@ const generateCreateNoteUrl = (project, pageName, body) =>
 
 /* --- テンプレート --- */
 
-const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
-
 /* 指定月の研究ノートテンプレート本文を生成する */
 const generateResearchNoteBody = (date, userName) => {
     const year = date.getFullYear();
@@ -22,7 +20,7 @@ const generateResearchNoteBody = (date, userName) => {
     let body = `#${formatYm(prev)}_研究ノート_${userName} #${formatYm(next)}_研究ノート_${userName} #研究ノート_${userName}\n\n`;
     for (let d = 1; d <= lastDay; d++) {
         const day = new Date(year, month, d);
-        body += `[*( ${formatYmd(day)} (${WEEK_LABELS[day.getDay()]})]\n\n\n`;
+        body += `[*( ${formatYmd(day)} (${WEEKDAY_JA[day.getDay()]})]\n\n\n`;
     }
     body += `#研究ノート\n\n`;
     return body;
