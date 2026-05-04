@@ -162,7 +162,7 @@ const injectStyleSheet = () => {
 .sb-cal-weekday--sat { color:#3c66a0; }
 
 .sb-cal-cell {
-    border:1px dashed #c2a982;
+    border:1px solid rgba(0,0,0,0.10);
     background:rgba(255,255,252,0.7);
     padding:3px 4px; cursor:pointer;
     display:flex; flex-direction:column; gap:2px;
@@ -172,8 +172,7 @@ const injectStyleSheet = () => {
 }
 .sb-cal-cell:hover { background:rgba(255,253,238,0.95); }
 .sb-cal-cell--today {
-    background:rgba(255,235,160,0.55) !important;
-    box-shadow:inset 4px 0 0 #d4a04a;
+    box-shadow:inset 0 0 0 2px #4a3a28;
 }
 .sb-cal-cell--sun { color:#b03c3c; }
 .sb-cal-cell--sat { color:#3c66a0; }
