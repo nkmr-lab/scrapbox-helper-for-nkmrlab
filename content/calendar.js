@@ -85,6 +85,7 @@ const renderCalendarPanel = (pageName) => {
         applyCalendarLayout(panelNode, gridNode);
         toggleBtn.textContent = _calendarExpanded ? '[縮小]' : '[拡大]';
     });
+    toggleBtn.classList.add('sb-cal-toggle-btn');
 
     headerNode.append(
         renderButton('◀', () => {
@@ -130,12 +131,15 @@ const renderCalendarFromLines = (pageName, json) => {
 
     while (gridNode.children.length > 7) gridNode.removeChild(gridNode.lastChild);
 
-    /* ヘッダーのダイアリーボタンを最新の json.lines にバインドし直す */
+    /* ヘッダーのダイアリーボタンを最新の json.lines にバインドし直す。[今月へ] と [拡大] の間に挿入 */
     panelNode.querySelector('.sb-cal-diary-btn')?.remove();
     const diaryBtn = renderButton('[週間表示]', () => openDiary(json.lines, pageName));
     diaryBtn.classList.add('sb-cal-diary-btn');
     diaryBtn.title = '週間ダイアリービューを開く';
-    panelNode.querySelector('.sb-cal-header')?.appendChild(diaryBtn);
+    const headerNode = panelNode.querySelector('.sb-cal-header');
+    const toggleBtn = headerNode?.querySelector('.sb-cal-toggle-btn');
+    if (headerNode && toggleBtn) headerNode.insertBefore(diaryBtn, toggleBtn);
+    else headerNode?.appendChild(diaryBtn);
 
     if (countDateHeaders(json.lines) > 0) removeResearchNoteCreateUI();
 
