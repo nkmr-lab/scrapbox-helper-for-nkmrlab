@@ -44,7 +44,7 @@ const renderPinnedPages = (panelNode, pinned) => {
         const link = document.createElement('span');
         link.textContent = '・' + pageName;
         link.className = 'sb-pin-link';
-        link.onclick = () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`);
+        link.onclick = () => navigateToPage(pageName);
 
         const removeBtn = document.createElement('span');
         removeBtn.textContent = '✕';

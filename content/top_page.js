@@ -8,7 +8,7 @@ const renderMyResearchNote = (panelNode, settings) => {
     appendSectionHeader(panelNode, '🧑 自分の研究ノート');
     appendItem(
         panelNode, '📅 ' + pageName,
-        () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`)
+        () => navigateToPage(pageName)
     );
 };
 

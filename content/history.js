@@ -72,7 +72,7 @@ const renderHistory = async (panelNode, history) => {
     appendSectionHeader(panelNode, '🕒 最近見たページ');
     items.forEach(item => {
         appendItem(panelNode, '・' + item.pageName,
-            () => location.assign(`/${currentProjectName}/${encodeURIComponent(item.pageName)}`));
+            () => navigateToPage(item.pageName));
     });
 };
 
@@ -91,6 +91,6 @@ const renderFrequentPages = async (panelNode, history) => {
     appendSectionHeader(panelNode, '⭐ よく見ているページ');
     items.forEach(([pageName, count]) => {
         appendItem(panelNode, '・' + `${pageName} (${count})`,
-            () => location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}`));
+            () => navigateToPage(pageName));
     });
 };

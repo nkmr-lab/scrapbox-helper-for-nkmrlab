@@ -42,11 +42,10 @@ const shiftMonthInPageName = (pageName, offset) => {
     let y = +m[1], mo = +m[2] + offset;
     if (mo === 0) { y--; mo = 12; }
     if (mo === 13) { y++; mo = 1; }
-    return pageName.replace(/20\d{2}\.\d{2}/, `${y}.${String(mo).padStart(2, '0')}`);
+    return pageNameWithYM(pageName, `${y}.${String(mo).padStart(2, '0')}`);
 };
 
-const todayPage = (pageName) =>
-    pageName.replace(/20\d{2}\.\d{2}/, formatYm(new Date()));
+const todayPage = (pageName) => pageNameWithYM(pageName, formatYm(new Date()));
 
 /* 今日の日付に対応する行を検索する */
 const findTodayLine = (lines) => {
@@ -90,17 +89,17 @@ const renderCalendarPanel = (pageName) => {
     headerNode.append(
         renderButton('◀', () => {
             const np = shiftMonthInPageName(pageName, -1);
-            if (np) location.assign(`/${currentProjectName}/${encodeURIComponent(np)}`);
+            if (np) navigateToPage(np);
         }),
         document.createTextNode(ym ? `${ym[1]}年${parseInt(ym[2], 10)}月` : ''),
         renderButton('▶', () => {
             const np = shiftMonthInPageName(pageName, 1);
-            if (np) location.assign(`/${currentProjectName}/${encodeURIComponent(np)}`);
+            if (np) navigateToPage(np);
         }),
         Object.assign(document.createElement('span'), { className: 'sb-flex-spacer' }),
         renderButton('[今月へ]', () => {
             const np = todayPage(pageName);
-            if (np) location.assign(`/${currentProjectName}/${encodeURIComponent(np)}`);
+            if (np) navigateToPage(np);
         }),
         toggleBtn,
         renderButton('✕', () => {

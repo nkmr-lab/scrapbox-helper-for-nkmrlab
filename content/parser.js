@@ -27,6 +27,9 @@ const formatYmd = (date) => {
    match[1]=YYYY, match[2]=MM, match[3]=DD */
 const DATE_HEADER_RE = /^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/;
 
+/* ページ名内の年月部分 `YYYY.MM` を別の年月に置き換える（研究ノート系ページ名で頻用） */
+const pageNameWithYM = (pageName, ym) => pageName.replace(/20\d{2}\.\d{2}/, ym);
+
 /* --- ページ種別判定 --- */
 const PAGE_TYPES = {
     'research-note':   /研究ノート/,

@@ -117,10 +117,6 @@ const _parseDiaryByDay = (rawLines) => {
     return byDay;
 };
 
-/* 基準pageNameの YYYY.MM 部分を ym に置換した新しいpageNameを返す */
-const _pageNameForMonth = (basePageName, ym) =>
-    basePageName.replace(/20\d{2}\.\d{2}/, ym);
-
 /* 指定月のデータをキャッシュから返す。なければfetchして格納（並行fetchは1本にまとめる） */
 const _loadMonthData = async (ym) => {
     if (_diaryMonthCache[ym]) return _diaryMonthCache[ym];
@@ -128,7 +124,7 @@ const _loadMonthData = async (ym) => {
     if (!_diaryBasePageName) return {};
 
     _diaryFetchInflight[ym] = (async () => {
-        const pageName = _pageNameForMonth(_diaryBasePageName, ym);
+        const pageName = pageNameWithYM(_diaryBasePageName, ym);
         const json = await fetchPage(currentProjectName, pageName);
         const byDay = json ? _parseDiaryByDay(json.lines) : {};
         _diaryMonthCache[ym] = byDay;
@@ -242,9 +238,9 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
                 const lineYM = formatYm(d);
                 const baseYM = _diaryBasePageName?.match(/(20\d{2}\.\d{2})/)?.[1];
                 if (baseYM && lineYM !== baseYM) {
-                    const newPage = _pageNameForMonth(_diaryBasePageName, lineYM);
+                    const newPage = pageNameWithYM(_diaryBasePageName, lineYM);
                     closeDiary();
-                    location.assign(`/${currentProjectName}/${encodeURIComponent(newPage)}#${line.id}`);
+                    navigateToPage(newPage, line.id);
                 } else {
                     closeDiary();
                     jumpToLineId(line.id);

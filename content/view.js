@@ -208,6 +208,10 @@ const appendCloseButton = (panelNode, panelId) => {
     panelNode.appendChild(btn);
 };
 
+/* 現在のプロジェクトの指定ページへナビゲート（任意で行ID hash を付与） */
+const navigateToPage = (pageName, lineId = '') =>
+    location.assign(`/${currentProjectName}/${encodeURIComponent(pageName)}${lineId ? '#' + lineId : ''}`);
+
 /* 指定行IDの位置にスクロールジャンプする */
 const jumpToLineId = id => {
     const a = document.createElement('a');
