@@ -120,7 +120,7 @@ const injectStyleSheet = () => {
 
 /* ===== Calendar (paper notebook aesthetic, ダイアリーと統一) ===== */
 .sb-panel-calendar {
-    background:#faf6ec !important;
+    background:#fcfbf5 !important;
     color:#3a2f24 !important;
     border:1px solid #b8a07a !important;
     box-shadow:0 4px 14px rgba(40,25,10,0.18) !important;
@@ -129,7 +129,7 @@ const injectStyleSheet = () => {
 .sb-cal-header {
     padding:8px 10px; font-weight:bold; font-size:14px;
     border-bottom:2px solid #b8a07a;
-    background:#f3ead2; color:#4a3a28;
+    background:#efebde; color:#4a3a28;
     display:flex; align-items:center; gap:8px;
     letter-spacing:1px;
 }
@@ -145,7 +145,7 @@ const injectStyleSheet = () => {
     display:grid; grid-template-columns:repeat(7,1fr);
     grid-template-rows:auto repeat(6,1fr); gap:2px;
     font-size:var(--sb-calFontSize, 11px);
-    background:#faf6ec;
+    background:#fcfbf5;
 }
 .sb-cal-grid--expanded {
     grid-template-rows:auto repeat(6, minmax(140px, 1fr)); gap:6px;
@@ -163,14 +163,14 @@ const injectStyleSheet = () => {
 
 .sb-cal-cell {
     border:1px dashed #c2a982;
-    background:rgba(255,253,244,0.7);
+    background:rgba(255,255,252,0.7);
     padding:3px 4px; cursor:pointer;
     display:flex; flex-direction:column; gap:2px;
     overflow:hidden; min-height:0;
     color:#3a2f24;
     transition:background 0.15s;
 }
-.sb-cal-cell:hover { background:rgba(255,250,225,0.95); }
+.sb-cal-cell:hover { background:rgba(255,253,238,0.95); }
 .sb-cal-cell--today {
     background:rgba(255,235,160,0.55) !important;
     box-shadow:inset 4px 0 0 #d4a04a;
@@ -365,7 +365,7 @@ const injectStyleSheet = () => {
     position:relative;
     width:96vw; max-width:1280px;
     height:92vh; max-height:1080px;
-    background:#faf6ec;
+    background:#fcfbf5;
     color:#3a2f24;
     box-shadow:0 24px 60px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(160,130,90,0.15);
     border-radius:4px;
@@ -423,7 +423,7 @@ const injectStyleSheet = () => {
     overflow-y:auto;
     padding:8px 22px;
     scrollbar-width:thin;
-    background:rgba(255,253,244,0.55);
+    background:rgba(255,255,252,0.6);
 }
 .sb-diary-page--left { padding-right:18px; }
 .sb-diary-page--right { padding-left:18px; }
