@@ -420,18 +420,20 @@ const injectStyleSheet = () => {
 }
 .sb-diary-page {
     flex:1; flex-basis:50%;
-    overflow-y:auto;
     padding:8px 22px;
-    scrollbar-width:thin;
     background:rgba(255,255,252,0.6);
+    display:flex; flex-direction:column;
+    overflow:hidden;  /* ページ自体はスクロールしない */
 }
 .sb-diary-page--left { padding-right:18px; }
 .sb-diary-page--right { padding-left:18px; }
 .sb-diary-day {
+    flex:1 1 0;          /* ページ高さを等幅に分配（左3日/右4日それぞれの中で均等） */
+    min-height:0;        /* 子のスクロール領域を機能させる */
     display:flex; align-items:stretch;
     border-bottom:1px dashed #c2a982;
-    min-height:80px;
     padding:8px 0;
+    overflow:hidden;
 }
 .sb-diary-day:last-child { border-bottom:none; }
 .sb-diary-day--today {
@@ -469,8 +471,10 @@ const injectStyleSheet = () => {
 
 .sb-diary-content {
     flex:1; padding-top:6px;
-    overflow:hidden;
-    min-width:0;
+    overflow-y:auto;     /* 1日のコンテンツが超えたら日内でスクロール */
+    overflow-x:hidden;
+    min-width:0; min-height:0;
+    scrollbar-width:thin;
 }
 .sb-diary-line {
     padding:3px 6px; line-height:1.65;
