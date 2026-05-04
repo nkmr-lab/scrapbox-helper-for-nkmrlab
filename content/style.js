@@ -414,7 +414,10 @@ const injectStyleSheet = () => {
     display:flex; flex-direction:column;
     overflow:hidden;  /* ページ自体はスクロールしない */
 }
-.sb-diary-page--left { padding-right:18px; }
+.sb-diary-page--left {
+    padding-right:18px;
+    border-right:1px dashed #b8a07a;  /* 綴じ目の目印 */
+}
 .sb-diary-page--right { padding-left:18px; }
 .sb-diary-day {
     flex:1 1 0;          /* ページ高さを等幅に分配（左3日/右4日それぞれの中で均等） */
