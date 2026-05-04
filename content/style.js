@@ -239,11 +239,11 @@ const injectStyleSheet = () => {
 .sb-toggle-btn { cursor:pointer; font-size:11px; color:var(--sb-textMuted); margin:4px 0; }
 .sb-create-msg { margin-bottom:6px; color:var(--sb-textMuted); }
 
-/* ===== Heatmap (paper notebook 用 warm tone) ===== */
-.sb-cal-cell--heat1 { background:rgba(220, 180, 120, 0.18) !important; }
-.sb-cal-cell--heat2 { background:rgba(220, 160, 90, 0.30) !important; }
-.sb-cal-cell--heat3 { background:rgba(210, 130, 70, 0.42) !important; }
-.sb-cal-cell--heat4 { background:rgba(190, 100, 60, 0.55) !important; }
+/* ===== Heatmap (元の緑系に戻す) ===== */
+.sb-cal-cell--heat1 { background:rgba(0,150,0,0.10) !important; }
+.sb-cal-cell--heat2 { background:rgba(0,150,0,0.20) !important; }
+.sb-cal-cell--heat3 { background:rgba(0,150,0,0.35) !important; }
+.sb-cal-cell--heat4 { background:rgba(0,150,0,0.55) !important; }
 
 /* ===== Forms / UI ===== */
 .sb-input { width:100%; color:var(--sb-formText); }
