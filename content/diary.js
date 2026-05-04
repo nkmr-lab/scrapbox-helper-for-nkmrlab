@@ -276,8 +276,8 @@ const _renderDiary = async () => {
     const weekEnd = _addDays(_diaryWeekStart, 6);
     const sameMonth = _diaryWeekStart.getMonth() === weekEnd.getMonth();
     const titleText = sameMonth
-        ? `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}月 ${_diaryWeekStart.getDate()}日 — ${weekEnd.getDate()}日`
-        : `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}/${_diaryWeekStart.getDate()} — ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+        ? `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}月 ${_diaryWeekStart.getDate()}日 ～ ${weekEnd.getDate()}日`
+        : `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}月${_diaryWeekStart.getDate()}日 ～ ${weekEnd.getMonth() + 1}月${weekEnd.getDate()}日`;
     const title = document.createElement('div');
     title.className = 'sb-diary-week-title';
     title.textContent = titleText;
