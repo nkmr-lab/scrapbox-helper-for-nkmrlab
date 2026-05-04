@@ -50,8 +50,33 @@ const _toImageUrl = (raw) => {
     return null;
 };
 
-/* テキスト中の [url] を画像なら <img>、そうでなければ元の表記で展開する */
+/* Scrapboxの画像並べ記法: 行全体が `[| [url][url][url]...]` 形式 */
+const _IMG_ROW_RE = /^\[\|\s+(.+)\]\s*$/;
+
+/* テキスト中の [url] を画像なら <img>、そうでなければ元の表記で展開する。
+   先頭が `[| ...]` の画像並べ記法なら横並びの画像グリッドにする。 */
 const _renderLineWithImages = (text, parentNode) => {
+    /* 画像並べ記法（行全体） */
+    const rowMatch = text.trim().match(_IMG_ROW_RE);
+    if (rowMatch) {
+        const items = [...rowMatch[1].matchAll(/\[([^\]]+)\]/g)];
+        const urls = items.map(m => _toImageUrl(m[1])).filter(Boolean);
+        if (urls.length) {
+            const row = document.createElement('div');
+            row.className = 'sb-diary-img-row';
+            urls.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'sb-diary-img sb-diary-img--row';
+                img.loading = 'lazy';
+                row.appendChild(img);
+            });
+            parentNode.appendChild(row);
+            return true;
+        }
+    }
+
+    /* 通常: 単発の [url] を画像なら img、それ以外はテキスト */
     const re = /\[([^\]]+)\]/g;
     let lastIndex = 0;
     let m;
@@ -274,10 +299,7 @@ const _renderDiary = async () => {
     };
 
     const weekEnd = _addDays(_diaryWeekStart, 6);
-    const sameMonth = _diaryWeekStart.getMonth() === weekEnd.getMonth();
-    const titleText = sameMonth
-        ? `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}月 ${_diaryWeekStart.getDate()}日 ～ ${weekEnd.getDate()}日`
-        : `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}月${_diaryWeekStart.getDate()}日 ～ ${weekEnd.getMonth() + 1}月${weekEnd.getDate()}日`;
+    const titleText = `${_diaryWeekStart.getFullYear()}年 ${_diaryWeekStart.getMonth() + 1}月${_diaryWeekStart.getDate()}日 ～ ${weekEnd.getMonth() + 1}月${weekEnd.getDate()}日`;
     const title = document.createElement('div');
     title.className = 'sb-diary-week-title';
     title.textContent = titleText;

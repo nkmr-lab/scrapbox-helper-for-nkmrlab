@@ -492,6 +492,16 @@ const injectStyleSheet = () => {
     box-shadow:1px 1px 2px rgba(40,25,10,0.15);
     object-fit:cover;
 }
+/* 画像並べ記法 [| [url][url]...] 用の横並びグリッド */
+.sb-diary-img-row {
+    display:flex; flex-wrap:wrap;
+    gap:4px; padding:6px 0;
+}
+.sb-diary-img--row {
+    max-height:64px; max-width:120px;
+    margin:0;
+    object-fit:cover;
+}
 .sb-diary-empty {
     color:#c2a982; font-style:italic;
     padding:14px 6px; font-size:13px;
