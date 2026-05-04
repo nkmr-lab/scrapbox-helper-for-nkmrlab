@@ -132,7 +132,7 @@ const renderCalendarFromLines = (pageName, json) => {
 
     /* ヘッダーのダイアリーボタンを最新の json.lines にバインドし直す */
     panelNode.querySelector('.sb-cal-diary-btn')?.remove();
-    const diaryBtn = renderButton('📖', () => openDiary(json.lines, pageName));
+    const diaryBtn = renderButton('[週間表示]', () => openDiary(json.lines, pageName));
     diaryBtn.classList.add('sb-cal-diary-btn');
     diaryBtn.title = '週間ダイアリービューを開く';
     panelNode.querySelector('.sb-cal-header')?.appendChild(diaryBtn);

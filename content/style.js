@@ -138,7 +138,6 @@ const injectStyleSheet = () => {
     color:#4a3a28;
 }
 .sb-cal-header .sb-btn:hover { background:rgba(184,160,122,0.25); }
-.sb-cal-diary-btn { font-size:16px; padding:2px 8px !important; }
 
 .sb-cal-grid {
     flex:1; min-height:0; padding:6px;
