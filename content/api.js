@@ -8,12 +8,13 @@
 const OPENAI_MODEL = 'gpt-4.1-mini';
 
 /* --- Scrapbox API --- */
-/* Scrapboxページをフェッチして返す（ブラウザキャッシュを避ける） */
+/* Scrapboxページをフェッチして返す。ブラウザキャッシュ・If-None-Matchパス・サーバ中間キャッシュを完全に避けるため
+   cache:'no-store' + クエリ文字列で毎回ユニークURLにする */
 const fetchPage = async (projectName, pageName) => {
     if (projectName === null) return null;
     const r = await fetch(
-        `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}`,
-        { cache: 'no-cache' }
+        `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}?_=${Date.now()}`,
+        { cache: 'no-store' }
     );
     if (!r.ok) { console.warn(`[SB Helper] fetchPage failed: ${r.status} ${projectName}/${pageName}`); return null; }
     return r.json();
@@ -51,12 +52,12 @@ const loadProjectUsers = async (projectName) => {
     }
 };
 
-/* ページのETagをHEADリクエストで取得する（ブラウザキャッシュを避け、ETagは丸ごと使う） */
+/* ページのETagをHEADリクエストで取得する（ブラウザキャッシュ完全バイパス） */
 const headPageETag = async (projectName, pageName) => {
     try {
         const r = await fetch(
-            `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}`,
-            { method: 'HEAD', cache: 'no-cache' }
+            `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}?_=${Date.now()}`,
+            { method: 'HEAD', cache: 'no-store' }
         );
         if (!r.ok) return null;
         return r.headers.get('etag') || null;
