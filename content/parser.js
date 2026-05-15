@@ -30,6 +30,58 @@ const DATE_HEADER_RE = /^\[\*\(\s*(20\d{2})\.(\d{2})\.(\d{2})/;
 /* ページ名内の年月部分 `YYYY.MM` を別の年月に置き換える（研究ノート系ページ名で頻用） */
 const pageNameWithYM = (pageName, ym) => pageName.replace(/20\d{2}\.\d{2}/, ym);
 
+/* --- Scrapbox bracket 記法のパース ---
+   `[* text]` `[*& text]` `[** text]` 等 → bold （* を含むなら太字扱い）
+   `[label url]` / `[url label]` → 平文（label部分のみ）
+   `[label]` （URLなし）→ 平文（中身のみ）
+   画像URL（gyazo or 拡張子）→ image */
+const _SB_DECORATOR_RE = /^([*\/\-_$&]+)\s+(.+)$/;
+const _SB_IMG_URL_RE = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg)(?:[?#]\S*)?$/i;
+const _SB_GYAZO_RE = /^https?:\/\/(?:www\.)?gyazo\.com\/([a-z0-9]+)(?:[\/?#].*)?$/i;
+const _SB_URL_RE = /^https?:\/\/\S+$/;
+
+/* `[内容]` の中身トークンが画像URLなら表示用URL（gyazoはthumb/1000）を返す */
+const bracketTokenToImageUrl = (token) => {
+    const g = token.match(_SB_GYAZO_RE);
+    if (g) return `https://gyazo.com/${g[1]}/thumb/1000`;
+    if (_SB_IMG_URL_RE.test(token)) return token;
+    return null;
+};
+
+/* `[内容]` の中身を解析する。返り値: {type:'image', url} | {type:'bold'|'plain', text} */
+const parseSbBracket = (inner) => {
+    const trimmed = inner.trim();
+    const tokens = trimmed.split(/\s+/);
+
+    /* 中身に画像URLが含まれていれば画像扱い */
+    for (const tok of tokens) {
+        const imgUrl = bracketTokenToImageUrl(tok);
+        if (imgUrl) return { type: 'image', url: imgUrl };
+    }
+
+    /* 装飾 [* text] [*& text] [** text] 等 */
+    const dec = trimmed.match(_SB_DECORATOR_RE);
+    if (dec) {
+        const isBold = dec[1].includes('*');
+        return { type: isBold ? 'bold' : 'plain', text: dec[2] };
+    }
+
+    /* 複数トークン: ラベル付きリンク [text url] / [url text] → label のみ */
+    if (tokens.length >= 2) {
+        const labels = tokens.filter(t => !_SB_URL_RE.test(t));
+        if (labels.length) return { type: 'plain', text: labels.join(' ') };
+    }
+
+    /* 単一トークン: [text] 内部リンク or [https://...] */
+    return { type: 'plain', text: trimmed };
+};
+
+/* Scrapbox記法を平文化する（カレンダー snippet 等のテキスト表示用、画像は省略） */
+const stripSbMarkup = (text) => text.replace(/\[([^\]]+)\]/g, (_, inner) => {
+    const p = parseSbBracket(inner);
+    return p.type === 'image' ? '' : p.text;
+});
+
 /* --- ページ種別判定 --- */
 const PAGE_TYPES = {
     'research-note':   /研究ノート/,
@@ -129,7 +181,8 @@ const parseCalendarData = (rawLines) => {
         if (cur && text && !text.startsWith('#') && !text.startsWith('>') &&
             !text.startsWith('[https://') && !text.startsWith('[[https://') &&
             !text.startsWith('[| ') && snippets[cur].length < CALENDAR_SNIPPET_LIMIT) {
-            snippets[cur].push(text);
+            const cleaned = stripSbMarkup(text).trim();
+            if (cleaned) snippets[cur].push(cleaned);
         }
     }
     return { days, snippets };

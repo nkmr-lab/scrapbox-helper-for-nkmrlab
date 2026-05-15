@@ -31,33 +31,21 @@ const _startOfWeekMonday = (date) => {
 
 const _lastDayOfMonth = (year, month1based) => new Date(year, month1based, 0);
 
-/* --- 画像URL判定（Scrapbox記法 [url] の中身用） --- */
-const _IMG_URL_RE = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|svg)(?:[?#]\S*)?$/i;
-const _GYAZO_PAGE_RE = /^https?:\/\/(?:www\.)?gyazo\.com\/([a-z0-9]+)(?:[\/?#].*)?$/i;
-
-/* `[url]` の中身を画像URLに変換する。中身に空白で分けたトークンが含まれる場合（[url label] / [label url] 等）も対応。
-   gyazo の場合は /thumb/1000 を用いる（拡張子無依存で必ずthumbnail画像が返る） */
-const _toImageUrl = (raw) => {
-    const tokens = raw.trim().split(/\s+/);
-    for (const tok of tokens) {
-        const g = tok.match(_GYAZO_PAGE_RE);
-        if (g) return `https://gyazo.com/${g[1]}/thumb/1000`;
-        if (_IMG_URL_RE.test(tok)) return tok;
-    }
-    return null;
-};
-
 /* Scrapboxの画像並べ記法: 行全体が `[| [url][url][url]...]` 形式 */
 const _IMG_ROW_RE = /^\[\|\s+(.+)\]\s*$/;
 
-/* テキスト中の [url] を画像なら <img>、そうでなければ元の表記で展開する。
-   先頭が `[| ...]` の画像並べ記法なら横並びの画像グリッドにする。 */
+/* テキスト中の [...] を parseSbBracket で解釈して描画する:
+   - image → <img>
+   - bold → <strong>
+   - plain → テキスト（ラベル/リンク先テキスト/装飾外しの中身）
+   先頭が `[| [url][url]...]` の画像並べ記法なら横並びの画像グリッドにする。 */
 const _renderLineWithImages = (text, parentNode) => {
     /* 画像並べ記法（行全体） */
     const rowMatch = text.trim().match(_IMG_ROW_RE);
     if (rowMatch) {
         const items = [...rowMatch[1].matchAll(/\[([^\]]+)\]/g)];
-        const urls = items.map(m => _toImageUrl(m[1])).filter(Boolean);
+        const urls = items.map(m => parseSbBracket(m[1]))
+            .filter(p => p.type === 'image').map(p => p.url);
         if (urls.length) {
             const row = document.createElement('div');
             row.className = 'sb-diary-img-row';
@@ -73,7 +61,7 @@ const _renderLineWithImages = (text, parentNode) => {
         }
     }
 
-    /* 通常: 単発の [url] を画像なら img、それ以外はテキスト */
+    /* 通常: 各 [...] を解釈して描画 */
     const re = /\[([^\]]+)\]/g;
     let lastIndex = 0;
     let m;
@@ -82,16 +70,21 @@ const _renderLineWithImages = (text, parentNode) => {
         const before = text.slice(lastIndex, m.index);
         if (before) parentNode.appendChild(document.createTextNode(before));
 
-        const imgUrl = _toImageUrl(m[1]);
-        if (imgUrl) {
+        const parsed = parseSbBracket(m[1]);
+        if (parsed.type === 'image') {
             const img = document.createElement('img');
-            img.src = imgUrl;
+            img.src = parsed.url;
             img.className = 'sb-diary-img';
             img.loading = 'lazy';
             parentNode.appendChild(img);
             hasImg = true;
+        } else if (parsed.type === 'bold') {
+            const s = document.createElement('strong');
+            s.textContent = parsed.text;
+            s.className = 'sb-diary-bold';
+            parentNode.appendChild(s);
         } else {
-            parentNode.appendChild(document.createTextNode(m[0]));
+            parentNode.appendChild(document.createTextNode(parsed.text));
         }
         lastIndex = m.index + m[0].length;
     }

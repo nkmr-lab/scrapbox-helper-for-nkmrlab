@@ -475,6 +475,10 @@ const injectStyleSheet = () => {
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .sb-diary-line:hover { background:rgba(184,160,122,0.22); }
+.sb-diary-bold {
+    font-weight:bold; color:#2a1f14;
+    font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
+}
 .sb-diary-line--has-img {
     white-space:normal; overflow-wrap:break-word;
     text-overflow:clip; line-height:1.4;
