@@ -76,9 +76,10 @@ const parseSbBracket = (inner) => {
     return { type: 'plain', text: trimmed };
 };
 
-/* Scrapbox記法を平文化する（カレンダー snippet 等のテキスト表示用、画像は省略） */
-const stripSbMarkup = (text) => text.replace(/\[([^\]]+)\]/g, (_, inner) => {
-    const p = parseSbBracket(inner);
+/* Scrapbox記法を平文化する（カレンダー snippet 等のテキスト表示用、画像は省略）。
+   `[[...]]` も `[...]` 同様に処理する */
+const stripSbMarkup = (text) => text.replace(/\[\[([^\]]+)\]\]|\[([^\]]+)\]/g, (_, dbl, sgl) => {
+    const p = parseSbBracket(dbl || sgl);
     return p.type === 'image' ? '' : p.text;
 });
 

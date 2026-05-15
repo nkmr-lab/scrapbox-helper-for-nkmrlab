@@ -61,8 +61,8 @@ const _renderLineWithImages = (text, parentNode) => {
         }
     }
 
-    /* 通常: 各 [...] を解釈して描画 */
-    const re = /\[([^\]]+)\]/g;
+    /* `[[...]]` (大画像/強調) を先に、`[...]` を後に */
+    const re = /\[\[([^\]]+)\]\]|\[([^\]]+)\]/g;
     let lastIndex = 0;
     let m;
     let hasImg = false;
@@ -70,15 +70,16 @@ const _renderLineWithImages = (text, parentNode) => {
         const before = text.slice(lastIndex, m.index);
         if (before) parentNode.appendChild(document.createTextNode(before));
 
-        const parsed = parseSbBracket(m[1]);
+        const isDouble = !!m[1];
+        const parsed = parseSbBracket(m[1] || m[2]);
         if (parsed.type === 'image') {
             const img = document.createElement('img');
             img.src = parsed.url;
-            img.className = 'sb-diary-img';
+            img.className = isDouble ? 'sb-diary-img sb-diary-img--large' : 'sb-diary-img';
             img.loading = 'lazy';
             parentNode.appendChild(img);
             hasImg = true;
-        } else if (parsed.type === 'bold') {
+        } else if (parsed.type === 'bold' || isDouble) {
             const s = document.createElement('strong');
             s.textContent = parsed.text;
             s.className = 'sb-diary-bold';

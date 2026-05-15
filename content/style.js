@@ -492,6 +492,13 @@ const injectStyleSheet = () => {
     box-shadow:1px 1px 2px rgba(40,25,10,0.15);
     object-fit:cover;
 }
+/* [[url]] 記法（Scrapbox 大画像）の場合は表示も大きく */
+.sb-diary-img--large {
+    max-height:240px;
+    object-fit:contain;
+    display:block;
+    margin:6px 0;
+}
 /* 画像並べ記法 [| [url][url]...] 用の横並びグリッド */
 .sb-diary-img-row {
     display:flex; flex-wrap:wrap;
