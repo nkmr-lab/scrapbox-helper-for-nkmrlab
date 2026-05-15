@@ -79,11 +79,11 @@ const _renderLineWithImages = (text, parentNode) => {
             img.loading = 'lazy';
             parentNode.appendChild(img);
             hasImg = true;
-        } else if (parsed.type === 'bold' || isDouble) {
-            const s = document.createElement('strong');
-            s.textContent = parsed.text;
-            s.className = 'sb-diary-bold';
-            parentNode.appendChild(s);
+        } else if (parsed.type === 'styled') {
+            parentNode.appendChild(_wrapWithStyles(parsed.text, parsed.styles));
+        } else if (isDouble) {
+            /* [[text]]（URL含まない）→ Scrapboxの強調記法。boldで描画 */
+            parentNode.appendChild(_wrapWithStyles(parsed.text, { bold: true }));
         } else {
             parentNode.appendChild(document.createTextNode(parsed.text));
         }
@@ -92,6 +92,21 @@ const _renderLineWithImages = (text, parentNode) => {
     const tail = text.slice(lastIndex);
     if (tail) parentNode.appendChild(document.createTextNode(tail));
     return hasImg;
+};
+
+/* テキストを styles {bold, strike, underline, italic} に応じて入れ子要素で包む。
+   内→外の順で重ねるので、装飾の重複適用が自然に効く */
+const _wrapWithStyles = (text, styles) => {
+    let node = document.createTextNode(text);
+    if (styles.italic)    { const e = document.createElement('em'); e.appendChild(node); node = e; }
+    if (styles.underline) { const u = document.createElement('u'); u.appendChild(node); node = u; }
+    if (styles.strike)    { const s = document.createElement('s'); s.appendChild(node); node = s; }
+    if (styles.bold)      {
+        const b = document.createElement('strong');
+        b.className = 'sb-diary-bold';
+        b.appendChild(node); node = b;
+    }
+    return node;
 };
 
 /* ページの行データを日付ごとに分割する。日付ヘッダ `[*( YYYY.MM.DD ...)]` を境界とする。

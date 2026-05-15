@@ -48,7 +48,10 @@ const bracketTokenToImageUrl = (token) => {
     return null;
 };
 
-/* `[内容]` の中身を解析する。返り値: {type:'image', url} | {type:'bold'|'plain', text} */
+/* `[内容]` の中身を解析する。返り値:
+   - {type:'image', url}
+   - {type:'styled', text, styles:{bold,strike,underline,italic}}  装飾あり
+   - {type:'plain', text}                                            装飾なし */
 const parseSbBracket = (inner) => {
     const trimmed = inner.trim();
     const tokens = trimmed.split(/\s+/);
@@ -59,11 +62,20 @@ const parseSbBracket = (inner) => {
         if (imgUrl) return { type: 'image', url: imgUrl };
     }
 
-    /* 装飾 [* text] [*& text] [** text] 等 */
+    /* 装飾 [* text] [*& text] [** text] [- text] [_ text] [/ text] 等 */
     const dec = trimmed.match(_SB_DECORATOR_RE);
     if (dec) {
-        const isBold = dec[1].includes('*');
-        return { type: isBold ? 'bold' : 'plain', text: dec[2] };
+        const d = dec[1];
+        const styles = {
+            bold:      d.includes('*'),
+            strike:    d.includes('-'),
+            underline: d.includes('_'),
+            italic:    d.includes('/'),
+        };
+        const hasStyle = styles.bold || styles.strike || styles.underline || styles.italic;
+        return hasStyle
+            ? { type: 'styled', text: dec[2], styles }
+            : { type: 'plain', text: dec[2] };
     }
 
     /* 複数トークン: ラベル付きリンク [text url] / [url text] → label のみ */
