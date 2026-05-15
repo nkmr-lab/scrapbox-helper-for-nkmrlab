@@ -120,8 +120,9 @@ const parseCalendarData = (rawLines) => {
         const mm = text.match(DATE_HEADER_RE);
         if (mm) {
             cur = `${mm[1]}.${mm[2]}.${mm[3]}`;
-            days[cur] = line.id;
-            snippets[cur] = [];
+            /* 同じ日付ヘッダが複数回出てきても上書きしない（2回目以降は追記） */
+            if (!days[cur]) days[cur] = line.id;
+            if (!snippets[cur]) snippets[cur] = [];
             continue;
         }
         text = text.replace(/\[[^\]]+\.icon\]/g, '').trim();

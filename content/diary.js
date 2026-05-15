@@ -100,7 +100,8 @@ const _renderLineWithImages = (text, parentNode) => {
     return hasImg;
 };
 
-/* ページの行データを日付ごとに分割する。日付ヘッダ `[*( YYYY.MM.DD ...)]` を境界とする */
+/* ページの行データを日付ごとに分割する。日付ヘッダ `[*( YYYY.MM.DD ...)]` を境界とする。
+   同じ日付ヘッダが複数回出てきた場合も上書きせず追記する（研究ノート内で重複定義されるケース対応） */
 const _parseDiaryByDay = (rawLines) => {
     const byDay = {};
     let curKey = null;
@@ -109,7 +110,7 @@ const _parseDiaryByDay = (rawLines) => {
         const m = text.match(DATE_HEADER_RE);
         if (m) {
             curKey = `${m[1]}.${m[2]}.${m[3]}`;
-            byDay[curKey] = [];
+            if (!byDay[curKey]) byDay[curKey] = [];
             continue;
         }
         if (curKey && line.text) byDay[curKey].push(line);
