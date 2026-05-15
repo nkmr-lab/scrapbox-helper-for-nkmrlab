@@ -479,6 +479,14 @@ const injectStyleSheet = () => {
     font-weight:bold; color:#2a1f14;
     font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
 }
+.sb-diary-check {
+    display:inline-block; min-width:1em; text-align:center;
+    color:#6a5a48; margin-right:3px;
+    font-family:'Hiragino Mincho ProN','Yu Mincho',serif;
+}
+.sb-diary-check--done {
+    color:#2a8c3a; font-weight:bold;
+}
 .sb-diary-line--has-img {
     white-space:normal; overflow-wrap:break-word;
     text-overflow:clip; line-height:1.4;

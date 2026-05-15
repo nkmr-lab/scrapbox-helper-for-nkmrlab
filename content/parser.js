@@ -50,11 +50,16 @@ const bracketTokenToImageUrl = (token) => {
 
 /* `[内容]` の中身を解析する。返り値:
    - {type:'image', url}
+   - {type:'check', done}              `[x]` `[ ]` `[_]` 等のTODO/DONEマーク
    - {type:'styled', text, styles:{bold,strike,underline,italic}}  装飾あり
    - {type:'plain', text}                                            装飾なし */
 const parseSbBracket = (inner) => {
     const trimmed = inner.trim();
     const tokens = trimmed.split(/\s+/);
+
+    /* TODO/DONE マーク（小文字大文字両対応、空・アンダースコアは未チェック） */
+    if (trimmed === 'x' || trimmed === 'X') return { type: 'check', done: true };
+    if (trimmed === '' || trimmed === '_') return { type: 'check', done: false };
 
     /* 中身に画像URLが含まれていれば画像扱い */
     for (const tok of tokens) {
@@ -92,7 +97,9 @@ const parseSbBracket = (inner) => {
    `[[...]]` も `[...]` 同様に処理する */
 const stripSbMarkup = (text) => text.replace(/\[\[([^\]]+)\]\]|\[([^\]]+)\]/g, (_, dbl, sgl) => {
     const p = parseSbBracket(dbl || sgl);
-    return p.type === 'image' ? '' : p.text;
+    if (p.type === 'image') return '';
+    if (p.type === 'check') return p.done ? '✓' : '□';
+    return p.text;
 });
 
 /* --- ページ種別判定 --- */

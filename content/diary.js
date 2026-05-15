@@ -79,6 +79,11 @@ const _renderLineWithImages = (text, parentNode) => {
             img.loading = 'lazy';
             parentNode.appendChild(img);
             hasImg = true;
+        } else if (parsed.type === 'check') {
+            const span = document.createElement('span');
+            span.textContent = parsed.done ? '✓' : '□';
+            span.className = 'sb-diary-check' + (parsed.done ? ' sb-diary-check--done' : '');
+            parentNode.appendChild(span);
         } else if (parsed.type === 'styled') {
             parentNode.appendChild(_wrapWithStyles(parsed.text, parsed.styles));
         } else if (isDouble) {
