@@ -123,7 +123,10 @@ const _wrapWithStyles = (text, styles) => {
 };
 
 /* ページの行データを日付ごとに分割する。日付ヘッダ `[*( YYYY.MM.DD ...)]` を境界とする。
-   同じ日付ヘッダが複数回出てきた場合も上書きせず追記する（研究ノート内で重複定義されるケース対応）。
+   返り値: { [YYYY.MM.DD]: { headerId, lines } }
+   - headerId: 日付ヘッダ行の id（日付クリックでのジャンプ先）
+   - lines: その日の本文行配列
+   同じ日付ヘッダが複数回出てきた場合は最初の出現の headerId を保持し、本文は追記する。
    `#tag` 行（ページ末尾の `#研究ノート` 等）はノート本文ではないので除外する。 */
 const _parseDiaryByDay = (rawLines) => {
     const byDay = {};
@@ -133,14 +136,28 @@ const _parseDiaryByDay = (rawLines) => {
         const m = text.match(DATE_HEADER_RE);
         if (m) {
             curKey = `${m[1]}.${m[2]}.${m[3]}`;
-            if (!byDay[curKey]) byDay[curKey] = [];
+            if (!byDay[curKey]) byDay[curKey] = { headerId: line.id, lines: [] };
             continue;
         }
         if (!curKey || !line.text) continue;
-        if (text.startsWith('#')) continue;  /* タグ行は除外 */
-        byDay[curKey].push(line);
+        if (text.startsWith('#')) continue;
+        byDay[curKey].lines.push(line);
     }
     return byDay;
+};
+
+/* 指定の日付・行IDへジャンプする（必要なら別月のページへ遷移してから） */
+const _jumpToDiaryLine = (date, lineId) => {
+    const dayYM = formatYm(date);
+    const baseYM = _diaryBasePageName?.match(/(20\d{2}\.\d{2})/)?.[1];
+    if (baseYM && dayYM !== baseYM) {
+        const newPage = pageNameWithYM(_diaryBasePageName, dayYM);
+        closeDiary();
+        navigateToPage(newPage, lineId);
+    } else {
+        closeDiary();
+        jumpToLineId(lineId);
+    }
 };
 
 /* 指定月のデータをキャッシュから返す。なければfetchして格納（並行fetchは1本にまとめる） */
@@ -215,7 +232,9 @@ const closeDiary = () => {
 const _buildDayBlock = (weekStart, i, todayKey) => {
     const d = _addDays(weekStart, i);
     const dateKey = formatYmd(d);
-    const dayLines = _diaryDays[dateKey] || [];
+    const dayData = _diaryDays[dateKey];
+    const dayLines = dayData?.lines || [];
+    const headerId = dayData?.headerId || null;
     const dayOfWeek = d.getDay();
     const isToday = dateKey === todayKey;
 
@@ -227,6 +246,11 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
 
     const dateBox = document.createElement('div');
     dateBox.className = 'sb-diary-date-box';
+    if (headerId) {
+        dateBox.classList.add('sb-diary-date-box--clickable');
+        dateBox.title = 'この日の見出しへジャンプ';
+        dateBox.onclick = () => _jumpToDiaryLine(d, headerId);
+    }
 
     const dayNum = document.createElement('div');
     dayNum.textContent = String(d.getDate());
@@ -259,19 +283,7 @@ const _buildDayBlock = (weekStart, i, todayKey) => {
             const hasImg = _renderLineWithImages(t, node);
             if (hasImg) node.classList.add('sb-diary-line--has-img');
             node.title = '元の行へジャンプ';
-            node.onclick = () => {
-                /* ページが違えばまずそちらへ移動してからジャンプ */
-                const lineYM = formatYm(d);
-                const baseYM = _diaryBasePageName?.match(/(20\d{2}\.\d{2})/)?.[1];
-                if (baseYM && lineYM !== baseYM) {
-                    const newPage = pageNameWithYM(_diaryBasePageName, lineYM);
-                    closeDiary();
-                    navigateToPage(newPage, line.id);
-                } else {
-                    closeDiary();
-                    jumpToLineId(line.id);
-                }
-            };
+            node.onclick = () => _jumpToDiaryLine(d, line.id);
             content.appendChild(node);
         });
     }

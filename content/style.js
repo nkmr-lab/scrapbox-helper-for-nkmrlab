@@ -440,7 +440,10 @@ const injectStyleSheet = () => {
     padding-top:4px;
     border-right:1px solid #d8c4a0;
     margin-right:18px;
+    user-select:none;
 }
+.sb-diary-date-box--clickable { cursor:pointer; transition:opacity 0.15s; }
+.sb-diary-date-box--clickable:hover { opacity:0.7; }
 .sb-diary-day-num {
     font-size:34px; font-weight:bold;
     line-height:1; color:#3a2f24;
