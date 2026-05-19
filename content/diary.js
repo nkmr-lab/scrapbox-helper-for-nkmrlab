@@ -1,17 +1,14 @@
 /* ================= 研究ノート：週間ダイアリービュー ================= */
 /* 1週間分の研究ノート内容を、見開き2ページ（左=月火水 / 右=木金土日）の紙ノート風モーダルで表示する。
-   月跨ぎの週は前後月のノートも自動でフェッチして合成。
-   週の全7日が現在開いている Scrapbox ページの月と完全に違うなら、Scrapbox 側もその月の研究ノートに自動遷移する。 */
+   月跨ぎの週は前後月のノートも自動でフェッチして合成（Scrapbox側のページは触らない）。
+   日付フォーマットは parser.js の formatYmd / formatYm を共有、キーは 'YYYY.MM.DD' 形式。 */
 
-let _diaryBasePageName = null;  // Scrapbox上の基準ページ名（月の自動遷移時に更新）
+let _diaryBasePageName = null;  // 開いた時点の Scrapbox ページ名（月跨ぎ fetch の基準）
 let _diaryWeekStart = null;     // 表示中の週の月曜日 (Date)
-let _diaryDays = {};            // 表示中の週に必要な全月データのマージ { 'YYYY-MM-DD': line[] }
-let _diaryMonthCache = {};      // { 'YYYY.MM': { 'YYYY-MM-DD': line[] } }
+let _diaryDays = {};            // 表示中の週に必要な全月データのマージ { 'YYYY.MM.DD': { headerId, lines } }
+let _diaryMonthCache = {};      // { 'YYYY.MM': { 'YYYY.MM.DD': { headerId, lines } } }
 let _diaryFetchInflight = {};   // 同月への並行fetch重複を抑える { 'YYYY.MM': Promise }
 let _diaryEscHandler = null;
-
-/* 日付フォーマットは parser.js の formatYmd / formatYm を共有。
-   _diaryDays のキーは 'YYYY.MM.DD' 形式（formatYmd と一致）。 */
 
 const _addDays = (date, n) => {
     const d = new Date(date);
@@ -34,26 +31,26 @@ const _lastDayOfMonth = (year, month1based) => new Date(year, month1based, 0);
 /* Scrapboxの画像並べ記法: 行全体が `[| [url][url][url]...]` 形式 */
 const _IMG_ROW_RE = /^\[\|\s+(.+)\]\s*$/;
 
-/* テキスト中の [...] を parseSbBracket で解釈して描画する:
-   - image → <img>
-   - bold → <strong>
+/* テキスト中の [...] / [[...]] を parseSbBracket で解釈して描画する:
+   - image → <img>（[[...]]の場合は --large）
+   - icon → <img class="sb-diary-icon">
+   - check → ✓/□
+   - styled → <strong>/<s>/<u>/<em> の入れ子
    - plain → テキスト（ラベル/リンク先テキスト/装飾外しの中身）
    先頭が `[| [url][url]...]` の画像並べ記法なら横並びの画像グリッドにする。 */
 const _renderLineWithImages = (text, parentNode) => {
-    /* 画像並べ記法（行全体） */
+    /* 画像並べ記法（行全体）: `[| [url][url]...]` */
     const rowMatch = text.trim().match(_IMG_ROW_RE);
     if (rowMatch) {
-        const items = [...rowMatch[1].matchAll(/\[([^\]]+)\]/g)];
-        const urls = items.map(m => parseSbBracket(m[1]))
-            .filter(p => p.type === 'image').map(p => p.url);
-        if (urls.length) {
+        const parsedItems = [...rowMatch[1].matchAll(/\[([^\]]+)\]/g)]
+            .map(m => parseSbBracket(m[1]))
+            .filter(p => p.type === 'image');
+        if (parsedItems.length) {
             const row = document.createElement('div');
             row.className = 'sb-diary-img-row';
-            urls.forEach(url => {
-                const img = document.createElement('img');
-                img.src = url;
-                img.className = 'sb-diary-img sb-diary-img--row';
-                img.loading = 'lazy';
+            parsedItems.forEach(p => {
+                const img = _renderBracket(p, false);
+                img.classList.add('sb-diary-img--row');
                 row.appendChild(img);
             });
             parentNode.appendChild(row);
@@ -72,39 +69,44 @@ const _renderLineWithImages = (text, parentNode) => {
 
         const isDouble = !!m[1];
         const parsed = parseSbBracket(m[1] || m[2]);
-        if (parsed.type === 'image') {
-            const img = document.createElement('img');
-            img.src = parsed.url;
-            img.className = isDouble ? 'sb-diary-img sb-diary-img--large' : 'sb-diary-img';
-            img.loading = 'lazy';
-            parentNode.appendChild(img);
-            hasImg = true;
-        } else if (parsed.type === 'check') {
-            const span = document.createElement('span');
-            span.textContent = parsed.done ? '✓' : '□';
-            span.className = 'sb-diary-check' + (parsed.done ? ' sb-diary-check--done' : '');
-            parentNode.appendChild(span);
-        } else if (parsed.type === 'icon') {
-            const img = document.createElement('img');
-            img.src = `/api/pages/${currentProjectName}/${encodeURIComponent(parsed.user)}/icon`;
-            img.alt = parsed.user;
-            img.title = parsed.user;
-            img.className = 'sb-diary-icon';
-            img.loading = 'lazy';
-            parentNode.appendChild(img);
-        } else if (parsed.type === 'styled') {
-            parentNode.appendChild(_wrapWithStyles(parsed.text, parsed.styles));
-        } else if (isDouble) {
-            /* [[text]]（URL含まない）→ Scrapboxの強調記法。boldで描画 */
-            parentNode.appendChild(_wrapWithStyles(parsed.text, { bold: true }));
-        } else {
-            parentNode.appendChild(document.createTextNode(parsed.text));
-        }
+        parentNode.appendChild(_renderBracket(parsed, isDouble));
+        if (parsed.type === 'image') hasImg = true;
         lastIndex = m.index + m[0].length;
     }
     const tail = text.slice(lastIndex);
     if (tail) parentNode.appendChild(document.createTextNode(tail));
     return hasImg;
+};
+
+/* parseSbBracketの結果から表示用DOMノードを生成する。
+   isDouble = true（[[...]]記法）の場合は image を大きく、それ以外でも plain は bold 扱い */
+const _renderBracket = (parsed, isDouble) => {
+    if (parsed.type === 'image') {
+        const img = document.createElement('img');
+        img.src = parsed.url;
+        img.className = isDouble ? 'sb-diary-img sb-diary-img--large' : 'sb-diary-img';
+        img.loading = 'lazy';
+        return img;
+    }
+    if (parsed.type === 'check') {
+        const span = document.createElement('span');
+        span.textContent = parsed.done ? '✓' : '□';
+        span.className = 'sb-diary-check' + (parsed.done ? ' sb-diary-check--done' : '');
+        return span;
+    }
+    if (parsed.type === 'icon') {
+        const img = document.createElement('img');
+        img.src = `/api/pages/${currentProjectName}/${encodeURIComponent(parsed.user)}/icon`;
+        img.alt = parsed.user;
+        img.title = parsed.user;
+        img.className = 'sb-diary-icon';
+        img.loading = 'lazy';
+        return img;
+    }
+    if (parsed.type === 'styled') return _wrapWithStyles(parsed.text, parsed.styles);
+    /* [[text]] (URL含まないダブルブラケット) は Scrapboxの強調記法 → bold */
+    if (isDouble) return _wrapWithStyles(parsed.text, { bold: true });
+    return document.createTextNode(parsed.text);
 };
 
 /* テキストを styles {bold, strike, underline, italic} に応じて入れ子要素で包む。
