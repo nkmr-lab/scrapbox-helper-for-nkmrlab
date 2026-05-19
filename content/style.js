@@ -487,6 +487,14 @@ const injectStyleSheet = () => {
 .sb-diary-check--done {
     color:#2a8c3a; font-weight:bold;
 }
+.sb-diary-icon {
+    height:1.4em; width:1.4em;
+    vertical-align:middle;
+    border-radius:50%;
+    margin:0 2px;
+    object-fit:cover;
+    border:1px solid #c2a982;
+}
 .sb-diary-line--has-img {
     white-space:normal; overflow-wrap:break-word;
     text-overflow:clip; line-height:1.4;

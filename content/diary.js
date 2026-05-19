@@ -84,6 +84,14 @@ const _renderLineWithImages = (text, parentNode) => {
             span.textContent = parsed.done ? '✓' : '□';
             span.className = 'sb-diary-check' + (parsed.done ? ' sb-diary-check--done' : '');
             parentNode.appendChild(span);
+        } else if (parsed.type === 'icon') {
+            const img = document.createElement('img');
+            img.src = `/api/pages/${currentProjectName}/${encodeURIComponent(parsed.user)}/icon`;
+            img.alt = parsed.user;
+            img.title = parsed.user;
+            img.className = 'sb-diary-icon';
+            img.loading = 'lazy';
+            parentNode.appendChild(img);
         } else if (parsed.type === 'styled') {
             parentNode.appendChild(_wrapWithStyles(parsed.text, parsed.styles));
         } else if (isDouble) {

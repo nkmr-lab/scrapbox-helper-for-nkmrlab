@@ -50,6 +50,7 @@ const bracketTokenToImageUrl = (token) => {
 
 /* `[内容]` の中身を解析する。返り値:
    - {type:'image', url}
+   - {type:'icon', user}               `[user.icon]` ユーザーアイコン
    - {type:'check', done}              `[x]` `[ ]` `[_]` 等のTODO/DONEマーク
    - {type:'styled', text, styles:{bold,strike,underline,italic}}  装飾あり
    - {type:'plain', text}                                            装飾なし */
@@ -57,9 +58,13 @@ const parseSbBracket = (inner) => {
     const trimmed = inner.trim();
     const tokens = trimmed.split(/\s+/);
 
-    /* TODO/DONE マーク（小文字大文字両対応、空・アンダースコアは未チェック） */
+    /* TODO/DONE マーク */
     if (trimmed === 'x' || trimmed === 'X') return { type: 'check', done: true };
     if (trimmed === '' || trimmed === '_') return { type: 'check', done: false };
+
+    /* ユーザーアイコン記法 [user.icon] */
+    const iconMatch = trimmed.match(/^([^\s]+)\.icon$/i);
+    if (iconMatch) return { type: 'icon', user: iconMatch[1] };
 
     /* 中身に画像URLが含まれていれば画像扱い */
     for (const tok of tokens) {
@@ -93,11 +98,11 @@ const parseSbBracket = (inner) => {
     return { type: 'plain', text: trimmed };
 };
 
-/* Scrapbox記法を平文化する（カレンダー snippet 等のテキスト表示用、画像は省略）。
+/* Scrapbox記法を平文化する（カレンダー snippet 等のテキスト表示用、画像・アイコンは省略）。
    `[[...]]` も `[...]` 同様に処理する */
 const stripSbMarkup = (text) => text.replace(/\[\[([^\]]+)\]\]|\[([^\]]+)\]/g, (_, dbl, sgl) => {
     const p = parseSbBracket(dbl || sgl);
-    if (p.type === 'image') return '';
+    if (p.type === 'image' || p.type === 'icon') return '';
     if (p.type === 'check') return p.done ? '✓' : '□';
     return p.text;
 });
