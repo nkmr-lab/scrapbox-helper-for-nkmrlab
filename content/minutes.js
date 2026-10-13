@@ -94,13 +94,16 @@ const populateSessionData = (sessions, lines) => {
 
 /* 議事録の行データをパースしてパネルに描画する */
 const renderMinutesFromLines = async (pageName, rawLines, projectUsers) => {
+    const seq = currentNavigation();
     const enableOpenAI = await isOpenAIEnabled();
+    if (isStaleNavigation(seq)) return;
     const lines = normalizeLines(rawLines, { withUid: true });
 
     /* 当該ページの名前解決マップを用意する */
     applyProjectUsers(projectUsers, lines);
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
+    if (!panelNode) return;  /* ✕で閉じられている */
     const { bodyNode } = renderPanelHeader(panelNode, rawLines);
     const fragment = document.createDocumentFragment();
 

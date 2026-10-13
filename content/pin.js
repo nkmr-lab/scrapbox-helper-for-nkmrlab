@@ -12,6 +12,15 @@ const savePinnedPages = async (projectName, pinned) => {
     getStorage(settings.syncPinned).set({ [pinnedKey(projectName)]: pinned });
 };
 
+/* ピン留めの保存先（同期/このPC）を切り替えた時、元の保存先の分を新しい保存先へ合流させる */
+const migratePinnedStore = async (projectName, fromSync, toSync) => {
+    const key = pinnedKey(projectName);
+    const from = await loadFromStorage(getStorage(fromSync), key, []);
+    const to = await loadFromStorage(getStorage(toSync), key, []);
+    const merged = [...to, ...from.filter(p => !to.includes(p))];
+    await getStorage(toSync).set({ [key]: merged });
+};
+
 /* 指定ページをピン留めに追加する */
 const pinPage = async (projectName, pageName) => {
     const pinned = await loadPinnedPages(projectName);

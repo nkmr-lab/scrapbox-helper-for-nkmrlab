@@ -14,27 +14,29 @@ const renderMyResearchNote = (panelNode, settings) => {
 
 /* プロジェクトトップページのパネルを描画する */
 const renderProjectTop = async () => {
+    const seq = currentNavigation();
     const projectName = currentProjectName;
     const settings = await loadSettings(projectName);
-
-    if (!isExtensionAlive() || projectName !== currentProjectName) return;
-
     const history = await loadHistory(projectName);
     const pinnedPages = await loadPinnedPages(projectName);
+    if (!isExtensionAlive() || isStaleNavigation(seq)) return;
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, () => {
         const parent = document.createElement('div');
         parent.className = 'sb-panel';
         applyPanelSettings(parent, 'main');
-        appendCloseButton(parent, MAIN_PANEL_ID);
+        /* トップではフロートメニューを出していないので、閉じたら代わりにメニューを出す（何も無くならないように） */
+        appendCloseButton(parent, MAIN_PANEL_ID, () => openFloatMenu());
         appendPanelTitle(parent, 'Project: ' + currentProjectName);
         return parent;
     });
+    if (!panelNode) return;
 
     renderMyResearchNote(panelNode, settings);
     renderPinnedPages(panelNode, pinnedPages);
     await renderFrequentPages(panelNode, history);
     await renderHistory(panelNode, history);
+    if (isStaleNavigation(seq)) return;
     renderMenuButtons(panelNode, shouldShowPageCreate(settings));
 
     document.body.appendChild(panelNode);

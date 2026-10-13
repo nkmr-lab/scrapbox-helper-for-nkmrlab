@@ -175,6 +175,7 @@ const injectStyleSheet = () => {
 }
 .sb-cal-cell--sun { color:#b03c3c; }
 .sb-cal-cell--sat { color:#3c66a0; }
+.sb-cal-cell--missing { opacity:0.35; cursor:default; background:transparent; }
 
 .sb-cal-day {
     font-family:'Georgia','Times New Roman',serif;
@@ -220,6 +221,7 @@ const injectStyleSheet = () => {
     border-left:3px solid var(--sb-aiSummaryBorder);
     white-space:pre-line;
 }
+.sb-ai-summary--error { border-left-color:var(--sb-reviewNg); }
 .sb-review-box {
     margin:4px 12px 8px 12px; padding:6px;
     border-left:3px solid var(--sb-aiSummaryBorder);

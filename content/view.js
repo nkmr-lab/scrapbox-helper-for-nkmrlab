@@ -84,6 +84,41 @@ const appendEl = (parentNode, text, className, onClick) => {
     return node;
 };
 
+/* --- Scrapbox記法のインライン描画 --- */
+/* テキストを styles {bold, strike, underline, italic} に応じて入れ子要素で包む。
+   内→外の順で重ねるので、装飾の重複適用が自然に効く */
+const wrapWithSbStyles = (text, styles, boldClass = '') => {
+    let node = document.createTextNode(text);
+    if (styles.italic)    { const e = document.createElement('em'); e.appendChild(node); node = e; }
+    if (styles.underline) { const u = document.createElement('u'); u.appendChild(node); node = u; }
+    if (styles.strike)    { const s = document.createElement('s'); s.appendChild(node); node = s; }
+    if (styles.bold)      {
+        const b = document.createElement('strong');
+        if (boldClass) b.className = boldClass;
+        b.appendChild(node); node = b;
+    }
+    return node;
+};
+
+/* 1行分のテキストを、[* 強調] 等の装飾を効かせて parentNode に追加する（一覧の1行表示用）。
+   画像は🖼、アイコンは名前、チェック記法は✓/□に置き換える */
+const appendSbInline = (parentNode, text) => {
+    const re = /\[\[([^\]]+)\]\]|\[([^\]]+)\]/g;
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+        if (m.index > last) parentNode.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const p = parseSbBracket(m[1] || m[2]);
+        if (p.type === 'image') parentNode.appendChild(document.createTextNode('🖼'));
+        else if (p.type === 'icon') parentNode.appendChild(document.createTextNode(p.user));
+        else if (p.type === 'check') parentNode.appendChild(document.createTextNode(p.done ? '✓' : '□'));
+        else if (p.type === 'styled') parentNode.appendChild(wrapWithSbStyles(p.text, p.styles));
+        else if (m[1]) parentNode.appendChild(wrapWithSbStyles(p.text, { bold: true }));  /* [[強調]] */
+        else parentNode.appendChild(document.createTextNode(p.text));
+        last = m.index + m[0].length;
+    }
+    if (last < text.length) parentNode.appendChild(document.createTextNode(text.slice(last)));
+};
+
 /* --- 質問リスト描画 --- */
 /* 質問一覧をリスト形式で描画する */
 const appendQuestionList = (parentNode, questions) => {
@@ -114,7 +149,19 @@ const appendAiSummaryButton = (titleNode, cacheKey, generateFn) => {
     btn.className = 'sb-ai-btn';
     btn.onclick = async () => {
         btn.textContent = ' ⏳';
-        const result = await generateFn();
+        let result;
+        try {
+            result = await generateFn();
+        } catch (e) {
+            console.error(e);
+            btn.textContent = ' 🧠';
+            titleNode.parentNode?.querySelector('.sb-ai-summary--error')?.remove();
+            const box = document.createElement('div');
+            box.className = 'sb-ai-summary sb-ai-summary--error';
+            box.textContent = `⚠ AI要約に失敗しました（${e.message}）`;
+            titleNode.after(box);
+            return;
+        }
         btn.textContent = ' 🧠';
         if (!result) return;
         setCachedAiResult(cacheKey, result);
@@ -196,14 +243,15 @@ const renderMenuButtons = (panelNode, showCreate) => {
 };
 
 /* --- ボタン・コントロール --- */
-/* パネルに閉じるボタンを追加する */
-const appendCloseButton = (panelNode, panelId) => {
+/* パネルに閉じるボタンを追加する（onClose: 閉じた後に呼ぶ処理） */
+const appendCloseButton = (panelNode, panelId, onClose = null) => {
     const btn = document.createElement('div');
     btn.textContent = '✕';
     btn.className = 'sb-close-btn';
     btn.onclick = () => {
         _closedPanels.add(panelId);
         panelNode.remove();
+        onClose?.();
     };
     panelNode.appendChild(btn);
 };

@@ -1,4 +1,7 @@
 /* ================= 履歴管理 ================= */
+/* 履歴エントリ: { pageName, ts, id }
+   - id は Scrapbox のページID。改名（タイトル行の編集）しても変わらないので、同じidの古い名前を最新名に寄せる。
+   - 旧版の記録には id が無い。セッション中に一度だけページを引き直して id を付け、存在しないものは捨てる。 */
 
 /* 正規化済みの閲覧履歴をストレージから読み込む（sync設定に従う） */
 const loadHistory = async (projectName) => {
@@ -15,27 +18,122 @@ const loadHistory = async (projectName) => {
    タイトル入力中の中途URL（け→けん→けんき…）等の素早いURL変化はキャンセルされる。 */
 let _historyTimer = null;
 
-const saveHistory = (projectName, pageName) => {
-    if (!projectName || !pageName) return;
+/* 登録待ちの履歴を取り消す（5秒たたずに別の画面へ移った時） */
+const cancelPendingHistory = () => {
     if (_historyTimer) { clearTimeout(_historyTimer); _historyTimer = null; }
+};
+
+const saveHistory = (projectName, pageName) => {
+    cancelPendingHistory();
+    if (!projectName || !pageName) return;
     _historyTimer = setTimeout(() => {
         _historyTimer = null;
-        _commitHistory(projectName, pageName);
+        _commitHistory(projectName, pageName).catch(e => console.warn('[SB Helper] history:', e));
     }, HISTORY_COMMIT_DELAY);
 };
 
+/* Scrapboxのタイトルを URL 上の表記（空白→_）にそろえる */
+const _toUrlPageName = (title) => title.replace(/ /g, '_');
+
+/* ページを引いて { id, pageName } を返す。存在しないページは null、通信失敗は undefined。
+   Scrapbox は どこからもリンクされていない名前には 404、リンクだけある空ページには
+   200 + persistent:false（id は毎回変わる仮のもの）を返すので、どちらも「存在しない」とみなす */
+const _resolveHistoryPage = async (projectName, pageName) => {
+    try {
+        const r = await fetch(
+            `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}?_=${Date.now()}`,
+            { cache: 'no-store' }
+        );
+        if (r.status === 404) return null;
+        if (!r.ok) return undefined;
+        const json = await r.json();
+        if (!json.persistent || !json.id) return null;
+        return { id: json.id, pageName: _toUrlPageName(json.title || pageName) };
+    } catch {
+        return undefined;
+    }
+};
+
+/* id の無い旧記録を引き直して整理する（プロジェクトごとにセッション中1回） */
+const _historyCleaned = new Set();
+
+const _cleanLegacyHistory = async (projectName, list) => {
+    if (_historyCleaned.has(projectName)) return list;
+    const names = [...new Set(list.filter(e => !e.id).map(e => e.pageName))];
+    if (!names.length) { _historyCleaned.add(projectName); return list; }
+
+    const resolved = {};
+    let failed = false;
+    const queue = [...names];
+    const worker = async () => {
+        while (queue.length) {
+            const name = queue.shift();
+            resolved[name] = await _resolveHistoryPage(projectName, name);
+            if (resolved[name] === undefined) failed = true;
+        }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    if (!failed) _historyCleaned.add(projectName);
+
+    return list.flatMap(e => {
+        if (e.id) return [e];
+        const r = resolved[e.pageName];
+        if (r === null) return [];                 /* もう存在しない名前 → 捨てる */
+        if (r === undefined) return [e];           /* 通信失敗 → 次回に回す */
+        return [{ ...e, id: r.id, pageName: r.pageName }];
+    });
+};
+
+/* 同じidの記録はすべて最新の名前にそろえる（改名・タイトル編集の途中名を寄せる） */
+const _applyLatestNames = (list) => {
+    const latest = {};
+    list.forEach(e => { if (e.id) latest[e.id] = e.pageName; });
+    return list.map(e => (e.id && latest[e.id] !== e.pageName) ? { ...e, pageName: latest[e.id] } : e);
+};
+
+/* 履歴を書き込む。同期領域は1項目8KBまでなので、収まるまで古い方から削る */
+const _writeHistory = async (storage, key, list) => {
+    list = list.slice(-HISTORY_LIMIT);
+    if (storage !== chrome.storage.local) {
+        const limit = (chrome.storage.sync.QUOTA_BYTES_PER_ITEM || 8192) - 64;
+        const enc = new TextEncoder();
+        while (list.length > 1 && enc.encode(key + JSON.stringify(list)).length > limit) list = list.slice(1);
+    }
+    try {
+        await storage.set({ [key]: list });
+    } catch (e) {
+        console.warn('[SB Helper] 履歴を保存できませんでした:', e);
+    }
+};
+
 const _commitHistory = async (projectName, pageName) => {
+    const page = await _resolveHistoryPage(projectName, pageName);
+    if (!page) return;  /* 存在しないページ（作りかけ・改名で消えた名前）や通信失敗は記録しない */
+
     const settings = await loadSettings(projectName);
     const storage = getStorage(settings.syncHistory);
-    storage.get(
-        { [historyKey(projectName)]: [] },
-        data => {
-            const list = data[historyKey(projectName)];
-            if (list.length && list[list.length - 1].pageName === pageName) return;
-            list.push({ pageName, ts: Date.now() });
-            storage.set({ [historyKey(projectName)]: list.slice(-HISTORY_LIMIT) });
-        }
-    );
+    const key = historyKey(projectName);
+
+    let list = await loadFromStorage(storage, key, [], normalizeHistoryEntries);
+    list = await _cleanLegacyHistory(projectName, list);
+
+    const last = list[list.length - 1];
+    if (!(last && last.id === page.id)) list.push({ pageName: page.pageName, ts: Date.now(), id: page.id });
+    else last.pageName = page.pageName;
+
+    await _writeHistory(storage, key, _applyLatestNames(list));
+};
+
+/* 履歴の保存先（同期/このPC）を切り替えた時、元の保存先の分を新しい保存先へ合流させる */
+const migrateHistoryStore = async (projectName, fromSync, toSync) => {
+    const key = historyKey(projectName);
+    const from = await loadFromStorage(getStorage(fromSync), key, [], normalizeHistoryEntries);
+    const to = await loadFromStorage(getStorage(toSync), key, [], normalizeHistoryEntries);
+    const seen = new Set();
+    const merged = [...to, ...from]
+        .filter(e => { const k = e.pageName + '\n' + e.ts; if (seen.has(k)) return false; seen.add(k); return true; })
+        .sort((a, b) => a.ts - b.ts);
+    await _writeHistory(getStorage(toSync), key, _applyLatestNames(merged));
 };
 
 /* 履歴エントリを正規化・フィルタリングする */
@@ -43,7 +141,11 @@ const normalizeHistoryEntries = (history) => {
     if (!Array.isArray(history)) return [];
     return history
         .filter(entry => entry && typeof entry.pageName === 'string' && entry.pageName.trim() !== '')
-        .map(entry => ({ pageName: entry.pageName, ts: typeof entry.ts === 'number' ? entry.ts : 0 }));
+        .map(entry => ({
+            pageName: entry.pageName,
+            ts: typeof entry.ts === 'number' ? entry.ts : 0,
+            ...(typeof entry.id === 'string' ? { id: entry.id } : {}),
+        }));
 };
 
 /* 重複を除いた最近のページ一覧を返す */

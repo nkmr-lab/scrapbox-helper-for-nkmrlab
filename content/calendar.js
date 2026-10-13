@@ -146,39 +146,49 @@ const renderCalendarFromLines = (pageName, json) => {
     const today = formatYmd(new Date());
     const ds = Object.keys(days).sort();
 
-    if (ds.length) {
-        const f = new Date(ds[0].replace(/\./g, '-')).getDay();
-        for (let i = 0; i < f; i++) gridNode.appendChild(document.createElement('div'));
+    /* 見出しを順に詰めると1日欠けただけで以降の曜日が全部ずれるので、
+       ページ名の年月（無ければ最初の見出しの年月）で1日〜末日を全部並べ、見出しの無い日は空マスにする */
+    const ym = pageName.match(/(20\d{2})\.(\d{2})/) || ds[0]?.match(/^(\d{4})\.(\d{2})/);
+    if (ds.length && ym) {
+        const year = +ym[1], month = +ym[2];
+        const lead = new Date(year, month - 1, 1).getDay();
+        for (let i = 0; i < lead; i++) gridNode.appendChild(document.createElement('div'));
+
+        const lastDay = new Date(year, month, 0).getDate();
+        for (let day = 1; day <= lastDay; day++) {
+            const dateObj = new Date(year, month - 1, day);
+            const d = formatYmd(dateObj);
+            const weekday = dateObj.getDay();
+            const hasHeader = !!days[d];
+
+            const c = document.createElement('div');
+            c.className = 'sb-cal-cell' +
+                (d === today ? ' sb-cal-cell--today' : '') +
+                (weekday === 0 ? ' sb-cal-cell--sun' : '') +
+                (weekday === 6 ? ' sb-cal-cell--sat' : '') +
+                (hasHeader ? '' : ' sb-cal-cell--missing');
+
+            const dd = document.createElement('div');
+            dd.textContent = String(day).padStart(2, '0');
+            dd.className = 'sb-cal-day';
+            c.appendChild(dd);
+
+            if (hasHeader) {
+                (snippets[d] || []).forEach(t => {
+                    const p = document.createElement('div');
+                    p.textContent = t;
+                    p.className = 'sb-cal-snippet';
+                    c.appendChild(p);
+                });
+                c.dataset.dayCell = '1';
+                c.dataset.count = String(snippets[d]?.length || 0);
+                c.onclick = () => jumpToLineId(days[d]);
+            } else {
+                c.title = 'この日の見出しがページにありません';
+            }
+            gridNode.appendChild(c);
+        }
     }
-
-    ds.forEach(d => {
-        const dateObj = new Date(d.replace(/\./g, '-'));
-        const weekday = dateObj.getDay();
-        const dayNum = d.split('.').pop();
-
-        const c = document.createElement('div');
-        c.className = 'sb-cal-cell' +
-            (d === today ? ' sb-cal-cell--today' : '') +
-            (weekday === 0 ? ' sb-cal-cell--sun' : '') +
-            (weekday === 6 ? ' sb-cal-cell--sat' : '');
-
-        const dd = document.createElement('div');
-        dd.textContent = dayNum;
-        dd.className = 'sb-cal-day';
-        c.appendChild(dd);
-
-        (snippets[d] || []).forEach(t => {
-            const p = document.createElement('div');
-            p.textContent = t;
-            p.className = 'sb-cal-snippet';
-            c.appendChild(p);
-        });
-
-        c.dataset.dayCell = '1';
-        c.dataset.count = String(snippets[d]?.length || 0);
-        c.onclick = () => jumpToLineId(days[d]);
-        gridNode.appendChild(c);
-    });
 
     /* ヒートマップ適用 */
     loadSettings(currentProjectName).then(settings => {

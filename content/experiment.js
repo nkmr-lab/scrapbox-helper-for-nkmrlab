@@ -48,7 +48,7 @@ const runSingleSectionReview = async (section) => {
         const settings = await loadSettings(currentProjectName);
         const prompt = settings.promptExperimentReview || EXPERIMENT_REVIEW_PROMPT;
         const res = await callOpenAI(prompt, content);
-        if (!res || /問題は見当たりません/.test(res)) {
+        if (/問題は見当たりません/.test(res)) {
             resultBox.textContent = '✅ 特に問題は見当たりません';
             resultBox.className = 'sb-review-box sb-review-box--ok';
             setCachedAiResult(cacheKey, { text: resultBox.textContent, cls: 'sb-review-box--ok' });
@@ -58,7 +58,7 @@ const runSingleSectionReview = async (section) => {
             setCachedAiResult(cacheKey, { text: res, cls: 'sb-review-box--ng' });
         }
     } catch (e) {
-        resultBox.textContent = '❌ GPTレビューでエラーが発生しました';
+        resultBox.textContent = `❌ GPTレビューに失敗しました（${e.message}）`;
         resultBox.className = 'sb-review-box sb-review-box--ng';
         console.error(e);
     }
@@ -107,10 +107,12 @@ const renderGPTBatchReviewUI = (sections) => {
 
 /* 実験計画書ページをフェッチしてパネルに描画する */
 const renderExperimentPlan = async (pageName) => {
+    const seq = currentNavigation();
     const json = await fetchPage(currentProjectName, pageName);
-    if (!json) return;
+    if (!json || isStaleNavigation(seq)) return;
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
+    if (!panelNode) return;  /* ✕で閉じられている */
     const { bodyNode } = renderPanelHeader(panelNode, json.lines, '📋');
     const fragment = document.createDocumentFragment();
 
@@ -141,7 +143,9 @@ const renderExperimentPlan = async (pageName) => {
         currentSection.contents.push(text);
     });
 
-    if (await isOpenAIEnabled() && sections.length > 0) {
+    const enableOpenAI = await isOpenAIEnabled();
+    if (isStaleNavigation(seq)) return;
+    if (enableOpenAI && sections.length > 0) {
         const batchUI = renderGPTBatchReviewUI(sections);
         fragment.prepend(batchUI);
     }

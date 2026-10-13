@@ -286,7 +286,7 @@ const openPageCreateModal = async () => {
                 copyRow.style.display = '';
                 progStatus.textContent = '';
             } catch (e) {
-                progStatus.textContent = '❌ エラーが発生しました';
+                progStatus.textContent = `❌ 生成に失敗しました（${e.message}）`;
                 console.error(e);
             } finally {
                 progBtn.disabled = false;

@@ -62,35 +62,86 @@ const getPanelLayout = (settings, panelType) => {
     }
 };
 
+/* --- 同期の対象 ---
+   「システム設定」と「表示設定」の2種類。APIキーはどちらにも入れない（Googleアカウントの同期に載せない）。
+   同期フラグ（sync*）自体はPCごとの選択なので同期しない。 */
+const SYNC_SYSTEM_KEYS = [
+    'userName', 'todoMark', 'doneMark', 'showPageCreate',
+    'promptSummary', 'promptExperimentReview', 'promptProgramParse',
+];
+const SYNC_DISPLAY_KEYS = Object.keys(DEFAULT_SETTINGS).filter(k =>
+    !SYNC_SYSTEM_KEYS.includes(k) && k !== 'openaiApiKey' && !k.startsWith('sync'));
+
+/* 設定の同期フラグに応じて、同期する項目名の一覧を返す */
+const syncedSettingKeys = (settings) => [
+    ...(settings.syncSystem ? SYNC_SYSTEM_KEYS : []),
+    ...(settings.syncDisplay ? SYNC_DISPLAY_KEYS : []),
+];
+
 let _settingsCache = null;
 let _settingsCacheProject = null;
 
 /* 設定キャッシュをクリアする（ページ遷移時にrouter.jsから呼ばれる） */
 const clearSettingsCache = () => { _settingsCache = null; };
 
-/* プロジェクトの設定をストレージから読み込む（sync有効ならsync優先で試みる） */
+/* プロジェクトの設定を読み込む。
+   このPCの設定（local）を土台に、同期を有効にしている種類の項目は同期領域の値で上書きする
+   （同期ONの間は保存のたびに同期領域にも書くので、同期領域の方が常に新しい）。 */
 const loadSettings = async (projectName) => {
     if (_settingsCache && _settingsCacheProject === projectName) return _settingsCache;
     if (!projectName) return { ...DEFAULT_SETTINGS };
-    /* 常に存在するlocalから読み、未設定項目はDEFAULT_SETTINGSで補完 */
-    _settingsCache = await loadFromStorage(
-        chrome.storage.local,
-        settingsKey(projectName),
-        DEFAULT_SETTINGS,
-        v => ({ ...DEFAULT_SETTINGS, ...v })
-    );
+
+    const key = settingsKey(projectName);
+    const local = await loadFromStorage(chrome.storage.local, key, {}, v => v || {});
+    const settings = { ...DEFAULT_SETTINGS, ...local };
+
+    if (settings.syncSystem || settings.syncDisplay) {
+        const synced = await loadFromStorage(getStorage(true), key, null);
+        if (synced) {
+            syncedSettingKeys(settings).forEach(k => { if (k in synced) settings[k] = synced[k]; });
+            /* 旧版は設定を丸ごと（APIキー込みで）同期領域に置いていた。
+               このPCにキーが無ければローカルへ移し、同期領域からは消す */
+            if ('openaiApiKey' in synced) {
+                const { openaiApiKey, ...rest } = synced;
+                if (!settings.openaiApiKey && openaiApiKey) {
+                    settings.openaiApiKey = openaiApiKey;
+                    chrome.storage.local.set({ [key]: { ...local, openaiApiKey } });
+                }
+                getStorage(true).set({ [key]: rest });
+            }
+        }
+    }
+
+    _settingsCache = settings;
     _settingsCacheProject = projectName;
     return _settingsCache;
 };
 
-/* プロジェクトの設定をストレージに保存する */
-const saveSettings = (projectName, settings) => {
+/* プロジェクトの設定を保存する。localには全項目、同期領域には同期対象の項目だけを書く。
+   同期の書き込みに失敗したら（容量超過など）例外にする（localへの保存は済んでいる）。 */
+const saveSettings = async (projectName, settings) => {
     if (!projectName) return;
+    const prev = await loadSettings(projectName);
     _settingsCache = null;
-    chrome.storage.local.set({ [settingsKey(projectName)]: settings });
-    /* システムまたは表示の同期が有効ならsyncにも書く */
-    if (settings.syncSystem || settings.syncDisplay) {
-        getStorage(true).set({ [settingsKey(projectName)]: settings });
+
+    const key = settingsKey(projectName);
+    await chrome.storage.local.set({ [key]: settings });
+
+    /* 履歴・ピン留めの保存先が変わるなら、今までの分を新しい保存先へ移す（入れ替わって消えたように見えないように） */
+    if (!!prev.syncHistory !== !!settings.syncHistory) {
+        await migrateHistoryStore(projectName, prev.syncHistory, settings.syncHistory);
+    }
+    if (!!prev.syncPinned !== !!settings.syncPinned) {
+        await migratePinnedStore(projectName, prev.syncPinned, settings.syncPinned);
+    }
+
+    const keys = syncedSettingKeys(settings);
+    if (keys.length) {
+        const sync = getStorage(true);
+        const existing = await loadFromStorage(sync, key, {}, v => v || {});
+        delete existing.openaiApiKey;
+        keys.forEach(k => { existing[k] = settings[k]; });
+        await sync.set({ [key]: existing });
     }
 };
 

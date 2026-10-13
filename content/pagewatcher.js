@@ -18,46 +18,50 @@
       this.lastETag = null;
       this.warmedUp = false;
       this.inflight = false;
+      /* start/stop のたびに増える世代番号。通信待ちの間に止められた古い実行は、戻ってきても何もしない */
+      this.gen = 0;
     }
 
     async _run(projectName, pageName) {
       if (this.inflight) return;
       this.inflight = true;
+      const gen = this.gen;
+      const stale = () => gen !== this.gen;
+      /* 描画側にも渡す（描画の途中に await があっても、止められていたら描かない） */
+      const isActive = () => !stale();
 
       try {
         /* ========= 初回：必ず GET ========= */
         if (!this.warmedUp) {
           const json = await this.fetchPage(projectName, pageName);
-          if (!json) return;
+          if (stale() || !json) return;
 
-          this.lastETag = await this.headPageETag(projectName, pageName);
+          const etag = await this.headPageETag(projectName, pageName);
+          if (stale()) return;
+          this.lastETag = etag;
           this.warmedUp = true;
 
-          this.onInit?.({ projectName, pageName, json });
+          await this.onInit?.({ projectName, pageName, json, isActive });
           return;
         }
 
         /* ========= 通常：HEAD ========= */
         const etag = await this.headPageETag(projectName, pageName);
-
-        // HEAD 失敗時は安全に GET
-        if (!etag) {
-          const json = await this.fetchPage(projectName, pageName);
-          if (!json) return;
-          this.onUpdate?.({ projectName, pageName, json });
-          return;
-        }
+        if (stale()) return;
 
         // 変更なし
-        if (etag === this.lastETag) return;
+        if (etag && etag === this.lastETag) return;
 
-        this.lastETag = etag;
+        // 変更あり（または HEAD 失敗時は安全側で GET）
         const json = await this.fetchPage(projectName, pageName);
-        if (!json) return;
+        if (stale() || !json) return;
+        if (etag) this.lastETag = etag;
 
-        this.onUpdate?.({ projectName, pageName, json });
+        await this.onUpdate?.({ projectName, pageName, json, isActive });
+      } catch (e) {
+        console.warn('[SB Helper] PageWatcher:', e);
       } finally {
-        this.inflight = false;
+        if (!stale()) this.inflight = false;
       }
     }
 
@@ -74,5 +78,6 @@
       this.lastETag = null;
       this.warmedUp = false;
       this.inflight = false;
+      this.gen++;
     }
   }

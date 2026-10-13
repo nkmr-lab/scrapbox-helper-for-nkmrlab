@@ -464,11 +464,17 @@ const openSettingsModal = async () => {
     const saveBtn = document.createElement('button');
     saveBtn.textContent = '保存';
     saveBtn.className = 'sb-save-btn';
-    saveBtn.onclick = () => {
+    saveBtn.onclick = async () => {
         const newSettings = _collectSettingsValues({
             ...basic, ...main, ...cal, ...todo, ...other, ...color, ...sync, ...ai,
         });
-        saveSettings(currentProjectName, newSettings);
+        saveBtn.disabled = true;
+        try {
+            await saveSettings(currentProjectName, newSettings);
+        } catch (e) {
+            console.error(e);
+            alert(`このPCには保存しましたが、他のPCとの同期に失敗しました。\n（${e.message}）\nAIプロンプトが長すぎる場合は「同期」タブでシステム設定の同期を外してください。`);
+        }
         location.reload();
     };
     panelNode.appendChild(saveBtn);

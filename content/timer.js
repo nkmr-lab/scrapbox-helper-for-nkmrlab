@@ -43,6 +43,9 @@ const _playBeep = (freq = 800, durationMs = 200, gainVal = 0.25) => {
     if (!_beepEnabled) return;
     try {
         if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        /* リロード後に復元したタイマーは操作なしで AudioContext を作るので止まった状態で始まる。
+           そのページで一度でもクリック等していれば resume で鳴らせる */
+        if (_audioCtx.state === 'suspended') _audioCtx.resume();
         const osc = _audioCtx.createOscillator();
         const gain = _audioCtx.createGain();
         osc.frequency.value = freq;

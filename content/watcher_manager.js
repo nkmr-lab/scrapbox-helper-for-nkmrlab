@@ -7,9 +7,10 @@ class WatcherManager {
 
         /* projectUsers をロードして render 関数を呼ぶハンドラを生成する。
            guard を指定するとそれが falsy を返す場合は描画をスキップする。 */
-        const renderWithUsers = (renderFn, guard = null) => async ({ pageName, json }) => {
+        const renderWithUsers = (renderFn, guard = null) => async ({ pageName, json, isActive }) => {
             if (guard && !guard(json.lines)) return;
             const projectUsers = await loadProjectUsers(this.projectName);
+            if (!isActive()) return;
             await renderFn(pageName, json.lines, projectUsers);
         };
 
@@ -26,8 +27,9 @@ class WatcherManager {
 
             researchNote: new PageWatcher({
                 fetchPage, headPageETag,
-                onInit: async ({ pageName, json }) => {
+                onInit: async ({ pageName, json, isActive }) => {
                     const settings = await loadSettings(this.projectName);
+                    if (!isActive()) return;
                     renderCalendar(pageName);
                     renderCalendarFromLines(pageName, json);
                     renderResearchNoteCreateUI({

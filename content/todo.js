@@ -4,7 +4,9 @@
 const renderTodoRow = (todo) => {
     const itemNode = document.createElement('div');
     itemNode.className = 'sb-todo-row' + (todo.done ? ' sb-todo-row--done' : '');
-    itemNode.textContent = '□ ' + todo.text + (todo.date ? ` (${todo.date})` : '');
+    itemNode.appendChild(document.createTextNode(todo.done ? '✓ ' : '□ '));
+    appendSbInline(itemNode, todo.text);
+    if (todo.date) itemNode.appendChild(document.createTextNode(` (${todo.date})`));
     itemNode.onclick = () => jumpToLineId(todo.id);
     return itemNode;
 };
@@ -19,11 +21,12 @@ const extractTodos = (settings, lines) => {
         const dm = text.match(DATE_HEADER_RE);
         if (dm) { currentDate = `${dm[1]}.${dm[2]}.${dm[3]}`; return; }
 
-        if (text.includes(settings.todoMark)) {
+        /* マークが空欄だと全行が includes('') に当たるので無視する */
+        if (settings.todoMark && text.includes(settings.todoMark)) {
             todos.push({ id: line.id, text: text.replace(settings.todoMark, '').trim(), date: currentDate, done: false });
             return;
         }
-        if (text.includes(settings.doneMark)) {
+        if (settings.doneMark && text.includes(settings.doneMark)) {
             todos.push({ id: line.id, text: text.replace(settings.doneMark, '').trim(), date: currentDate, done: true });
         }
     });
@@ -77,7 +80,9 @@ const positionTodoPanel = (panelNode, settings) => {
 
 /* TODOパネルを生成・更新して表示する */
 const renderTodoPanel = async (lines) => {
+    const seq = currentNavigation();
     const settings = await loadSettings(currentProjectName);
+    if (isStaleNavigation(seq)) return;
     const todos = extractTodos(settings, lines);
 
     if (!todos.length) { document.getElementById(TODO_PANEL_ID)?.remove(); return; }
@@ -89,6 +94,7 @@ const renderTodoPanel = async (lines) => {
     });
     if (!panelNode) return;
     await applyPanelSettings(panelNode, 'todo');
+    if (isStaleNavigation(seq)) return;
     positionTodoPanel(panelNode, settings);
     panelNode.innerHTML = '';
 

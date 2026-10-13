@@ -3,10 +3,12 @@
 
 /* --- ページ判定 --- */
 
-/* ページが自分の研究ノートかどうか判定する */
+/* ページが自分の研究ノートかどうか判定する。
+   名前は末尾一致で比べる（部分一致だと「中村」が「研究ノート_中村太郎」にも当たる）。空白と_は同一視 */
 const isMyResearchNotePage = (pageName, userName) => {
     if (!pageName || !userName) return false;
-    return pageName.includes(`研究ノート_${userName}`);
+    const norm = s => s.replace(/ /g, '_');
+    return norm(pageName).endsWith(`研究ノート_${norm(userName)}`);
 };
 
 /* ページが自分の今月の研究ノートかどうか判定する */

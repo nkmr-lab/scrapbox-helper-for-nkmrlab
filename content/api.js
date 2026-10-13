@@ -16,6 +16,8 @@ const fetchPage = async (projectName, pageName) => {
         `https://scrapbox.io/api/pages/${projectName}/${encodeURIComponent(pageName)}?_=${Date.now()}`,
         { cache: 'no-store' }
     );
+    /* 404 はどこからもリンクされていない名前（存在しないページ）で、普通に起こるので黙って null */
+    if (r.status === 404) return null;
     if (!r.ok) { console.warn(`[SB Helper] fetchPage failed: ${r.status} ${projectName}/${pageName}`); return null; }
     return r.json();
 };
@@ -97,8 +99,14 @@ const callOpenAI = async (prompt, content, apiKey = null) => {
         })
     });
 
-    const json = await res.json();
-    return json.choices?.[0]?.message?.content || '';
+    /* 失敗（キー誤り401・残高切れ429等）を空文字にすると呼び出し側が「問題なし」と誤認するので、必ず例外にする */
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        throw new Error(`OpenAI API ${res.status}: ${json.error?.message || res.statusText}`);
+    }
+    const text = json.choices?.[0]?.message?.content;
+    if (!text) throw new Error('OpenAI API: 応答が空でした');
+    return text;
 };
 
 /* --- 感想要約 --- */

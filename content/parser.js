@@ -165,6 +165,19 @@ const parseBracketTitle = (text) => {
     return title;
 };
 
+/* 行全体が見出し `[装飾 本文]`（装飾は * ( & の組み合わせ）ならその装飾と本文を返す */
+const parseHeadingLine = (text) => {
+    const m = (text || '').match(/^\[([*(&]+)\s+(.+?)\]$/);
+    return m ? { decorators: m[1], title: m[2].trim() } : null;
+};
+
+/* 大見出しか: `[(** 概要]` `[*** 概要]` のように ( を含むか * が2個以上（`[* 背景]` は小見出し） */
+const isMajorHeading = (text) => {
+    const h = parseHeadingLine(text);
+    if (!h) return false;
+    return h.decorators.includes('(') || (h.decorators.match(/\*/g) || []).length >= 2;
+};
+
 /* タイトル行かどうか判定する */
 const isTitleLine = (t) =>
     !!parseBracketTitle(t) || /^タイトル\s*[:：『「]/.test(t);

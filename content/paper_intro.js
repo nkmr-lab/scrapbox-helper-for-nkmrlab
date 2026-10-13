@@ -16,8 +16,11 @@ const renderPaperIntroFromLines = (pageName, rawLines, projectUsers) => {
     lines.forEach((line, idx) => {
         const t = line.text;
 
-        if (t === '[*** 質問・コメント]') { inQnA = true; return; }
-        if (inQnA && /^\[\*{3}\s/.test(t)) { inQnA = false; return; }
+        /* 旧形式 `[*** 質問・コメント]` と拡張のテンプレート `[(** 質問・コメント]` の両方を受ける */
+        if (isMajorHeading(t)) {
+            inQnA = parseHeadingLine(t).title === '質問・コメント';
+            return;
+        }
 
         if (inQnA && /^\?\s/.test(t)) {
             const text = normalize(t.replace(/^\?\s*/, ''));
@@ -37,6 +40,7 @@ const renderPaperIntroFromLines = (pageName, rawLines, projectUsers) => {
     const questions = Array.from(questionMap.values());
 
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
+    if (!panelNode) return;  /* ✕で閉じられている */
     renderPanelHeader(panelNode, rawLines, '📄');
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
 

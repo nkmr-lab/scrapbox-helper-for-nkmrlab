@@ -72,5 +72,13 @@ const loadFromStorage = (storage, key, defaultValue, transform = null) => {
     });
 };
 
+/* --- 画面遷移の世代番号 ---
+   遷移ごとに1増やす。await を挟む描画処理は開始時の番号を覚えておき、
+   戻ってきた時に番号が変わっていたら（＝もう別ページ）何も描かずに抜ける。 */
+let _navSeq = 0;
+const beginNavigation = () => ++_navSeq;
+const currentNavigation = () => _navSeq;
+const isStaleNavigation = (seq) => seq !== _navSeq;
+
 /* 拡張機能が実行中かどうかを判定する */
 const isExtensionAlive = () => !!window.__SB_EXTENSION_RUNNING__;
