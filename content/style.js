@@ -222,6 +222,7 @@ const injectStyleSheet = () => {
     white-space:pre-line;
 }
 .sb-ai-summary--error { border-left-color:var(--sb-reviewNg); }
+.sb-labpay-timer { font-variant-numeric:tabular-nums; }
 .sb-review-box {
     margin:4px 12px 8px 12px; padding:6px;
     border-left:3px solid var(--sb-aiSummaryBorder);

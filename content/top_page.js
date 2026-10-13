@@ -32,6 +32,7 @@ const renderProjectTop = async () => {
     });
     if (!panelNode) return;
 
+    if (shouldShowLabPay(settings)) appendLabPaySection(panelNode);
     renderMyResearchNote(panelNode, settings);
     renderPinnedPages(panelNode, pinnedPages);
     await renderFrequentPages(panelNode, history);

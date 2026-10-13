@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LabPay連携 – Labo Scrapbox Helper</title>
+<style>
+  :root { --bg:#f7f5f0; --card:#fff; --text:#222; --muted:#666; --accent:#1565c0; --ok:#2e7d32; --ng:#c62828; --border:#ddd; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b1b1b; --card:#262626; --text:#eee; --muted:#aaa; --accent:#64b5f6; --ok:#81c784; --ng:#ef9a9a; --border:#444; }
+  }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.7 system-ui, sans-serif; }
+  main { max-width:560px; margin:48px auto; padding:0 16px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:24px; }
+  h1 { font-size:20px; margin:0 0 12px; }
+  ul { padding-left:1.2em; color:var(--muted); }
+  button { font-size:15px; padding:10px 18px; border-radius:8px; border:0; background:var(--accent); color:#fff; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  #status { margin-top:16px; min-height:1.7em; }
+  .ok { color:var(--ok); } .ng { color:var(--ng); }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>💰 LabPay連携を有効にする</h1>
+    <p>中村研のメンバー向けの機能です。Scrapbox（nkmr-lab）のメニューに、LabPay の次の情報を表示します。</p>
+    <ul>
+      <li>残高と来室の連続日数</li>
+      <li>今ラボにいる人</li>
+      <li>動いている共有タイマー</li>
+      <li>近い学会締め切り</li>
+    </ul>
+    <p>このために、拡張が <b>pay.nkmr.io</b> を読み取る許可が要ります。LabPay へは読み取りだけで、書き換えはしません。表示には、このブラウザでの LabPay のログインを使います。</p>
+    <button id="enable">許可する</button>
+    <button id="disable" hidden>連携をやめる</button>
+    <div id="status"></div>
+  </div>
+</main>
+<script src="labpay_enable.js"></script>
+</body>
+</html>

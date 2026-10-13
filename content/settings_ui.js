@@ -100,6 +100,9 @@ const _buildBasicTab = (settings) => {
     const pageCreateI = _select(settings.showPageCreate, [
         ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
     ]);
+    const labpayI = _select(settings.showLabPay, [
+        ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
+    ]);
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
     const pageAlignI = _select(settings.pageAlign, [
@@ -111,12 +114,13 @@ const _buildBasicTab = (settings) => {
         _desc('拡張機能の全般的な設定です。'),
         _field('名前', nameI),
         _field('ページ生成メニュー', pageCreateI),
+        _field('LabPay（残高・在室・タイマー・締め切り）', labpayI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
         _field('Scrapboxページの配置', pageAlignI),
     );
 
-    return { basicContent, nameI, pageCreateI, floatPosI, floatWI, pageAlignI };
+    return { basicContent, nameI, pageCreateI, labpayI, floatPosI, floatWI, pageAlignI };
 };
 
 /* 同期タブ（Chrome同期の対象選択）を構築する */
@@ -384,7 +388,7 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, pageCreateI, floatPosI, floatWI, pageAlignI,
+    nameI, pageCreateI, labpayI, floatPosI, floatWI, pageAlignI,
     syncSystemCb, syncDisplayCb, syncPinnedCb, syncHistoryCb,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
@@ -419,6 +423,7 @@ const _collectSettingsValues = ({
         recentPagesCount: +recentI.value,
         frequentPagesCount: +frequentI.value,
         showPageCreate: pageCreateI.value,
+        showLabPay: labpayI.value,
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),

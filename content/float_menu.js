@@ -90,6 +90,7 @@ const openFloatMenu = async () => {
     setOpen(false);
 
     /* コンテンツ */
+    if (shouldShowLabPay(settings)) appendLabPaySection(panel);
     await _renderPinSection(panel, getCurrentPageName());
 
     const history = await loadHistory(currentProjectName);

@@ -9,6 +9,7 @@ const DEFAULT_SETTINGS = {
     floatMenuPosition: 'bottom-right',
     floatMenuWidth: 320,
     showPageCreate: 'auto',       // 'auto'(nkmr-labのみ) | 'show' | 'hide'
+    showLabPay: 'auto',           // LabPay欄 'auto'(nkmr-labのみ) | 'show' | 'hide'
     recentPagesCount: 5,
     frequentPagesCount: 5,
     pageAlign: 'center',          // 'center' | 'left' | 'right'
