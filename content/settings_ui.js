@@ -123,41 +123,6 @@ const _buildBasicTab = (settings) => {
     return { basicContent, nameI, pageCreateI, labpayI, floatPosI, floatWI, pageAlignI };
 };
 
-/* 同期タブ（Chrome同期の対象選択）を構築する */
-const _buildSyncTab = (settings) => {
-    const _checkbox = (label, checked) => {
-        const wrap = document.createElement('label');
-        wrap.className = 'sb-settings-field';
-        wrap.style.display = 'flex';
-        wrap.style.alignItems = 'center';
-        wrap.style.gap = '4px';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = checked;
-        const lbl = document.createElement('span');
-        lbl.textContent = label;
-        lbl.className = 'sb-settings-label';
-        wrap.append(cb, lbl);
-        return { wrap, cb };
-    };
-
-    const syncSystemI = _checkbox('システム設定（名前・マーク・プロンプト等）', settings.syncSystem);
-    const syncDisplayI = _checkbox('表示設定（パネルサイズ・位置・テーマ・色等）', settings.syncDisplay);
-    const syncPinnedI = _checkbox('ピン留め', settings.syncPinned);
-    const syncHistoryI = _checkbox('閲覧履歴', settings.syncHistory);
-
-    const syncContent = document.createElement('div');
-    syncContent.append(
-        _desc('Googleアカウントでログインしている場合、チェックした項目が他のPCと同期されます。'),
-        syncSystemI.wrap, syncDisplayI.wrap,
-        syncPinnedI.wrap, syncHistoryI.wrap,
-    );
-
-    return { syncContent,
-        syncSystemCb: syncSystemI.cb, syncDisplayCb: syncDisplayI.cb,
-        syncPinnedCb: syncPinnedI.cb, syncHistoryCb: syncHistoryI.cb };
-};
-
 /* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
 const _buildColorTab = (settings) => {
     const themeI = _select(settings.theme, Object.entries(THEME_LABELS));
@@ -389,7 +354,6 @@ const _buildOtherTab = (settings) => {
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
     nameI, pageCreateI, labpayI, floatPosI, floatWI, pageAlignI,
-    syncSystemCb, syncDisplayCb, syncPinnedCb, syncHistoryCb,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
@@ -427,10 +391,6 @@ const _collectSettingsValues = ({
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),
-        syncSystem: syncSystemCb.checked,
-        syncDisplay: syncDisplayCb.checked,
-        syncPinned: syncPinnedCb.checked,
-        syncHistory: syncHistoryCb.checked,
     };
 };
 
@@ -448,7 +408,6 @@ const openSettingsModal = async () => {
     const todo = _buildTodoTab(settings);
     const other = _buildOtherTab(settings);
     const color = _buildColorTab(settings);
-    const sync = _buildSyncTab(settings);
     const ai = _buildAiTab(settings);
 
     /* ===== タブ組み立て ===== */
@@ -459,7 +418,6 @@ const openSettingsModal = async () => {
         { label: 'TODO', content: todo.todoContent },
         { label: '他ページ', content: other.otherContent },
         { label: '色', content: color.colorContent },
-        { label: '同期', content: sync.syncContent },
         { label: 'AI', content: ai.aiContent },
     ]);
 
@@ -471,7 +429,7 @@ const openSettingsModal = async () => {
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = async () => {
         const newSettings = _collectSettingsValues({
-            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...sync, ...ai,
+            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...ai,
         });
         saveBtn.disabled = true;
         try {

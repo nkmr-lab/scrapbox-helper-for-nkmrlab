@@ -52,16 +52,6 @@ const _closedPanels = new Set();
 let currentProjectName = null;
 
 /* --- Storage ヘルパー --- */
-/* sync設定に基づいてストレージを選択する（設定キャッシュから判定） */
-const getStorage = (syncEnabled) => {
-    if (!syncEnabled) return chrome.storage.local;
-    try {
-        return chrome.storage.sync || chrome.storage.local;
-    } catch {
-        return chrome.storage.local;
-    }
-};
-
 /* chrome.storage から1キーを読み、必要なら値を変換して返すPromiseを返す */
 const loadFromStorage = (storage, key, defaultValue, transform = null) => {
     return new Promise(resolve => {

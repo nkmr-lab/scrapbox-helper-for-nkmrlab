@@ -3,15 +3,10 @@
    - id は Scrapbox のページID。改名（タイトル行の編集）しても変わらないので、同じidの古い名前を最新名に寄せる。
    - 旧版の記録には id が無い。セッション中に一度だけページを引き直して id を付け、存在しないものは捨てる。 */
 
-/* 正規化済みの閲覧履歴をストレージから読み込む（sync設定に従う） */
+/* 正規化済みの閲覧履歴をストレージから読み込む */
 const loadHistory = async (projectName) => {
-    const settings = await loadSettings(projectName);
-    return loadFromStorage(
-        getStorage(settings.syncHistory),
-        historyKey(projectName),
-        [],
-        normalizeHistoryEntries
-    );
+    await retireSyncOnce(projectName);
+    return loadFromStorage(chrome.storage.local, historyKey(projectName), [], normalizeHistoryEntries);
 };
 
 /* 閲覧履歴の登録は HISTORY_COMMIT_DELAY 経過後にコミット。
@@ -91,16 +86,10 @@ const _applyLatestNames = (list) => {
     return list.map(e => (e.id && latest[e.id] !== e.pageName) ? { ...e, pageName: latest[e.id] } : e);
 };
 
-/* 履歴を書き込む。同期領域は1項目8KBまでなので、収まるまで古い方から削る */
-const _writeHistory = async (storage, key, list) => {
-    list = list.slice(-HISTORY_LIMIT);
-    if (storage !== chrome.storage.local) {
-        const limit = (chrome.storage.sync.QUOTA_BYTES_PER_ITEM || 8192) - 64;
-        const enc = new TextEncoder();
-        while (list.length > 1 && enc.encode(key + JSON.stringify(list)).length > limit) list = list.slice(1);
-    }
+/* 履歴を書き込む（新しい HISTORY_LIMIT 件） */
+const _writeHistory = async (key, list) => {
     try {
-        await storage.set({ [key]: list });
+        await chrome.storage.local.set({ [key]: list.slice(-HISTORY_LIMIT) });
     } catch (e) {
         console.warn('[SB Helper] 履歴を保存できませんでした:', e);
     }
@@ -110,30 +99,15 @@ const _commitHistory = async (projectName, pageName) => {
     const page = await _resolveHistoryPage(projectName, pageName);
     if (!page) return;  /* 存在しないページ（作りかけ・改名で消えた名前）や通信失敗は記録しない */
 
-    const settings = await loadSettings(projectName);
-    const storage = getStorage(settings.syncHistory);
     const key = historyKey(projectName);
-
-    let list = await loadFromStorage(storage, key, [], normalizeHistoryEntries);
+    let list = await loadHistory(projectName);
     list = await _cleanLegacyHistory(projectName, list);
 
     const last = list[list.length - 1];
     if (!(last && last.id === page.id)) list.push({ pageName: page.pageName, ts: Date.now(), id: page.id });
     else last.pageName = page.pageName;
 
-    await _writeHistory(storage, key, _applyLatestNames(list));
-};
-
-/* 履歴の保存先（同期/このPC）を切り替えた時、元の保存先の分を新しい保存先へ合流させる */
-const migrateHistoryStore = async (projectName, fromSync, toSync) => {
-    const key = historyKey(projectName);
-    const from = await loadFromStorage(getStorage(fromSync), key, [], normalizeHistoryEntries);
-    const to = await loadFromStorage(getStorage(toSync), key, [], normalizeHistoryEntries);
-    const seen = new Set();
-    const merged = [...to, ...from]
-        .filter(e => { const k = e.pageName + '\n' + e.ts; if (seen.has(k)) return false; seen.add(k); return true; })
-        .sort((a, b) => a.ts - b.ts);
-    await _writeHistory(getStorage(toSync), key, _applyLatestNames(merged));
+    await _writeHistory(key, _applyLatestNames(list));
 };
 
 /* 履歴エントリを正規化・フィルタリングする */
