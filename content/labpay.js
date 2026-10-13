@@ -100,6 +100,7 @@ const appendLabPaySection = (parentNode) => {
     parentNode.appendChild(box);
 
     _fillLabPayBody(body);
+    _startLabPayAutoRefresh();
     return box;
 };
 
@@ -110,11 +111,38 @@ const _fillLabPayBody = async (body) => {
     _renderLabPayBody(body, snap, settings);
 };
 
+/* 表示中の LabPay 欄を全部取り直して描き直す */
+const _refreshLabPaySections = () => {
+    _labpayCache = null;
+    document.querySelectorAll('.sb-labpay-body').forEach(_fillLabPayBody);
+};
+
 /* 許可・取り消しの知らせ（background から）で、表示中の LabPay 欄をその場で描き直す */
 chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.type !== 'labpay:changed') return;
-    _labpayCache = null;
-    document.querySelectorAll('.sb-labpay-body').forEach(_fillLabPayBody);
+    _refreshLabPaySections();
+});
+
+/* 自動更新: 欄が画面にある間は1分ごとに取り直す。タブが裏の間は取りに行かず、
+   戻った時に前回から1分以上たっていればすぐ取り直す。欄が無くなったら止める */
+let _labpayRefreshTimer = null;
+
+const _labpayIsStale = () => !_labpayCache || Date.now() - _labpayCache.at >= LABPAY_CACHE_MS;
+
+const _startLabPayAutoRefresh = () => {
+    if (_labpayRefreshTimer) return;
+    _labpayRefreshTimer = setInterval(() => {
+        if (!document.querySelector('.sb-labpay-body')) {
+            clearInterval(_labpayRefreshTimer);
+            _labpayRefreshTimer = null;
+            return;
+        }
+        if (!document.hidden) _refreshLabPaySections();
+    }, LABPAY_CACHE_MS);
+};
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && document.querySelector('.sb-labpay-body') && _labpayIsStale()) _refreshLabPaySections();
 });
 
 const _renderLabPayBody = (body, snap, settings) => {
