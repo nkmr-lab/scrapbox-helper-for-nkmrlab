@@ -223,6 +223,8 @@ const injectStyleSheet = () => {
 }
 .sb-ai-summary--error { border-left-color:var(--sb-reviewNg); }
 .sb-labpay-timer { font-variant-numeric:tabular-nums; }
+.sb-check-row { display:flex; align-items:center; gap:4px; cursor:pointer; }
+.sb-check-row--sub { margin-left:1.5em; }
 .sb-review-box {
     margin:4px 12px 8px 12px; padding:6px;
     border-left:3px solid var(--sb-aiSummaryBorder);

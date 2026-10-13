@@ -100,9 +100,6 @@ const _buildBasicTab = (settings) => {
     const pageCreateI = _select(settings.showPageCreate, [
         ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
     ]);
-    const labpayI = _select(settings.showLabPay, [
-        ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
-    ]);
     const floatPosI = _select(settings.floatMenuPosition, POSITION_OPTIONS);
     const floatWI = _input(settings.floatMenuWidth, 'number');
     const pageAlignI = _select(settings.pageAlign, [
@@ -114,13 +111,54 @@ const _buildBasicTab = (settings) => {
         _desc('拡張機能の全般的な設定です。'),
         _field('名前', nameI),
         _field('ページ生成メニュー', pageCreateI),
-        _field('LabPay（残高・在室・タイマー・締め切り）', labpayI),
         _field('メニュー位置', floatPosI),
         _field('メニュー横幅', floatWI),
         _field('Scrapboxページの配置', pageAlignI),
     );
 
-    return { basicContent, nameI, pageCreateI, labpayI, floatPosI, floatWI, pageAlignI };
+    return { basicContent, nameI, pageCreateI, floatPosI, floatWI, pageAlignI };
+};
+
+/* チェックボックス付きの行を生成する */
+const _checkbox = (label, checked) => {
+    const wrap = document.createElement('label');
+    wrap.className = 'sb-settings-field sb-check-row';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!checked;
+    const lbl = document.createElement('span');
+    lbl.textContent = label;
+    lbl.className = 'sb-settings-label';
+    wrap.append(cb, lbl);
+    return { wrap, cb };
+};
+
+/* LabPayタブ（表示するかどうかと、出す内容）を構築する */
+const _buildLabPayTab = (settings) => {
+    const labpayI = _select(settings.showLabPay, [
+        ['auto', '自動（nkmr-labのみ表示）'], ['show', '常に表示'], ['hide', '非表示'],
+    ]);
+    const pointsI = _checkbox('ポイント（残高・連続来室）', settings.labpayShowPoints);
+    const presenceI = _checkbox('今ラボにいる人', settings.labpayShowPresence);
+    const timersI = _checkbox('動いている共有タイマー', settings.labpayShowTimers);
+    const deadlinesI = _checkbox('学会締め切り', settings.labpayShowDeadlines);
+    const mineOnlyI = _checkbox('自分が⭐参加している学会だけ', settings.labpayDeadlinesMineOnly);
+    mineOnlyI.wrap.classList.add('sb-check-row--sub');
+    const deadlineCountI = _input(settings.labpayDeadlineCount, 'number');
+    deadlineCountI.min = '1'; deadlineCountI.max = '20';
+
+    const labpayContent = document.createElement('div');
+    labpayContent.append(
+        _desc('LabPay（研究室のサービス）の情報を、メニューとトップのパネルに出します。中村研メンバー向けで、最初にメニューの「LabPay連携を有効にする」から許可が必要です。'),
+        _field('表示', labpayI),
+        pointsI.wrap,
+        presenceI.wrap,
+        timersI.wrap,
+        deadlinesI.wrap, mineOnlyI.wrap,
+        _field('締め切りの表示件数', deadlineCountI),
+    );
+
+    return { labpayContent, labpayI, pointsI, presenceI, timersI, deadlinesI, mineOnlyI, deadlineCountI };
 };
 
 /* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
@@ -353,7 +391,8 @@ const _buildOtherTab = (settings) => {
 
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
-    nameI, pageCreateI, labpayI, floatPosI, floatWI, pageAlignI,
+    nameI, pageCreateI, floatPosI, floatWI, pageAlignI,
+    labpayI, pointsI, presenceI, timersI, deadlinesI, mineOnlyI, deadlineCountI,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
@@ -388,6 +427,12 @@ const _collectSettingsValues = ({
         frequentPagesCount: +frequentI.value,
         showPageCreate: pageCreateI.value,
         showLabPay: labpayI.value,
+        labpayShowPoints: pointsI.cb.checked,
+        labpayShowPresence: presenceI.cb.checked,
+        labpayShowTimers: timersI.cb.checked,
+        labpayShowDeadlines: deadlinesI.cb.checked,
+        labpayDeadlinesMineOnly: mineOnlyI.cb.checked,
+        labpayDeadlineCount: Math.min(20, Math.max(1, +deadlineCountI.value || 3)),
         promptSummary: promptSummaryI.value.trim(),
         promptExperimentReview: promptExperimentI.value.trim(),
         promptProgramParse: promptProgramI.value.trim(),
@@ -409,6 +454,7 @@ const openSettingsModal = async () => {
     const other = _buildOtherTab(settings);
     const color = _buildColorTab(settings);
     const ai = _buildAiTab(settings);
+    const labpay = _buildLabPayTab(settings);
 
     /* ===== タブ組み立て ===== */
     const { bar, panels } = renderTabs([
@@ -419,6 +465,7 @@ const openSettingsModal = async () => {
         { label: '他ページ', content: other.otherContent },
         { label: '色', content: color.colorContent },
         { label: 'AI', content: ai.aiContent },
+        { label: 'LabPay', content: labpay.labpayContent },
     ]);
 
     panelNode.append(bar, ...panels);
@@ -429,7 +476,7 @@ const openSettingsModal = async () => {
     saveBtn.className = 'sb-save-btn';
     saveBtn.onclick = async () => {
         const newSettings = _collectSettingsValues({
-            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...ai,
+            ...basic, ...main, ...cal, ...todo, ...other, ...color, ...ai, ...labpay,
         });
         saveBtn.disabled = true;
         try {

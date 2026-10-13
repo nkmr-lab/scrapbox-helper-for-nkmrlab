@@ -7,8 +7,8 @@
 
 const LABPAY_BASE = 'https://pay.nkmr.io';
 const LABPAY_CACHE_MS = 60 * 1000;   /* メニューは遷移ごとに作り直すので、取得結果は1分使い回す */
-const LABPAY_DEADLINE_COUNT = 3;
 const LABPAY_TIMER_COUNT = 3;
+const LABPAY_DEADLINE_FETCH = 20;    /* 「自分の締め切りだけ」の時は多めに取ってから絞る（API側に絞り込みが無い） */
 
 /* LabPay を表示すべきか（auto = nkmr-lab プロジェクトのみ） */
 const shouldShowLabPay = (settings) => {
@@ -31,16 +31,19 @@ const labpayGet = async (path) => {
 
 let _labpayCache = null;   /* { at, promise } */
 
-/* 4つの API をまとめて取得する。返り値 { state: 'ok'|'login'|'disabled'|'error', me, rooms, timers, serverNow, deadlines, fetchedAt, error } */
-const loadLabPaySnapshot = () => {
+/* 設定で出すことになっている API だけをまとめて取得する（/api/me はログイン判定にも使うので常に取る）。
+   返り値 { state: 'ok'|'login'|'disabled'|'error', me, rooms, timers, serverNow, deadlines, fetchedAt, error } */
+const loadLabPaySnapshot = (settings) => {
     if (_labpayCache && Date.now() - _labpayCache.at < LABPAY_CACHE_MS) return _labpayCache.promise;
 
+    const skip = Promise.resolve({ ok: false, status: 0, error: 'skipped' });
+    const deadlineLimit = settings.labpayDeadlinesMineOnly ? LABPAY_DEADLINE_FETCH : (settings.labpayDeadlineCount || 3);
     const promise = (async () => {
         const [me, presence, timers, deadlines] = await Promise.all([
             labpayGet('/api/me'),
-            labpayGet('/api/presence'),
-            labpayGet('/api/timers'),
-            labpayGet(`/api/conf-deadlines/upcoming?limit=${LABPAY_DEADLINE_COUNT}`),
+            settings.labpayShowPresence ? labpayGet('/api/presence') : skip,
+            settings.labpayShowTimers ? labpayGet('/api/timers') : skip,
+            settings.labpayShowDeadlines ? labpayGet(`/api/conf-deadlines/upcoming?limit=${deadlineLimit}`) : skip,
         ]);
         const fetchedAt = Date.now();
         if (me.error === 'no_permission') return { state: 'disabled', fetchedAt };
@@ -100,11 +103,11 @@ const appendLabPaySection = (parentNode) => {
     return box;
 };
 
-const _fillLabPayBody = (body) => {
-    loadLabPaySnapshot().then(snap => {
-        body.replaceChildren();
-        _renderLabPayBody(body, snap);
-    });
+const _fillLabPayBody = async (body) => {
+    const settings = await loadSettings(currentProjectName);
+    const snap = await loadLabPaySnapshot(settings);
+    body.replaceChildren();
+    _renderLabPayBody(body, snap, settings);
 };
 
 /* 許可・取り消しの知らせ（background から）で、表示中の LabPay 欄をその場で描き直す */
@@ -114,7 +117,7 @@ chrome.runtime.onMessage.addListener((msg) => {
     document.querySelectorAll('.sb-labpay-body').forEach(_fillLabPayBody);
 });
 
-const _renderLabPayBody = (body, snap) => {
+const _renderLabPayBody = (body, snap, settings) => {
     if (snap.state === 'disabled') {
         appendItem(body, '🔗 LabPay連携を有効にする（中村研メンバー向け）',
             () => chrome.runtime.sendMessage({ type: 'labpay:enable' }).catch(() => {}));
@@ -130,15 +133,16 @@ const _renderLabPayBody = (body, snap) => {
     }
 
     /* 残高・連続来室 */
-    const balance = Number(snap.me?.balance ?? 0).toLocaleString();
-    const streak = snap.me?.streak?.current_streak;
-    appendItem(body, `残高 ${balance}pt` + (streak ? `　🔥 ${streak}日連続` : ''), () => openLabPay());
+    if (settings.labpayShowPoints) {
+        const balance = Number(snap.me?.balance ?? 0).toLocaleString();
+        const streak = snap.me?.streak?.current_streak;
+        appendItem(body, `残高 ${balance}pt` + (streak ? `　🔥 ${streak}日連続` : ''), () => openLabPay());
+    }
 
-    /* 今ラボにいる人（部屋ごと） */
+    /* 今ラボにいる人（LabPay の部屋一覧のまま、人がいる部屋ごと） */
     if (snap.rooms) {
         const occupied = snap.rooms.filter(r => r.users?.length);
-        const total = occupied.reduce((n, r) => n + r.users.length, 0);
-        if (!total) {
+        if (!occupied.length) {
             appendItemMuted(body, '🏠 今ラボにいる人はいません');
         } else {
             occupied.forEach(r => {
@@ -171,9 +175,16 @@ const _renderLabPayBody = (body, snap) => {
             });
     }
 
-    /* 学会締め切り（近い順） */
-    if (snap.deadlines?.length) {
-        snap.deadlines.forEach(d => {
+    /* 学会締め切り（近い順。既定は自分が⭐参加しているものだけ） */
+    if (snap.deadlines) {
+        const list = snap.deadlines
+            .filter(d => !settings.labpayDeadlinesMineOnly || Number(d.is_mine))
+            .slice(0, settings.labpayDeadlineCount || 3);
+        if (!list.length) {
+            appendItemMuted(body, settings.labpayDeadlinesMineOnly
+                ? '📅 自分が⭐参加している学会の締め切りはありません' : '📅 近い締め切りはありません');
+        }
+        list.forEach(d => {
             const sec = Number(d.sec_ahead || 0) - (Date.now() - snap.fetchedAt) / 1000;
             const at = String(d.nearest_at || '');
             const md = at.length >= 10 ? `${+at.slice(5, 7)}/${+at.slice(8, 10)}` : '';

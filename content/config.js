@@ -10,6 +10,13 @@ const DEFAULT_SETTINGS = {
     floatMenuWidth: 320,
     showPageCreate: 'auto',       // 'auto'(nkmr-labのみ) | 'show' | 'hide'
     showLabPay: 'auto',           // LabPay欄 'auto'(nkmr-labのみ) | 'show' | 'hide'
+    /* --- LabPay欄に出す内容 --- */
+    labpayShowPoints: true,       // 残高・連続来室
+    labpayShowPresence: true,     // 今ラボにいる人
+    labpayShowTimers: false,      // 動いている共有タイマー
+    labpayShowDeadlines: true,    // 学会締め切り
+    labpayDeadlinesMineOnly: true,// 自分が⭐参加している学会だけ
+    labpayDeadlineCount: 3,       // 締め切りの表示件数
     recentPagesCount: 5,
     frequentPagesCount: 5,
     pageAlign: 'center',          // 'center' | 'left' | 'right'
