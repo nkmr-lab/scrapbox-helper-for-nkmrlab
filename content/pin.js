@@ -1,9 +1,24 @@
 /* ================= ピン留め ================= */
 
-/* ピン留めページ一覧をストレージから読み込む（sync設定に従う） */
+/* ピン留めページ一覧をストレージから読み込む（sync設定に従う）。
+   同期が既定ONになる前の版はこのPC（local）に保存していたので、同期ONなのに local に残っている分は
+   同期領域へ一度だけ合流させ、local からは消す（残すと外したピンが次回 local から復活する） */
 const loadPinnedPages = async (projectName) => {
     const settings = await loadSettings(projectName);
-    return loadFromStorage(getStorage(settings.syncPinned), pinnedKey(projectName), []);
+    const key = pinnedKey(projectName);
+    const pinned = await loadFromStorage(getStorage(settings.syncPinned), key, []);
+    if (!settings.syncPinned) return pinned;
+
+    const local = await loadFromStorage(chrome.storage.local, key, null);
+    if (!Array.isArray(local) || !local.length) return pinned;
+    const merged = [...pinned, ...local.filter(p => !pinned.includes(p))];
+    try {
+        if (merged.length !== pinned.length) await getStorage(true).set({ [key]: merged });
+        await chrome.storage.local.remove(key);
+    } catch (e) {
+        console.warn('[SB Helper] ピン留めを同期領域へ移せませんでした:', e);
+    }
+    return merged;
 };
 
 /* ピン留めページ一覧をストレージに保存する（sync設定に従う） */
