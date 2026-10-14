@@ -201,8 +201,10 @@ const injectStyleSheet = () => {
 .sb-todo-row {
     cursor:pointer; padding:4px 6px;
     border-bottom:1px solid var(--sb-todoBorder);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; display:flex; align-items:baseline; gap:6px;
 }
+.sb-todo-text { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.sb-todo-date { flex-shrink:0; font-size:10px; color:var(--sb-textDone); }
 .sb-todo-row--done { color:var(--sb-textDone); text-decoration:line-through; }
 
 /* ===== Stats ===== */

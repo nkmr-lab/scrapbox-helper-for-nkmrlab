@@ -4,9 +4,22 @@
 const renderTodoRow = (todo) => {
     const itemNode = document.createElement('div');
     itemNode.className = 'sb-todo-row' + (todo.done ? ' sb-todo-row--done' : '');
-    itemNode.appendChild(document.createTextNode(todo.done ? '✓ ' : '□ '));
-    appendSbInline(itemNode, todo.text);
-    if (todo.date) itemNode.appendChild(document.createTextNode(` (${todo.date})`));
+
+    /* 本文（長ければ … で省略）と日付を分け、日付は右端に薄い色で「10/5」と出す */
+    const textNode = document.createElement('span');
+    textNode.className = 'sb-todo-text';
+    textNode.appendChild(document.createTextNode(todo.done ? '✓ ' : '□ '));
+    appendSbInline(textNode, todo.text);
+    itemNode.appendChild(textNode);
+
+    if (todo.date) {
+        const [, m, d] = todo.date.split('.');
+        const dateNode = document.createElement('span');
+        dateNode.className = 'sb-todo-date';
+        dateNode.textContent = `${+m}/${+d}`;
+        itemNode.title = todo.date;
+        itemNode.appendChild(dateNode);
+    }
     itemNode.onclick = () => jumpToLineId(todo.id);
     return itemNode;
 };
