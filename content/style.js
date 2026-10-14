@@ -109,6 +109,9 @@ const injectStyleSheet = () => {
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .sb-item--muted { color:var(--sb-textMuted); }
+.sb-freq-row { display:flex; align-items:baseline; gap:6px; }
+.sb-freq-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.sb-freq-count { flex-shrink:0; font-size:10px; color:var(--sb-textDone); padding-right:6px; }
 .sb-item--sub { background:var(--sb-subTitleBg); margin-bottom:4px; padding-bottom:3px; }
 
 /* ===== Buttons ===== */

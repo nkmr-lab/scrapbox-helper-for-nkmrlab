@@ -165,8 +165,17 @@ const renderFrequentPages = async (panelNode, history) => {
     if (!items.length) return;
 
     appendSectionHeader(panelNode, '⭐ よく見ているページ');
+    /* 回数はページ名の一部に見えないよう、右端に薄い色で分けて出す（名前だけを … で省略） */
     items.forEach(([pageName, count]) => {
-        appendItem(panelNode, '・' + `${pageName} (${count})`,
-            () => navigateToPage(pageName));
+        const row = appendItem(panelNode, '', () => navigateToPage(pageName));
+        row.classList.add('sb-freq-row');
+        const name = document.createElement('span');
+        name.className = 'sb-freq-name';
+        name.textContent = '・' + pageName;
+        const badge = document.createElement('span');
+        badge.className = 'sb-freq-count';
+        badge.textContent = `${count}回`;
+        row.title = `${pageName}（最近の100回の閲覧のうち${count}回）`;
+        row.append(name, badge);
     });
 };
