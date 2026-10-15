@@ -228,6 +228,9 @@ const injectStyleSheet = () => {
 }
 .sb-ai-summary--error { border-left-color:var(--sb-reviewNg); }
 .sb-labpay-timer { font-variant-numeric:tabular-nums; }
+.sb-labpay-timer-strip:empty { display:none; }
+.sb-labpay-timer-strip { border-bottom:1px solid var(--sb-border); padding:2px 0; }
+.sb-labpay-timer-strip .sb-labpay-timer { font-size:14px; font-weight:bold; padding:3px 8px; }
 .sb-check-row { display:flex; align-items:center; gap:4px; cursor:pointer; }
 .sb-check-row--sub { margin-left:1.5em; }
 .sb-review-box {

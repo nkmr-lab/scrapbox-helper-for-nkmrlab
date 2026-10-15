@@ -141,6 +141,7 @@ const _buildLabPayTab = (settings) => {
     const pointsI = _checkbox('ポイント（残高・連続来室）', settings.labpayShowPoints);
     const presenceI = _checkbox('今ラボにいる人', settings.labpayShowPresence);
     const timersI = _checkbox('動いている共有タイマー', settings.labpayShowTimers);
+    const paperTimersI = _checkbox('論文紹介・発表練習ページで、動いている共有タイマーを出す', settings.labpayPageTimers);
     const deadlinesI = _checkbox('学会締め切り', settings.labpayShowDeadlines);
     const mineOnlyI = _checkbox('自分が⭐参加している学会だけ', settings.labpayDeadlinesMineOnly);
     mineOnlyI.wrap.classList.add('sb-check-row--sub');
@@ -154,11 +155,12 @@ const _buildLabPayTab = (settings) => {
         pointsI.wrap,
         presenceI.wrap,
         timersI.wrap,
+        paperTimersI.wrap,
         deadlinesI.wrap, mineOnlyI.wrap,
         _field('締め切りの表示件数', deadlineCountI),
     );
 
-    return { labpayContent, labpayI, pointsI, presenceI, timersI, deadlinesI, mineOnlyI, deadlineCountI };
+    return { labpayContent, labpayI, pointsI, presenceI, timersI, paperTimersI, deadlinesI, mineOnlyI, deadlineCountI };
 };
 
 /* 色設定タブ（テーマ・透明度・カスタムカラー）を構築する */
@@ -392,7 +394,7 @@ const _buildOtherTab = (settings) => {
 /* 全入力要素から設定値オブジェクトを収集する */
 const _collectSettingsValues = ({
     nameI, pageCreateI, floatPosI, floatWI, pageAlignI,
-    labpayI, pointsI, presenceI, timersI, deadlinesI, mineOnlyI, deadlineCountI,
+    labpayI, pointsI, presenceI, timersI, paperTimersI, deadlinesI, mineOnlyI, deadlineCountI,
     themeI, oI, colorInputs,
     calPosI, calWI, calHI, calFI, calFEI, calHeatI,
     todoI, doneI, todoPosI, todoWI, todoHI, todoShowI,
@@ -430,6 +432,7 @@ const _collectSettingsValues = ({
         labpayShowPoints: pointsI.cb.checked,
         labpayShowPresence: presenceI.cb.checked,
         labpayShowTimers: timersI.cb.checked,
+        labpayPageTimers: paperTimersI.cb.checked,
         labpayShowDeadlines: deadlinesI.cb.checked,
         labpayDeadlinesMineOnly: mineOnlyI.cb.checked,
         labpayDeadlineCount: Math.min(20, Math.max(1, +deadlineCountI.value || 3)),

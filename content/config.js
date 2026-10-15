@@ -13,7 +13,8 @@ const DEFAULT_SETTINGS = {
     /* --- LabPay欄に出す内容 --- */
     labpayShowPoints: true,       // 残高・連続来室
     labpayShowPresence: true,     // 今ラボにいる人
-    labpayShowTimers: false,      // 動いている共有タイマー
+    labpayShowTimers: false,      // 動いている共有タイマー（メニュー・トップ）
+    labpayPageTimers: true,       // 論文紹介・発表練習ページのパネルに、動いている共有タイマーを出す
     labpayShowDeadlines: true,    // 学会締め切り
     labpayDeadlinesMineOnly: true,// 自分が⭐参加している学会だけ
     labpayDeadlineCount: 3,       // 締め切りの表示件数

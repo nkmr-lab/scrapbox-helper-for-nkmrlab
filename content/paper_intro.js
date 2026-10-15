@@ -42,6 +42,7 @@ const renderPaperIntroFromLines = (pageName, rawLines, projectUsers) => {
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     if (!panelNode) return;  /* ✕で閉じられている */
     renderPanelHeader(panelNode, rawLines, '📄');
+    attachLabPayTimerStrip(panelNode);
     const bodyNode = panelNode.querySelector('#' + MAIN_BODY_ID);
 
     const fragment = document.createDocumentFragment();

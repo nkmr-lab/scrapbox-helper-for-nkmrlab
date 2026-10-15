@@ -10,6 +10,7 @@ const renderPresentationFromLines = (pageName, rawLines, projectUsers) => {
     const panelNode = getOrCreatePanel(MAIN_PANEL_ID, renderStandardPanel);
     if (!panelNode) return;  /* ✕で閉じられている */
     const { bodyNode } = renderPanelHeader(panelNode, rawLines);
+    attachLabPayTimerStrip(panelNode);
 
     /* 発表の区切り行からタイトルを返す（区切りでなければnull）。
        旧形式 `タイトル: xxx` `タイトル「xxx」` と、ページ生成テンプレートの `[(* xxx]`（( 付き見出し）を受ける。

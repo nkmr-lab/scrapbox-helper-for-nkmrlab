@@ -88,6 +88,60 @@ const _labpayTimerRemaining = (t, snap) => {
     return base - (Date.now() - snap.fetchedAt) / 1000;
 };
 
+/* 動いている / 止めているタイマーだけ */
+const _activeLabPayTimers = (timers) => timers.filter(t => t.status === 'running' || t.status === 'paused');
+
+/* タイマー1本の行を追加する。動いているものは1秒ごとに残り時間を描き直す（行が画面から消えたら止める）。
+   snap は { serverNow, fetchedAt }（残り時間を LabPay サーバの時計基準で出すため） */
+const _appendLabPayTimerRow = (parentNode, t, snap) => {
+    const row = appendItem(parentNode, '', () => openLabPay(`#/timers/${t.id}`));
+    row.classList.add('sb-labpay-timer');
+    row.dataset.timerId = String(t.id);
+    const paint = () => {
+        const sec = _labpayTimerRemaining(t, snap);
+        const mark = t.status === 'paused' ? '⏸' : '⏱';
+        const time = sec > 0 ? formatTimerMMSS(sec) : '終了';
+        row.textContent = `${mark} ${t.title}　${time}` + (t.status === 'paused' ? '（停止中）' : '');
+    };
+    paint();
+    if (t.status === 'running') {
+        const iv = setInterval(() => { if (!row.isConnected) clearInterval(iv); else paint(); }, 1000);
+    }
+    return row;
+};
+
+/* --- 論文紹介・発表練習ページのタイマー表示 ---
+   発表の時間を見ながら聞けるよう、パネルのタイトル直下に LabPay の動いている共有タイマーを出す。
+   開始・一時停止を早めに映すため、ここだけ15秒ごとに取り直す（タブが裏の間は取りに行かない）。
+   連携が無効・未ログイン・タイマー無しの時は何も出さない。 */
+const LABPAY_STRIP_REFRESH_MS = 15 * 1000;
+
+const attachLabPayTimerStrip = async (panelNode) => {
+    const titleNode = panelNode.querySelector('#' + MAIN_TITLE_ID);
+    if (!titleNode || panelNode.querySelector('.sb-labpay-timer-strip')) return;
+    const settings = await loadSettings(currentProjectName);
+    if (!shouldShowLabPay(settings) || !settings.labpayPageTimers) return;
+    if (panelNode.querySelector('.sb-labpay-timer-strip')) return;
+
+    const strip = document.createElement('div');
+    strip.className = 'sb-labpay-timer-strip';
+    titleNode.after(strip);
+
+    const fill = async () => {
+        const res = await labpayGet('/api/timers');
+        if (!strip.isConnected) return;
+        const timers = res.ok ? _activeLabPayTimers(res.json?.items || []) : [];
+        const snap = { serverNow: res.json?.server_now, fetchedAt: Date.now() };
+        strip.replaceChildren();
+        timers.slice(0, LABPAY_TIMER_COUNT).forEach(t => _appendLabPayTimerRow(strip, t, snap));
+    };
+    await fill();
+    const iv = setInterval(() => {
+        if (!strip.isConnected) { clearInterval(iv); return; }
+        if (!document.hidden) fill();
+    }, LABPAY_STRIP_REFRESH_MS);
+};
+
 /* LabPay 欄を parentNode に追加する。中身は非同期で埋まる（メニュー自体の表示は待たせない） */
 const appendLabPaySection = (parentNode) => {
     const box = document.createElement('div');
@@ -183,24 +237,8 @@ const _renderLabPayBody = (body, snap, settings) => {
 
     /* 共有タイマー（動いている / 止めているものだけ） */
     if (snap.timers) {
-        snap.timers
-            .filter(t => t.status === 'running' || t.status === 'paused')
-            .slice(0, LABPAY_TIMER_COUNT)
-            .forEach(t => {
-                const row = appendItem(body, '', () => openLabPay(`#/timers/${t.id}`));
-                row.classList.add('sb-labpay-timer');
-                row.dataset.timerId = String(t.id);
-                const paint = () => {
-                    const sec = _labpayTimerRemaining(t, snap);
-                    const mark = t.status === 'paused' ? '⏸' : '⏱';
-                    const time = sec > 0 ? formatTimerMMSS(sec) : '終了';
-                    row.textContent = `${mark} ${t.title}　${time}` + (t.status === 'paused' ? '（停止中）' : '');
-                };
-                paint();
-                if (t.status === 'running') {
-                    const iv = setInterval(() => { if (!row.isConnected) clearInterval(iv); else paint(); }, 1000);
-                }
-            });
+        _activeLabPayTimers(snap.timers).slice(0, LABPAY_TIMER_COUNT)
+            .forEach(t => _appendLabPayTimerRow(body, t, snap));
     }
 
     /* 学会締め切り（近い順。既定は自分が⭐参加しているものだけ） */
